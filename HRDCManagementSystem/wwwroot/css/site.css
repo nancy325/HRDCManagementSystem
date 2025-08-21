@@ -17,6 +17,35 @@ html {
   min-height: 100%;
 }
 
+
+/* wwwroot/css/site.css */
+
 body {
-  margin-bottom: 60px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.sidebar {
+    min-width: 260px;
+    max-width: 260px;
+}
+
+.card-stat {
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.upcoming-item {
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid #edf0f3;
+    background: #fff;
+    margin-bottom: 12px;
+}
+
+.notifications .note {
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #e6eef9;
+    background: #fff;
+    margin-bottom: 10px;
 }

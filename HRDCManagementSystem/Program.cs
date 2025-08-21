@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using HRDCManagementSystem.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";   // redirect to login if not authenticated
         options.LogoutPath = "/Account/Logout";
     });
-
+builder.Services.AddScoped<IParticipantService, ParticipantService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

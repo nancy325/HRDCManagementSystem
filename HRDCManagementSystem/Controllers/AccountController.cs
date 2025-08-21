@@ -21,7 +21,6 @@ namespace HRDCManagementSystem.Controllers
             if (!ModelState.IsValid)
                 return View(vm);
 
-           
             if ((vm.Username == "admin" && vm.Password == "admin123") ||
                 (vm.Username == "user" && vm.Password == "user123"))
             {
@@ -42,7 +41,16 @@ namespace HRDCManagementSystem.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                return LocalRedirect(returnUrl ?? Url.Action("Welcome", "Home"));
+                // Redirect based on user role
+                if (vm.Username == "admin")
+                {
+                    return LocalRedirect(returnUrl ?? Url.Action("Welcome", "Home"));
+                }
+                else
+                {
+                    // Redirect user to participants dashboard
+                    return LocalRedirect(returnUrl ?? Url.Action("Dashboard", "Participants"));
+                }
             }
 
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
