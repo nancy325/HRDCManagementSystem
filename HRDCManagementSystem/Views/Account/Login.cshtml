@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = null; // standalone page
+    Layout = null;
     ViewData["Title"] = "Login - HRDC";
 }
 
@@ -22,23 +22,53 @@
             border-radius: 15px;
         }
 
+        .header-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
         .logo-img {
             max-width: 120px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
+
+        .form-control {
+            height: 45px;
+        }
+
+        .input-group-text {
+            background: #fff;
+            border-right: 0;
+        }
+
+        .input-group .form-control {
+            border-left: 0;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+        }
+
+            .btn-primary:hover {
+                background-color: #0b5ed7;
+            }
     </style>
 </head>
 <body>
     <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="card shadow-lg p-4 login-card text-center">
+        <div class="card shadow-lg p-4 login-card">
 
-            <!-- Logo -->
-            <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="logo-img" />
-
-            <!-- Title -->
-            <h2 class="fw-bold text-primary">HRDC</h2>
-            <small class="text-muted">Gateway to HRDC Portal</small>
-            <hr />
+            <!-- Logo + Title Block -->
+            <div class="header-block text-center">
+                <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="logo-img" />
+                @* <h3 class="fw-bold text-primary mb-1">HRDC</h3> *@
+                <p class="text-muted mb-0">Gateway to HRDC Portal</p>
+            </div>
+            <hr class="mb-4" />
 
             <!-- Error message -->
             @if (ViewBag.Error != null)
@@ -47,7 +77,7 @@
             }
 
             <!-- Login Form -->
-            <form asp-action="Login" method="post" class="text-start">
+            <form asp-action="Login" method="post">
                 <!-- Username -->
                 <div class="form-group mb-3">
                     <div class="input-group">
