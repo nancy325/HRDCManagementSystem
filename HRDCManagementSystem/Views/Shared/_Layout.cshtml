@@ -1,6 +1,4 @@
-﻿@*
-  Views/Shared/_Layout.cshtml
-*@
+﻿@* Views/Shared/_Layout.cshtml *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,27 +16,11 @@
             @Html.Partial("_Sidebar")
         </div>
 
+        <!-- Main Content -->
         <div class="flex-fill bg-light">
-            <!-- Topbar -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-sm d-md-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
-                    <form class="d-none d-md-block ms-3" method="get" action="@Url.Action("Dashboard", "Participants")">
-                        <div class="text-muted small">
-                            Welcome, @(User?.Identity != null && User.Identity.IsAuthenticated ? User.Identity.Name : "User")
-                        </div>
+            
 
-                    </form>
-
-                    <div class="ms-auto d-flex align-items-center gap-3">
-                        <div class="text-muted small">Welcome, @User?.Identity?.Name ?? "User"</div>
-                        <div>
-                            <a href="#" class="text-muted"><i class="bi bi-bell"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
+            <!-- Page Body -->
             <main class="p-4">
                 @RenderBody()
             </main>
@@ -47,7 +29,7 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // simple sidebar toggle for small screens
+        // Sidebar toggle for small screens
         document.getElementById('sidebarToggle')?.addEventListener('click', function () {
             document.querySelector('.sidebar')?.classList.toggle('d-none');
         });

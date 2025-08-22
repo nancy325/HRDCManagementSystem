@@ -1,22 +1,41 @@
 ﻿@* Views/Shared/_Sidebar.cshtml *@
-<div class="p-4" style="width:260px; min-height:100vh;">
-    <div class="mb-4 text-center">
-        <img src="~/images/hrdc-logo.png" alt="HRDC" class="img-fluid" style="max-width:140px;" />
-        <div class="mt-2 small text-muted">Participant Portal</div>
+<div class="d-flex flex-column justify-content-between" style="width:260px; min-height:100vh;">
+    <!-- Top Section -->
+    <div class="p-4">
+        <div class="mb-4 text-center">
+            <img src="~/images/hrdc-logo.png" alt="HRDC" class="img-fluid" style="max-width:140px;" />
+            <div class="mt-2 small text-muted">Participant Portal</div>
+        </div>
+
+        <ul class="nav flex-column">
+            <li class="nav-item mb-2">
+                <a class="nav-link active" href="@Url.Action("Dashboard", "Participants")">
+                    <i class="bi bi-house-door me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link" href="#"><i class="bi bi-journal-check me-2"></i> Training Registration</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link" href="#"><i class="bi bi-card-checklist me-2"></i> My Trainings</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link" href="#"><i class="bi bi-award me-2"></i> Certificates</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link" href="#"><i class="bi bi-chat-left-text me-2"></i> Feedback</a>
+            </li>
+        </ul>
     </div>
 
-    <ul class="nav flex-column">
-        <li class="nav-item mb-2">
-            <a class="nav-link active" href="@Url.Action("Dashboard", "Participants")"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-        </li>
-        <li class="nav-item mb-2"><a class="nav-link" href="#"><i class="bi bi-journal-check me-2"></i> Training Registration</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="#"><i class="bi bi-card-checklist me-2"></i> My Trainings</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="#"><i class="bi bi-award me-2"></i> Certificates</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="#"><i class="bi bi-chat-left-text me-2"></i> Feedback</a></li>
-    </ul>
-
-    <div class="mt-5 small text-muted">
+    <!-- Bottom Section -->
+    <div class="small text-muted p-4 border-top">
         <div class="mb-1">John Participant</div>
-        <div>Employee ID: EMP001</div>
+        <div>
+            Employee ID: EMP001
+            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="logoutUser()" title="Logout">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
+        </div>
     </div>
 </div>
