@@ -8,11 +8,15 @@ public class ParticipantsController : Controller
 {
     private readonly IParticipantService _service;
     private readonly ITrainingService _trainingService;
+    private readonly ICertificateService _certificateService;
 
-    public ParticipantsController(IParticipantService service, ITrainingService trainingService)
+
+    public ParticipantsController(IParticipantService service, ITrainingService trainingService, ICertificateService certificateService)
     {
         _service = service;
         _trainingService = trainingService;
+        _certificateService = certificateService;
+
     }
 
     // Dashboard
@@ -70,5 +74,11 @@ public class ParticipantsController : Controller
     {
         var trainings = _trainingService.GetRegisteredTrainings();  // uses your existing method
         return View(trainings);
+    }
+    // CERRTIFICATE
+    public IActionResult Certificate()
+    {
+        var certificates = _certificateService.GetCertificates();
+        return View(certificates);
     }
 }

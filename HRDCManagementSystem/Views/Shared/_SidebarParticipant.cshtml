@@ -42,17 +42,32 @@
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Trainings"
-                       class="participant-nav-link @IsActive("Participants", "Trainings")">
+                    <a asp-controller="Participants" asp-action="TrainingRegistration"
+                       class="participant-nav-link @IsActive("Participants", "TrainingRegistraion")">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Training Registration</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="MyTraining"
+                       class="participant-nav-link @IsActive("Participants", "MyTraining")">
                         <i class="bi bi-journal-text"></i>
                         <span>My Trainings</span>
                     </a>
                 </li>
+                
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Certificates"
+                    <a asp-controller="Participants" asp-action="Certificate"
                        class="participant-nav-link @IsActive("Participants", "Certificates")">
                         <i class="bi bi-award"></i>
-                        <span>Certificates</span>
+                        <span>Certificate</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="Feedback"
+                       class="participant-nav-link @IsActive("Participants", "Feedback")">
+                        <i class="bi bi-award"></i>
+                        <span>Feedback</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
