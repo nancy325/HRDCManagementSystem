@@ -1,11 +1,10 @@
-﻿@* Views/Shared/_SidebarParticipant.cshtml *@
+﻿@using Microsoft.AspNetCore.Routing
 @functions {
     string IsActive(string controller, string action = "Dashboard")
     {
         var routeData = Context.GetRouteData();
         var currentController = routeData.Values["controller"]?.ToString();
         var currentAction = routeData.Values["action"]?.ToString();
-
         if (string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase) &&
             (action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase)))
         {
@@ -14,51 +13,89 @@
         return "";
     }
 }
+<link rel="stylesheet" href="~/css/participant-sidebar.css" asp-append-version="true" />
 
-<div class="d-flex flex-column p-3" style="height: 100%;">
-    <!-- Logo / Title -->
-    <a href="/Participants/Dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-        <i class="bi bi-mortarboard fs-4 me-2"></i>
-        <span class="fw-bold">My Learning</span>
-    </a>
-    <hr />
+<div class="participant-sidebar">
+    <div class="sidebar-content">
+        <!-- Logo Section -->
+        <div class="logo-container d-flex align-items-center">
+            <!-- Logo Image -->
+            <div class="main-logo me-2">
+                <img src="~/images/hrdc-logo.png" alt="HRDC Logo" style="height:40px; width:auto;" />
+            </div>
 
-    <!-- Nav Items -->
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item">
-            <a href="/Participants/Dashboard" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-house-door me-2"></i> Dashboard
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link active" href="@Url.Action("TrainingRegistration", "Participants")">
-                <i class="bi bi-house-door me-2"></i> Training Registration
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link active" href="@Url.Action("MyTraining", "Participants")">
-                <i class="bi bi-house-door me-2"></i> My Training
-            </a>
-        </li>
-        <li>
-            <a href="/Participants/Certificates" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-award me-2"></i> Certificates
-            </a>
-        </li>
-        <li>
-            <a href="/Participants/Notifications" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-bell me-2"></i> Notifications
-            </a>
-        </li>
-    </ul>
+            <!-- Logo Text -->
+            <div class="logo-text">
+                <small class="logo-title">HRDC Management System</small>
+            </div>
+        </div>
 
-    <hr />
 
-    <!-- Bottom Settings -->
-    <div>
-        <a href="/Participants/Profile" class="d-flex align-items-center text-dark text-decoration-none">
-            <i class="bi bi-person-circle me-2"></i>
-            <span>Profile</span>
-        </a>
+        <!-- Navigation Menu -->
+        <nav class="participant-nav-container">
+            <ul class="participant-nav">
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="Dashboard"
+                       class="participant-nav-link @IsActive("Participants", "Dashboard")">
+                        <i class="bi bi-house-door"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="Trainings"
+                       class="participant-nav-link @IsActive("Participants", "Trainings")">
+                        <i class="bi bi-journal-text"></i>
+                        <span>My Trainings</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="Certificates"
+                       class="participant-nav-link @IsActive("Participants", "Certificates")">
+                        <i class="bi bi-award"></i>
+                        <span>Certificates</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
+                    <a asp-controller="Participants" asp-action="Notifications"
+                       class="participant-nav-link @IsActive("Participants", "Notifications")">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
+                        <!-- Notification Badge (optional) -->
+                        <span class="notification-badge">3</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- User Profile Section -->
+        <div class="user-profile">
+            <a asp-controller="Participants" asp-action="Profile"
+               class="profile-link @IsActive("Participants", "Profile")">
+                <div class="profile-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <span class="profile-name">John Doe</span>
+                    <small class="profile-email">john.doe@example.com</small>
+                </div>
+                <i class="bi bi-chevron-right profile-arrow"></i>
+            </a>
+
+            <!-- Logout Button -->
+            <button class="logout-btn" onclick="logout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+            </button>
+        </div>
     </div>
 </div>
+
+
+<script>
+    function logout() {
+        if (confirm('Are you sure you want to sign out?')) {
+            // Add your logout logic here
+            window.location.href = '/Account/Logout';
+        }
+    }
+</script>

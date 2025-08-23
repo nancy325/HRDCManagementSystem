@@ -1,64 +1,153 @@
 ﻿@* Views/Shared/_SidebarAdmin.cshtml *@
 @functions {
-    string IsActive(string controller, string action = "Dashboard")
+    string IsActive(string controller, string action = null)
     {
-        var routeData = Context.GetRouteData();
+        var routeData = ViewContext.RouteData;
         var currentController = routeData.Values["controller"]?.ToString();
         var currentAction = routeData.Values["action"]?.ToString();
 
-        if (string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase) &&
-            (action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase)))
-        {
-            return "active";
-        }
-        return "";
+        bool controllerMatches = string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase);
+        bool actionMatches = action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase);
+
+        return controllerMatches && actionMatches ? "active" : "";
+    }
+
+    string GetActiveIcon(string controller, string action = null)
+    {
+        return IsActive(controller, action) == "active" ? "active-icon" : "";
     }
 }
 
-<div class="d-flex flex-column p-3" style="height: 100%;">
-    <!-- Logo / Title -->
-    <a href="/AdminDashboard/Dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-        <i class="bi bi-speedometer2 fs-4 me-2"></i>
-        <span class="fw-bold">Admin Panel</span>
-    </a>
-    <hr />
+<link href="~/css/admin-sidebar.css" rel="stylesheet"/>
 
-    <!-- Nav Items -->
-    <ul class="nav nav-pills flex-column mb-auto">
+<div class="admin-sidebar">
+    <div class="sidebar-header">
+        <h3>Administration</h3>
+    </div>
+
+    <ul class="sidebar-nav">
         <li class="nav-item">
-            <a href="/Admin/Dashboard" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-house-door me-2"></i> Dashboard
+            <a href="/Admin/Dashboard" class="nav-link @IsActive("Admin", "Dashboard")">
+                <i class="nav-icon bi bi-speedometer2"></i>
+                <span class="nav-text">Dashboard</span>
             </a>
         </li>
-        <li>
-            <a href="/Admin/Trainings" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-journal-text me-2"></i> Trainings
+
+        <li class="nav-item">
+            <a href="/Admin/Employees" class="nav-link @IsActive("Admin", "Employees")">
+                <i class="nav-icon bi bi-people"></i>
+                <span class="nav-text">Employees</span>
+                <span class="nav-badge success">142</span>
             </a>
         </li>
-        <li>
-            <a href="/Admin/Participants" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-people me-2"></i> Participants
+
+        <li class="nav-item">
+            <a href="/Admin/Trainings" class="nav-link @IsActive("Admin", "Trainings")">
+                <i class="nav-icon bi bi-mortarboard"></i>
+                <span class="nav-text">Trainings</span>
+                <span class="nav-badge">8</span>
             </a>
         </li>
-        <li>
-            <a href="/Admin/Approvals" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-check2-circle me-2"></i> Approvals
+
+        <li class="nav-item">
+            <a href="/Admin/Registrations" class="nav-link @IsActive("Admin", "Registrations")">
+                <i class="nav-icon bi bi-clipboard-check"></i>
+                <span class="nav-text">Registrations</span>
+                <span class="nav-badge warning">25</span>
             </a>
         </li>
-        <li>
-            <a href="/Admin/Reports" class="nav-link d-flex align-items-center text-dark">
-                <i class="bi bi-bar-chart-line me-2"></i> Reports
+
+        <li class="nav-item">
+            <a href="/Admin/Attendance" class="nav-link @IsActive("Admin", "Attendance")">
+                <i class="nav-icon bi bi-calendar-check"></i>
+                <span class="nav-text">Attendance</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Assessments" class="nav-link @IsActive("Admin", "Assessments")">
+                <i class="nav-icon bi bi-clipboard-data"></i>
+                <span class="nav-text">Assessments</span>
+                <span class="nav-badge">12</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Certificates" class="nav-link @IsActive("Admin", "Certificates")">
+                <i class="nav-icon bi bi-award"></i>
+                <span class="nav-text">Certificates</span>
+                <span class="nav-badge success">89</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Reports" class="nav-link @IsActive("Admin", "Reports")">
+                <i class="nav-icon bi bi-graph-up"></i>
+                <span class="nav-text">Reports</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Notifications" class="nav-link @IsActive("Admin", "Notifications")">
+                <i class="nav-icon bi bi-bell"></i>
+                <span class="nav-text">Notifications</span>
+                <span class="nav-badge">5</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Feedback" class="nav-link @IsActive("Admin", "Feedback")">
+                <i class="nav-icon bi bi-chat-left-text"></i>
+                <span class="nav-text">Feedback</span>
+                <span class="nav-badge warning">3</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="/Admin/Settings" class="nav-link @IsActive("Admin", "Settings")">
+                <i class="nav-icon bi bi-gear"></i>
+                <span class="nav-text">Settings</span>
             </a>
         </li>
     </ul>
 
-    <hr />
-
-    <!-- Bottom Settings -->
-    <div>
-        <a href="/Admin/Settings" class="d-flex align-items-center text-dark text-decoration-none">
-            <i class="bi bi-gear me-2"></i>
-            <span>Settings</span>
-        </a>
+    <div class="sidebar-footer">
+        <div class="admin-user-info">
+            <div class="admin-avatar">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="admin-details">
+                <div class="admin-name">@(User.Identity?.Name ?? "Admin User")</div>
+                <div class="admin-role">System Administrator</div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add smooth transitions for sidebar links
+        const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
+
+        navLinks.forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(2px)';
+            });
+
+            link.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Add click analytics (you can replace this with actual analytics)
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const linkText = this.querySelector('.nav-text').textContent;
+                console.log(`Admin clicked: ${linkText}`);
+
+                // You can add Google Analytics or other tracking here
+                // gtag('event', 'admin_navigation', { 'page_title': linkText });
+            });
+        });
+    });
+</script>

@@ -1,7 +1,9 @@
 ﻿using HRDCManagementSystem.Models;
 using HRDCManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+[Authorize(Roles = "User")]
 public class ParticipantsController : Controller
 {
     private readonly IParticipantService _service;
