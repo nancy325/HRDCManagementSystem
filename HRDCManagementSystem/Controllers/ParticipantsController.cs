@@ -60,4 +60,13 @@ public class ParticipantsController : Controller
         TempData["Message"] = _trainingService.RegisterTraining(trainingId);
         return RedirectToAction("TrainingRegistration");
     }
+
+
+    /// my  training 
+    // Show trainings
+    public IActionResult MyTraining()
+    {
+        var trainings = _trainingService.GetRegisteredTrainings();  // uses your existing method
+        return View(trainings);
+    }
 }

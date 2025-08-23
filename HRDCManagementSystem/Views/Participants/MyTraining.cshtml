@@ -1,0 +1,88 @@
+﻿@model List<HRDCManagementSystem.Models.Training>
+
+@{
+    ViewData["Title"] = "My Trainings";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">My Trainings</h2>
+    <p class="text-muted">Track your registered trainings and access course materials</p>
+
+    <div class="row">
+        @foreach (var training in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@training.Title</h5>
+                        <p class="card-text">@training.Description</p>
+
+                        <ul class="list-unstyled small text-muted">
+                            <li><b>Date:</b> @training.Date</li>
+                            <li><b>Time:</b> @training.Time</li>
+                            <li><b>Venue:</b> @training.Venue</li>
+                            <li><b>Trainer:</b> @training.Trainer</li>
+                            <li>
+                                <b>Status:</b>
+                                @if (training.RegistrationStatus == "approved")
+                                {
+                                    <span class="badge bg-success">Approved</span>
+                                    @if (!string.IsNullOrEmpty(training.Attendance))
+                                    {
+                                    <li><b>Attendance:</b> @training.Attendance</li>
+                                    }
+                                }
+                                else if (training.RegistrationStatus == "pending")
+                                {
+
+                                    <span class="badge bg-warning">Pending</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge bg-danger">Rejected</span>
+                                }
+                            </li>
+                           
+                        </ul>
+
+                        <p class="text-muted small">Registered: @training.RegistrationDate</p>
+                        @if (!string.IsNullOrEmpty(training.CompletionDate))
+                        {
+                            <p class="text-muted small">Completed: @training.CompletionDate</p>
+                        }
+
+                        @if (training.Materials.Count > 0)
+                        {
+                            <p><b>Materials:</b></p>
+                            <ul>
+                                @foreach (var material in training.Materials)
+                                {
+                                    <li>@material</li>
+                                }
+                            </ul>
+                        }
+
+                        @if (training.Progress > 0)
+                        {
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width:@training.Progress%">
+                                    @training.Progress%
+                                </div>
+                            </div>
+                        }
+
+                        @if (training.Progress == 100)
+                        {
+                            <a href="#" class="btn btn-primary btn-sm">Download Certificate</a>
+                        }
+                        else if (training.Status == "approved")
+                        {
+                            <a href="#" class="btn btn-outline-secondary btn-sm">Add to Calendar</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

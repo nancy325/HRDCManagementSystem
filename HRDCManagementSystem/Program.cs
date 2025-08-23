@@ -16,6 +16,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
+builder.Services.AddScoped<ITrainingService, TrainingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

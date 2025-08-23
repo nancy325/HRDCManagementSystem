@@ -16,5 +16,12 @@
         public string Status { get; set; }
         public string Prerequisites { get; set; }
         public bool IsRegistered { get; set; }
+        public string? Attendance { get; set; }
+        public int Progress { get; set; }
+        public List<string> Materials { get; set; } = new List<string>();
+        public string RegistrationDate { get; set; } = "";
+        public string? CompletionDate { get; set; }
+        public string RegistrationStatus { get; set; } = "not_registered";
+
     }
 }
