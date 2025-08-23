@@ -24,16 +24,18 @@ namespace HRDCManagementSystem.Controllers
             if ((vm.Username == "admin" && vm.Password == "admin123") ||
                 (vm.Username == "user" && vm.Password == "user123"))
             {
+                var role = vm.Username == "admin" ? "Admin" : "User";
+
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, vm.Username),
-                    new Claim(ClaimTypes.Role, vm.Username == "admin" ? "Admin" : "User")
+                    new Claim(ClaimTypes.Role, role)
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = vm.RememberMe
+                    IsPersistent = vm.RecoverPassword
                 };
 
                 await HttpContext.SignInAsync(
@@ -41,15 +43,14 @@ namespace HRDCManagementSystem.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                // Redirect based on user role
-                if (vm.Username == "admin")
+                if (role == "Admin")
                 {
-                    return LocalRedirect(returnUrl ?? Url.Action("Welcome", "Home"));
+                    // Redirect to /Admin/Dashboard
+                    return RedirectToAction("Dashboard", "AdminDashboard", new { area = "" });
                 }
                 else
                 {
-                    // Redirect user to participants dashboard
-                    return LocalRedirect(returnUrl ?? Url.Action("Dashboard", "Participants"));
+                    return RedirectToAction("Dashboard", "Participants");
                 }
             }
 

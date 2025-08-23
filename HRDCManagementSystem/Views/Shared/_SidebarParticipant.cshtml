@@ -1,0 +1,59 @@
+﻿@* Views/Shared/_SidebarParticipant.cshtml *@
+@functions {
+    string IsActive(string controller, string action = "Dashboard")
+    {
+        var routeData = Context.GetRouteData();
+        var currentController = routeData.Values["controller"]?.ToString();
+        var currentAction = routeData.Values["action"]?.ToString();
+
+        if (string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase) &&
+            (action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase)))
+        {
+            return "active";
+        }
+        return "";
+    }
+}
+
+<div class="d-flex flex-column p-3" style="height: 100%;">
+    <!-- Logo / Title -->
+    <a href="/Participants/Dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <i class="bi bi-mortarboard fs-4 me-2"></i>
+        <span class="fw-bold">My Learning</span>
+    </a>
+    <hr />
+
+    <!-- Nav Items -->
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="/Participants/Dashboard" class="nav-link d-flex align-items-center text-dark">
+                <i class="bi bi-house-door me-2"></i> Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="/Participants/Trainings" class="nav-link d-flex align-items-center text-dark">
+                <i class="bi bi-journal-text me-2"></i> My Trainings
+            </a>
+        </li>
+        <li>
+            <a href="/Participants/Certificates" class="nav-link d-flex align-items-center text-dark">
+                <i class="bi bi-award me-2"></i> Certificates
+            </a>
+        </li>
+        <li>
+            <a href="/Participants/Notifications" class="nav-link d-flex align-items-center text-dark">
+                <i class="bi bi-bell me-2"></i> Notifications
+            </a>
+        </li>
+    </ul>
+
+    <hr />
+
+    <!-- Bottom Settings -->
+    <div>
+        <a href="/Participants/Profile" class="d-flex align-items-center text-dark text-decoration-none">
+            <i class="bi bi-person-circle me-2"></i>
+            <span>Profile</span>
+        </a>
+    </div>
+</div>
