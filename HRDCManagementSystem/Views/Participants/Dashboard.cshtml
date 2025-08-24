@@ -3,17 +3,20 @@
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
 <!-- Search bar and notifications -->
 <div class="mb-4">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
         <!-- Search input -->
-        <div class="input-group" style="max-width: 400px;">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+        <div class="input-group" style="max-width: 400px; flex:1;">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search"></i>
+            </span>
             <input type="text" class="form-control border-start-0" placeholder="Search trainings, certificates..." />
         </div>
 
         <!-- Notification bell -->
-        <div class="position-relative me-2">
+        <div class="position-relative">
             <i class="bi bi-bell" style="font-size: 1.5rem; cursor: pointer;"></i>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                 3
@@ -25,34 +28,38 @@
 <div class="container-fluid">
     <!-- Welcome banner -->
     <div class="mb-4">
-        <div class="p-3 rounded-3" style="background:linear-gradient(90deg,#2b9bd6,#2db48b); color:white;">
+        <div class="p-3 rounded-3 text-white"
+             style="background:linear-gradient(90deg,#2b9bd6,#2db48b);">
             <h4 class="mb-1">Welcome back, @Model.WelcomeName!</h4>
-            <div class="small">Ready to continue your learning journey? You have <strong>@Model.UpcomingTrainings.Count()</strong> upcoming trainings this month.</div>
+            <div class="small">
+                Ready to continue your learning journey? You have
+                <strong>@Model.UpcomingTrainings.Count()</strong> upcoming trainings this month.
+            </div>
         </div>
     </div>
 
     <!-- Stats row -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card card-stat">
+        <div class="col-6 col-md-3">
+            <div class="card card-stat text-center p-3">
                 <div class="small text-muted">Total Trainings</div>
                 <div class="h4">@Model.TotalTrainings</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card card-stat">
+        <div class="col-6 col-md-3">
+            <div class="card card-stat text-center p-3">
                 <div class="small text-muted">Completed</div>
                 <div class="h4">@Model.Completed</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card card-stat">
+        <div class="col-6 col-md-3">
+            <div class="card card-stat text-center p-3">
                 <div class="small text-muted">In Progress</div>
                 <div class="h4">@Model.InProgress</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card card-stat">
+        <div class="col-6 col-md-3">
+            <div class="card card-stat text-center p-3">
                 <div class="small text-muted">Certificates</div>
                 <div class="h4">@Model.Certificates</div>
             </div>
@@ -61,102 +68,109 @@
 
     <div class="row">
         <!-- Left: Upcoming trainings & participants list -->
-        <div class="col-lg-8">
+        <div class="col-12 col-lg-8">
             <div class="card mb-4 p-3">
                 <h5 class="mb-3">Upcoming Trainings</h5>
-                @foreach (var u in Model.UpcomingTrainings)
+                @if (Model.UpcomingTrainings.Any())
                 {
-                    <div class="upcoming-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-semibold">@u.Course</div>
-                            <div class="small text-muted">
-                                <i class="bi bi-calendar-event"></i> @u.TrainingDate.ToString("MMM dd, yyyy • hh:mm tt") &nbsp;
-                                <i class="bi bi-geo-alt ms-2"></i> @u.Venue &nbsp;
-                                <i class="bi bi-person ms-2"></i> @u.Trainer
+                    @foreach (var u in Model.UpcomingTrainings)
+                    {
+                        <div class="upcoming-item d-flex flex-wrap justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <div class="fw-semibold">@u.Course</div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-calendar-event"></i> @u.TrainingDate.ToString("MMM dd, yyyy • hh:mm tt")
+                                    <i class="bi bi-geo-alt ms-2"></i> @u.Venue
+                                    <i class="bi bi-person ms-2"></i> @u.Trainer
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-success">@u.Status</span>
                             </div>
                         </div>
-                        <div>
-                            <span class="badge bg-success">@u.Status</span>
-                        </div>
-                    </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted small">No upcoming trainings</div>
                 }
             </div>
 
             <div class="card p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">Participants</h5>
                     <div class="small text-muted">Showing @Model.Participants.Count() participants</div>
                 </div>
 
-                <table class="table table-borderless">
-                    <thead>
-                        <tr class="small text-muted">
-                            <th>Name</th>
-                            <th>Course</th>
-                            <th>Training Date</th>
-                            <th>Status</th>
-                            <th>Mode</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in Model.Participants)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div>
-                                            <div class="fw-semibold">@p.Name</div>
-                                            <div class="small text-muted">@p.EmployeeId • @p.Email</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>@p.Course</td>
-                                <td>@p.TrainingDate.ToString("dd MMM yyyy, hh:mm tt")</td>
-                                <td>
-                                    @if (p.Status == "Approved")
-                                    {
-                                        <span class="badge bg-success">Approved</span>
-                                    }
-                                    else if (p.Status == "Pending")
-                                    {
-                                        <span class="badge bg-warning text-dark">Pending</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">@p.Status</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (p.Mode == "Online")
-                                    {
-                                        <span class="badge bg-primary">Online</span>
-                                    }
-                                    else if (p.Mode == "Offline")
-                                    {
-                                        <span class="badge bg-dark">Offline</span>
-                                    }
-                                </td>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <thead class="table-light">
+                            <tr class="small text-muted">
+                                <th>Name</th>
+                                <th>Course</th>
+                                <th>Training Date</th>
+                                <th>Status</th>
+                                <th>Mode</th>
                             </tr>
-                        }
-                    </tbody>
-
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Participants)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@p.Name</div>
+                                        <div class="small text-muted">@p.EmployeeId • @p.Email</div>
+                                    </td>
+                                    <td>@p.Course</td>
+                                    <td>@p.TrainingDate.ToString("dd MMM yyyy, hh:mm tt")</td>
+                                    <td>
+                                        @if (p.Status == "Approved")
+                                        {
+                                            <span class="badge bg-success">Approved</span>
+                                        }
+                                        else if (p.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@p.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (p.Mode == "Online")
+                                        {
+                                            <span class="badge bg-primary">Online</span>
+                                        }
+                                        else if (p.Mode == "Offline")
+                                        {
+                                            <span class="badge bg-dark">Offline</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Right: Notifications -->
-        <div class="col-lg-4">
-            <div class="card p-3 notifications">
+        <div class="col-12 col-lg-4 mt-4 mt-lg-0">
+            <div class="card p-3 h-100 d-flex flex-column">
                 <h5>Notifications</h5>
                 <div class="small text-muted mb-2">Recent</div>
 
-                @foreach (var note in Model.Notifications)
-                {
-                    <div class="note">
-                        <div class="small">@note</div>
-                        <div class="tiny text-muted" style="font-size:11px;">2 hours ago</div>
-                    </div>
-                }
+                <!-- Scrollable container -->
+                <div class="flex-grow-1 overflow-auto" style="max-height: 60vh;">
+                    @foreach (var note in Model.Notifications)
+                    {
+                        <div class="note mb-2 border-bottom pb-2">
+                            <div class="small">@note</div>
+                            <div class="tiny text-muted" style="font-size:11px;">2 hours ago</div>
+                        </div>
+                    }
+                </div>
 
                 <div class="text-center mt-2">
                     <a href="#" class="small text-decoration-none">View All Notifications</a>

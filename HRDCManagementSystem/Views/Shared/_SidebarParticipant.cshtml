@@ -15,67 +15,53 @@
 }
 <link rel="stylesheet" href="~/css/participant-sidebar.css" asp-append-version="true" />
 
-<div class="participant-sidebar">
+<!-- Sidebar -->
+<div class="participant-sidebar" id="participantSidebar">
     <div class="sidebar-content">
         <!-- Logo Section -->
-        <div class="logo-container d-flex align-items-center">
-            <!-- Logo Image -->
-            <div class="main-logo me-2">
-                <img src="~/images/hrdc-logo.png" alt="HRDC Logo" style="height:40px; width:auto;" />
-            </div>
-
-            <!-- Logo Text -->
-            <div class="logo-text">
-                <small class="logo-title">HRDC Management System</small>
+        <div class="logo-container d-flex justify-content-center align-items-center">
+            <div class="main-logo">
+                <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="sidebar-logo" />
             </div>
         </div>
 
-
         <!-- Navigation Menu -->
-        <nav class="participant-nav-container">
+        <nav class="participant-nav-container flex-grow-1">
             <ul class="participant-nav">
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="Dashboard"
                        class="participant-nav-link @IsActive("Participants", "Dashboard")">
-                        <i class="bi bi-house-door"></i>
-                        <span>Dashboard</span>
+                        <i class="bi bi-house-door"></i><span>Dashboard</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="TrainingRegistration"
-                       class="participant-nav-link @IsActive("Participants", "TrainingRegistraion")">
-                        <i class="bi bi-journal-text"></i>
-                        <span>Training Registration</span>
+                       class="participant-nav-link @IsActive("Participants", "TrainingRegistration")">
+                        <i class="bi bi-journal-text"></i><span>Training Registration</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="MyTraining"
                        class="participant-nav-link @IsActive("Participants", "MyTraining")">
-                        <i class="bi bi-journal-text"></i>
-                        <span>My Trainings</span>
+                        <i class="bi bi-journal-check"></i><span>My Trainings</span>
                     </a>
                 </li>
-                
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="Certificate"
-                       class="participant-nav-link @IsActive("Participants", "Certificates")">
-                        <i class="bi bi-award"></i>
-                        <span>Certificate</span>
+                       class="participant-nav-link @IsActive("Participants", "Certificate")">
+                        <i class="bi bi-award"></i><span>Certificate</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="Feedback"
                        class="participant-nav-link @IsActive("Participants", "Feedback")">
-                        <i class="bi bi-award"></i>
-                        <span>Feedback</span>
+                        <i class="bi bi-chat-dots"></i><span>Feedback</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
                     <a asp-controller="Participants" asp-action="Notifications"
                        class="participant-nav-link @IsActive("Participants", "Notifications")">
-                        <i class="bi bi-bell"></i>
-                        <span>Notifications</span>
-                        <!-- Notification Badge (optional) -->
+                        <i class="bi bi-bell"></i><span>Notifications</span>
                         <span class="notification-badge">3</span>
                     </a>
                 </li>
@@ -86,31 +72,32 @@
         <div class="user-profile">
             <a asp-controller="Participants" asp-action="Profile"
                class="profile-link @IsActive("Participants", "Profile")">
-                <div class="profile-avatar">
-                    <i class="bi bi-person-circle"></i>
-                </div>
+                <div class="profile-avatar"><i class="bi bi-person-circle"></i></div>
                 <div class="profile-info">
                     <span class="profile-name">John Doe</span>
                     <small class="profile-email">john.doe@example.com</small>
                 </div>
-                <i class="bi bi-chevron-right profile-arrow"></i>
             </a>
-
-            <!-- Logout Button -->
             <button class="logout-btn" onclick="logout()">
-                <i class="bi bi-box-arrow-right"></i>
-                <span>Sign Out</span>
+                <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>
             </button>
         </div>
     </div>
 </div>
 
+<!-- Toggle Button (Visible on Mobile) -->
+<button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+</button>
 
 <script>
     function logout() {
         if (confirm('Are you sure you want to sign out?')) {
-            // Add your logout logic here
-            window.location.href = '/Account/Logout';
+            window.location.href = '/Account/Login';
         }
+    }
+
+    function toggleSidebar() {
+        document.getElementById("participantSidebar").classList.toggle("open");
     }
 </script>
