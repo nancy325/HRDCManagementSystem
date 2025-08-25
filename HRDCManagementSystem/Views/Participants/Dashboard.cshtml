@@ -1,181 +1,137 @@
-﻿@model HRDCManagementSystem.Models.DashboardViewModel
+﻿@using HRDCManagementSystem.Models
+@model DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<link href="~/css/participantdashboard.css" rel="stylesheet" />
 <!-- Search bar and notifications -->
-<div class="mb-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <!-- Search input -->
-        <div class="input-group" style="max-width: 400px; flex:1;">
-            <span class="input-group-text bg-white border-end-0">
-                <i class="bi bi-search"></i>
-            </span>
-            <input type="text" class="form-control border-start-0" placeholder="Search trainings, certificates..." />
-        </div>
+            <div class="mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <!-- Search input -->
+                    <div class="input-group" style="max-width: 400px; flex:1;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search trainings, certificates..." />
+                    </div>
 
-        <!-- Notification bell -->
-        <div class="position-relative">
-            <i class="bi bi-bell" style="font-size: 1.5rem; cursor: pointer;"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                3
-            </span>
-        </div>
-    </div>
-</div>
+                    <!-- Notification bell -->
+                    <div class="position-relative">
+                        <i class="bi bi-bell" style="font-size: 1.5rem; cursor: pointer;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            3
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-<div class="container-fluid">
-    <!-- Welcome banner -->
-    <div class="mb-4">
-        <div class="p-3 rounded-3 text-white"
-             style="background:linear-gradient(90deg,#2b9bd6,#2db48b);">
-            <h4 class="mb-1">Welcome back, @Model.WelcomeName!</h4>
-            <div class="small">
-                Ready to continue your learning journey? You have
-                <strong>@Model.UpcomingTrainings.Count()</strong> upcoming trainings this month.
+            <!-- Welcome banner -->
+            <div class="mb-4">
+                <div class="welcome-banner">
+                    <h4 class="mb-1">Welcome back, Pr!</h4>
+                    <div class="small">
+                        Ready to continue your learning journey? You have
+                        <strong>0</strong> upcoming trainings this month.
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Stats row -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card card-stat text-center p-3">
-                <div class="small text-muted">Total Trainings</div>
-                <div class="h4">@Model.TotalTrainings</div>
+            <!-- Stats row -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="label">Total Trainings</div>
+                        <div class="value">0</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="label">Completed</div>
+                        <div class="value">0</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="label">In Progress</div>
+                        <div class="value">0</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="label">Certificates</div>
+                        <div class="value">0</div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card card-stat text-center p-3">
-                <div class="small text-muted">Completed</div>
-                <div class="h4">@Model.Completed</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card card-stat text-center p-3">
-                <div class="small text-muted">In Progress</div>
-                <div class="h4">@Model.InProgress</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card card-stat text-center p-3">
-                <div class="small text-muted">Certificates</div>
-                <div class="h4">@Model.Certificates</div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row">
-        <!-- Left: Upcoming trainings & participants list -->
-        <div class="col-12 col-lg-8">
-            <div class="card mb-4 p-3">
-                <h5 class="mb-3">Upcoming Trainings</h5>
-                @if (Model.UpcomingTrainings.Any())
-                {
-                    @foreach (var u in Model.UpcomingTrainings)
-                    {
-                        <div class="upcoming-item d-flex flex-wrap justify-content-between align-items-center border-bottom py-2">
-                            <div>
-                                <div class="fw-semibold">@u.Course</div>
-                                <div class="small text-muted">
-                                    <i class="bi bi-calendar-event"></i> @u.TrainingDate.ToString("MMM dd, yyyy • hh:mm tt")
-                                    <i class="bi bi-geo-alt ms-2"></i> @u.Venue
-                                    <i class="bi bi-person ms-2"></i> @u.Trainer
-                                </div>
-                            </div>
-                            <div>
-                                <span class="badge bg-success">@u.Status</span>
+            <div class="row">
+                <!-- Left: Upcoming trainings & participants list -->
+                <div class="col-12 col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            Upcoming Trainings
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">No upcoming trainings scheduled.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Participants</span>
+                            <span class="text-muted small">Showing 0 participants</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle">
+                                    <thead class="table-light">
+                                        <tr class="small text-muted">
+                                            <th>Name</th>
+                                            <th>Course</th>
+                                            <th>Training Date</th>
+                                            <th>Status</th>
+                                            <th>Mode</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">No participants found</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    }
-                }
-                else
-                {
-                    <div class="text-muted small">No upcoming trainings</div>
-                }
-            </div>
-
-            <div class="card p-3">
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Participants</h5>
-                    <div class="small text-muted">Showing @Model.Participants.Count() participants</div>
+                    </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-borderless align-middle">
-                        <thead class="table-light">
-                            <tr class="small text-muted">
-                                <th>Name</th>
-                                <th>Course</th>
-                                <th>Training Date</th>
-                                <th>Status</th>
-                                <th>Mode</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var p in Model.Participants)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold">@p.Name</div>
-                                        <div class="small text-muted">@p.EmployeeId • @p.Email</div>
-                                    </td>
-                                    <td>@p.Course</td>
-                                    <td>@p.TrainingDate.ToString("dd MMM yyyy, hh:mm tt")</td>
-                                    <td>
-                                        @if (p.Status == "Approved")
-                                        {
-                                            <span class="badge bg-success">Approved</span>
-                                        }
-                                        else if (p.Status == "Pending")
-                                        {
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">@p.Status</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (p.Mode == "Online")
-                                        {
-                                            <span class="badge bg-primary">Online</span>
-                                        }
-                                        else if (p.Mode == "Offline")
-                                        {
-                                            <span class="badge bg-dark">Offline</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right: Notifications -->
-        <div class="col-12 col-lg-4 mt-4 mt-lg-0">
-            <div class="card p-3 h-100 d-flex flex-column">
-                <h5>Notifications</h5>
-                <div class="small text-muted mb-2">Recent</div>
-
-                <!-- Scrollable container -->
-                <div class="flex-grow-1 overflow-auto" style="max-height: 60vh;">
-                    @foreach (var note in Model.Notifications)
-                    {
-                        <div class="note mb-2 border-bottom pb-2">
-                            <div class="small">@note</div>
-                            <div class="tiny text-muted" style="font-size:11px;">2 hours ago</div>
+                <!-- Right: Notifications -->
+                <div class="col-12 col-lg-4 mt-4 mt-lg-0">
+                    <div class="card h-100 d-flex flex-column">
+                        <div class="card-header">
+                            Notifications
                         </div>
-                    }
-                </div>
+                        <div class="card-body flex-grow-1 overflow-auto">
+                            <div class="small text-muted mb-2">Recent</div>
 
-                <div class="text-center mt-2">
-                    <a href="#" class="small text-decoration-none">View All Notifications</a>
+                            <div class="notification-item">
+                                <div class="small">System maintenance scheduled for this weekend.</div>
+                                <div class="notification-time">2 hours ago</div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="small">Your certificate for "Advanced Programming" is ready.</div>
+                                <div class="notification-time">1 day ago</div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="small">New training "Cloud Computing" has been added.</div>
+                                <div class="notification-time">3 days ago</div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="#" class="small text-decoration-none">View All Notifications</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+    

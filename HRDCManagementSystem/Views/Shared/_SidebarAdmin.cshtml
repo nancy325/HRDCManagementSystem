@@ -1,6 +1,6 @@
 ﻿@* Views/Shared/_SidebarAdmin.cshtml *@
 @functions {
-    string IsActive(string controller, string action = null)
+    string IsActive(string controller, string action = "Dashboard")
     {
         var routeData = ViewContext.RouteData;
         var currentController = routeData.Values["controller"]?.ToString();

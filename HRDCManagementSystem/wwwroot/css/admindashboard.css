@@ -1,0 +1,258 @@
+﻿/* HRDC Dashboard Styles */
+:root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    background-color: #f5f7fb;
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.navbar {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 0.8rem 0;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--primary) !important;
+}
+
+.navbar-nav .nav-link {
+    color: var(--dark) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary) !important;
+    }
+
+.dashboard-header {
+    background: linear-gradient(120deg, #4361ee, #3a0ca3);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 10px 10px;
+}
+
+    .dashboard-header h1 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header .lead {
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.5rem;
+    background-color: white;
+}
+
+    .card-header h5 {
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+    .stat-card .card-body {
+        padding: 1.5rem 1rem;
+    }
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stat-change {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.positive-change {
+    color: #2ecc71;
+}
+
+.negative-change {
+    color: #e74c3c;
+}
+
+.training-item {
+    border-left: 3px solid var(--primary);
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .training-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .training-item h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dark);
+    }
+
+.completion-progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.approval-item {
+    background-color: var(--light);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid #ffc107;
+}
+
+    .approval-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .approval-item h6 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--dark);
+    }
+
+.btn-approve {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+}
+
+    .btn-approve:hover {
+        background-color: #27ae60;
+        color: white;
+    }
+
+.btn-reject {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+}
+
+    .btn-reject:hover {
+        background-color: #c0392b;
+        color: white;
+    }
+
+.icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background-color: rgba(67, 97, 238, 0.1);
+}
+
+footer {
+    background-color: white !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    margin-top: 3rem;
+    padding: 1.5rem 0 !important;
+}
+
+    footer a {
+        transition: color 0.3s;
+    }
+
+        footer a:hover {
+            color: var(--primary) !important;
+        }
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .stat-number {
+        font-size: 2.25rem;
+    }
+
+    .dashboard-header {
+        padding: 1.5rem 0;
+    }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+        }
+}
+
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .card {
+        margin-bottom: 1.25rem;
+    }
+
+    .training-item {
+        padding-left: 0.75rem;
+    }
+
+    .approval-item {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .stat-number {
+        font-size: 1.75rem;
+    }
+
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        margin-right: 0.75rem;
+    }
+
+        .icon-circle i {
+            font-size: 0.9rem;
+        }
+}
