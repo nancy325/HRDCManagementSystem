@@ -17,11 +17,10 @@
 
 <div class="admin-sidebar">
     <!-- Sidebar Header with Logo -->
-    <div class="sidebar-header d-flex align-items-center gap-2 p-3">
-        <div class="logo">
-            <img src="~/images/hrdc-logo.png" alt="Logo" class="img-fluid" " />
+    <div class="logo-container d-flex justify-content-center align-items-center">
+        <div class="main-logo">
+            <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="sidebar-logo" />
         </div>
-        @* <h3 class="mb-0">Administration</h3> *@
     </div>
 
     <!-- Navigation -->
@@ -71,12 +70,6 @@
                 <i class="nav-icon bi bi-award"></i>
                 <span class="nav-text">Certificates</span>
                 <span class="nav-badge success">89</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Reports" class="nav-link @IsActive("Admin", "Reports")">
-                <i class="nav-icon bi bi-graph-up"></i>
-                <span class="nav-text">Reports</span>
             </a>
         </li>
         <li class="nav-item">
