@@ -1,36 +1,261 @@
 ﻿@using HRDCManagementSystem.Models.Admin
 @model AdminDashboardViewModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<link href="~/css/admindashboard.css" rel="stylesheet" />
 
-<div class="container-fluid">
-    <h2 class="mb-4">Admin Dashboard</h2>
-
-    <!-- Metrics -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3"><div class="card p-3"><div class="text-muted">Total Participants</div><div class="h4">@Model.TotalParticipants</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><div class="text-muted">Trainings Conducted</div><div class="h4">@Model.TrainingsConducted</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><div class="text-muted">Pending Approvals</div><div class="h4">@Model.PendingApprovals</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><div class="text-muted">Avg. Feedback Score</div><div class="h4">@Model.FeedbackScore</div></div></div>
-    </div>
-
-    <!-- Upcoming Trainings -->
-    <div class="card p-3">
-        <h5>Upcoming Trainings</h5>
-        <table class="table table-sm">
-            <thead><tr><th>Title</th><th>Date</th><th>Registered</th></tr></thead>
-            <tbody>
-                @foreach (var t in Model.UpcomingTrainings)
-                {
-                    <tr>
-                        <td>@t.Title</td>
-                        <td>@t.Date.ToString("dd MMM yyyy")</td>
-                        <td>@t.Registered</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<!-- Header Tools Section -->
+<div class="header-tools container mb-3">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <div class="search-container">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-secondary"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search employees, trainings, reports...">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="d-flex justify-content-end align-items-center gap-3">
+                <div class="notification-icon">
+                    <button class="btn btn-icon position-relative">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            5
+                        </span>
+                    </button>
+                </div>
+                <div class="add-employee-btn">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>Add Employee
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Main Content -->
+<main class="container">
+    <!-- Stats Section -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-label">Total Employees</div>
+                <div class="stat-value">1,247</div>
+                <div class="stat-trend trend-up">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                    <span>12% from last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-label">Active Trainings</div>
+                <div class="stat-value">18</div>
+                <div class="stat-trend trend-up">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                    <span>8% from last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-label">Certificates Issued</div>
+                <div class="stat-value">892</div>
+                <div class="stat-trend trend-up">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                    <span>23% from last month</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-label">Overall Completion Rate</div>
+                <div class="stat-value">94.2%</div>
+                <div class="stat-trend trend-up">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                    <span>3% from last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Recent Trainings Section -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="section-title">Recent Trainings</h2>
+
+                    <ul class="nav nav-tabs" id="trainingTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">Upcoming</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-bs-target="#ongoing" type="button" role="tab">Ongoing</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="trainingTabsContent">
+                        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+                            <div class="training-card">
+                                <h4>Digital Transformation Workshop</h4>
+                                <div class="d-flex flex-wrap gap-3 mt-2">
+                                    <div class="training-date">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>12/25/2024</span>
+                                    </div>
+                                    <div class="training-registered">
+                                        <i class="bi bi-people-fill"></i>
+                                        <span>45 registered</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-info status-badge mt-2">Upcoming</span>
+                            </div>
+
+                            <div class="training-card">
+                                <h4>Leadership Development Program</h4>
+                                <div class="d-flex flex-wrap gap-3 mt-2">
+                                    <div class="training-date">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>12/20/2024</span>
+                                    </div>
+                                    <div class="training-registered">
+                                        <i class="bi bi-people-fill"></i>
+                                        <span>32 registered</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-info status-badge mt-2">Upcoming</span>
+                            </div>
+
+                            <a href="#" class="view-all">
+                                <span>View All</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+
+                        <div class="tab-pane fade" id="ongoing" role="tabpanel">
+                            <div class="training-card">
+                                <h4>Data Analytics Fundamentals</h4>
+                                <div class="d-flex flex-wrap gap-3 mt-2">
+                                    <div class="training-date">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>11/15/2024 - 12/15/2024</span>
+                                    </div>
+                                    <div class="training-registered">
+                                        <i class="bi bi-people-fill"></i>
+                                        <span>36 registered</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning status-badge mt-2">Ongoing</span>
+                            </div>
+
+                            <a href="#" class="view-all">
+                                <span>View All</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+
+                        <div class="tab-pane fade" id="completed" role="tabpanel">
+                            <div class="training-card">
+                                <h4>Project Management Fundamentals</h4>
+                                <div class="d-flex flex-wrap gap-3 mt-2">
+                                    <div class="training-date">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>10/01/2024 - 10/15/2024</span>
+                                    </div>
+                                    <div class="training-registered">
+                                        <i class="bi bi-people-fill"></i>
+                                        <span>28 registered</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success status-badge mt-2">Completed</span>
+                            </div>
+
+                            <a href="#" class="view-all">
+                                <span>View All</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals Section -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="section-title">Pending Approvals</h2>
+
+                    <div class="approval-card">
+                        <h5>John Doe</h5>
+                        <p class="mb-2">Project Management IT</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-action">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                            <button class="btn btn-danger btn-action">
+                                <i class="bi bi-x-circle"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="approval-card">
+                        <h5>Jane Smith</h5>
+                        <p class="mb-2">Communication Skills HR</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-action">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                            <button class="btn btn-danger btn-action">
+                                <i class="bi bi-x-circle"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+
+                    <a href="#" class="view-all">
+                        <span>View All</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Simple interactivity for buttons
+    document.querySelectorAll('.btn-action').forEach(button => {
+        button.addEventListener('click', function() {
+            const card = this.closest('.approval-card');
+            const name = card.querySelector('h5').textContent;
+            const action = this.classList.contains('btn-success') ? 'approved' : 'rejected';
+
+            alert(`Registration for ${name} has been ${action}`);
+            card.style.opacity = '0.5';
+        });
+    });
+
+    // Notification bell interaction
+    document.querySelector('.notification-icon button').addEventListener('click', function() {
+        alert('You have 5 new notifications');
+    });
+
+    // Add Employee button interaction
+    document.querySelector('.add-employee-btn button').addEventListener('click', function() {
+        alert('Redirecting to Add Employee form...');
+        // In a real implementation, this would redirect to the add employee page
+        // window.location.href = '/Employees/Create';
+    });
+</script>
