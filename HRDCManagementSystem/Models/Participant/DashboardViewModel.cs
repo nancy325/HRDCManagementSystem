@@ -1,4 +1,6 @@
-﻿namespace HRDCManagementSystem.Models
+﻿using HRDCManagementSystem.Models;
+
+namespace HRDCManagementSystem.Models.Participant
 {
     public class DashboardViewModel
     {

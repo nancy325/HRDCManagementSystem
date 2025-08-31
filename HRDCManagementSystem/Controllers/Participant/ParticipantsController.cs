@@ -1,4 +1,4 @@
-﻿using HRDCManagementSystem.Models;
+﻿using HRDCManagementSystem.Models.Participant;
 using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
