@@ -4,8 +4,8 @@ namespace HRDCManagementSystem.Models.Participant
 {
     public class DashboardViewModel
     {
-        public IEnumerable<Participants> Participants { get; set; }
-        public IEnumerable<Participants> UpcomingTrainings { get; set; }
+        //public IEnumerable<Participants> Participants { get; set; }
+        //public IEnumerable<Participants> UpcomingTrainings { get; set; }
         public IEnumerable<string> Notifications { get; set; }
         public int TotalTrainings { get; set; }
         public int Completed { get; set; }

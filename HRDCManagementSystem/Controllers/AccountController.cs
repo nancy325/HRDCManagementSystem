@@ -46,11 +46,11 @@ namespace HRDCManagementSystem.Controllers
                 if (role == "Admin")
                 {
                     // Redirect to /Admin/Dashboard
-                    return RedirectToAction("Dashboard", "AdminDashboard", new { area = "" });
+                    return RedirectToAction("Dashboard", "Admin", new { area = "" });
                 }
                 else
                 {
-                    return RedirectToAction("Dashboard", "Participants");
+                    return RedirectToAction("Dashboard", "Employees");
                 }
             }
 

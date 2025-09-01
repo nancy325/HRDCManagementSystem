@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace HRDCManagementSystem.Models.Entities;
 
 public partial class TrainingRegistration
-{}
+{
     public int TrainingRegSysID { get; set; }
 
     public int? EmployeeSysID { get; set; }

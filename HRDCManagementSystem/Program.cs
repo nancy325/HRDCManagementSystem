@@ -1,4 +1,4 @@
-﻿using HRDCManagementSystem.Services;
+﻿
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,9 +15,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ReturnUrlParameter = "returnUrl"; // make sure returnUrl is consistent
     });
 
-builder.Services.AddScoped<IParticipantService, ParticipantService>();
-builder.Services.AddScoped<ITrainingService, TrainingService>();
-builder.Services.AddScoped<ICertificateService, CertificateService>();
+//builder.Services.AddScoped<IParticipantService, ParticipantService>();
+//builder.Services.AddScoped<ITrainingService, TrainingService>();
+//builder.Services.AddScoped<ICertificateService, CertificateService>();
 
 var app = builder.Build();
 
