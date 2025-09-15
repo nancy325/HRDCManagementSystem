@@ -1,4 +1,5 @@
-﻿@{
+﻿@model HRDCManagementSystem.Models.LoginViewModel
+@{
     Layout = null;
     ViewData["Title"] = "Login - HRDC";
 }
@@ -76,25 +77,32 @@
             {
                 <div class="alert alert-danger">@ViewBag.Error</div>
             }
+            
+            <!-- Validation Summary -->
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <!-- Login Form -->
             <form asp-action="Login" method="post">
-                <!-- Username -->
+                <!-- Email -->
                 <div class="form-group mb-3">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" placeholder="Enter Username" name="Username" required />
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Enter Email" />
                     </div>
+                    <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
                 <!-- Password -->
                 <div class="form-group mb-3">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" placeholder="Enter Password" name="Password" required />
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Enter Password" />
                     </div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
-
+                <div class="text-center mt-3">
+                    <p>Don't have an account? <a asp-action="Registration">Register here</a></p>
+                </div>
                 <!-- Forgot password -->
                 <div class="text-end mb-3">
                     <a asp-action="ForgotPassword" class="text-decoration-none">Recover Password</a>
@@ -111,5 +119,8 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </body>
 </html>

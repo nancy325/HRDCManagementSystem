@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class Feedback
+public partial class Feedback: BaseEntity
 {
     public int FeedbackID { get; set; }
 
@@ -16,17 +16,6 @@ public partial class Feedback
     public int? TrainerRating { get; set; }
 
     public string? Comment { get; set; }
-
-    public int? CreateUserId { get; set; }
-
-    public DateTime? CreateDateTime { get; set; }
-
-    public int? ModifiedUserId { get; set; }
-
-    public DateTime? ModifiedDateTime { get; set; }
-
-    public string RecStatus { get; set; } = null!;
-
     public virtual FeedbackQuestion? Question { get; set; }
 
     public virtual TrainingRegistration? RegSys { get; set; }

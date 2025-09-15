@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Data;
 using Microsoft.AspNetCore.Authorization;
+using HRDCManagementSystem.Models.Request;
 
 namespace HRDCManagementSystem.Controllers
 {
@@ -49,7 +50,7 @@ namespace HRDCManagementSystem.Controllers
         // ✅ Add new employee (Admin only)
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Employee>> AddEmployee(Employee employee)
+        public async Task<ActionResult<Employee>> AddEmployee(EmployeeReq employee)
         {
             using var context = _contextFactory.CreateDbContext();
 

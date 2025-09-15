@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class Employee
+public partial class Employee: BaseEntity
 {
     public int EmployeeSysID { get; set; }
 
@@ -28,17 +28,6 @@ public partial class Employee
     public string? AlternatePhone { get; set; }
 
     public string? Type { get; set; }
-
-    public int? CreateUserId { get; set; }
-
-    public DateTime? CreateDateTime { get; set; }
-
-    public int? ModifiedUserId { get; set; }
-
-    public DateTime? ModifiedDateTime { get; set; }
-
-    public string RecStatus { get; set; } = null!;
-
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
 
     public virtual UserMaster? UserSys { get; set; }

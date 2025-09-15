@@ -12,5 +12,13 @@ namespace HRDCManagementSystem.Models.Participant
         public int InProgress { get; set; }
         public int Certificates { get; set; }
         public string WelcomeName { get; set; }
+        
+        // Additional properties for the employee dashboard
+        public string EmployeeName { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Designation { get; set; } = string.Empty;
+        public int CompletedTrainings { get; set; }
+        public List<TrainingViewModel> UpcomingTrainings { get; set; } = new();
+        public List<TrainingViewModel> RecentTrainings { get; set; } = new();
     }
 }

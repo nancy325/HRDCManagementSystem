@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class TrainingProgram
+public partial class TrainingProgram: BaseEntity
 {
     public int TrainingSysID { get; set; }
 
@@ -37,15 +37,6 @@ public partial class TrainingProgram
 
     public bool? IsMarksEntry { get; set; }
 
-    public int? CreateUserId { get; set; }
-
-    public DateTime? CreateDateTime { get; set; }
-
-    public int? ModifiedUserId { get; set; }
-
-    public DateTime? ModifiedDateTime { get; set; }
-
-    public string RecStatus { get; set; } = null!;
-
+    
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
 }
