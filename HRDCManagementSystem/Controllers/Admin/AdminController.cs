@@ -38,6 +38,12 @@ namespace HRDCManagementSystem.Controllers.Admin
             return View(dashboard);
         }
 
+        [HttpGet]
+        public IActionResult Trainings()
+        {
+            return RedirectToAction("TrainingIndex", "Training");
+        }
+
         private async Task<double> CalculateCompletionRate()
         {
             var totalTrainings = await _context.TrainingPrograms.CountAsync(tp => tp.RecStatus == "active");

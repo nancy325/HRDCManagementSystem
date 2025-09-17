@@ -64,6 +64,7 @@ public partial class HRDCContext : DbContext
     public virtual DbSet<TrainingProgram> TrainingPrograms { get; set; }
     public virtual DbSet<TrainingRegistration> TrainingRegistrations { get; set; }
     public virtual DbSet<UserMaster> UserMasters { get; set; }
+  
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,6 +1,7 @@
 ﻿using HRDCManagementSystem.Models;
+using HRDCManagementSystem.Models.Request;
 
-namespace HRDCManagementSystem.Models.Participant
+namespace HRDCManagementSystem.Models
 {
     public class DashboardViewModel
     {
@@ -18,7 +19,7 @@ namespace HRDCManagementSystem.Models.Participant
         public string Department { get; set; } = string.Empty;
         public string Designation { get; set; } = string.Empty;
         public int CompletedTrainings { get; set; }
-        public List<TrainingViewModel> UpcomingTrainings { get; set; } = new();
-        public List<TrainingViewModel> RecentTrainings { get; set; } = new();
+        public List<TrainingRequest> UpcomingTrainings { get; set; } = new();
+        public List<TrainingRequest> RecentTrainings { get; set; } = new();
     }
 }

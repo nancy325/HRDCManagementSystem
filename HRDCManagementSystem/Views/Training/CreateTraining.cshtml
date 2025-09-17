@@ -1,0 +1,153 @@
+@model HRDCManagementSystem.Models.ViewModels.TrainingViewModel
+
+@{
+    ViewData["Title"] = "Create Training Program";
+}
+
+<h2>Create Training Program</h2>
+
+<hr />
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="Title" class="control-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="TrainerName" class="control-label"></label>
+        <input asp-for="TrainerName" class="form-control" />
+        <span asp-validation-for="TrainerName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="StartDate">Start Date</label>
+        <input type="text" class="form-control datepicker" name="StartDate" id="StartDate" />
+    </div>
+
+    <div class="form-group">
+        <label for="EndDate">End Date</label>
+        <input type="text" class="form-control datepicker" id="EndDate" name="EndDate" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FromTime" class="control-label"></label>
+        <input asp-for="FromTime" type="time" class="form-control" />
+        <span asp-validation-for="FromTime" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ToTime" class="control-label"></label>
+        <input asp-for="ToTime" type="time" class="form-control" />
+        <span asp-validation-for="ToTime" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="ValidTill">Valid Till</label>
+        <input type="text" class="form-control datepicker" id="ValidTill" name="ValidTill" />
+    </div>
+  
+
+    <div class="form-group">
+        <label asp-for="Venue" class="control-label"></label>
+        <input asp-for="Venue" class="form-control" />
+        <span asp-validation-for="Venue" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="EligibilityType" class="control-label"></label>
+        <select asp-for="EligibilityType" class="form-control">
+            <option value="">-- Select Eligibility --</option>
+            <option value="Technical">Technical</option>
+            <option value="Non-Technical">Non-Technical</option>
+        </select>
+        <span asp-validation-for="EligibilityType" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Capacity" class="control-label"></label>
+        <input asp-for="Capacity" type="number" class="form-control" />
+        <span asp-validation-for="Capacity" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FilePath" class="control-label">Upload File</label>
+        <input asp-for="FilePath" type="file" class="form-control" />
+        <span asp-validation-for="FilePath" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Mode" class="control-label"></label>
+        <select asp-for="Mode" class="form-control">
+            <option value="">-- Select Mode --</option>
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
+        </select>
+        <span asp-validation-for="Mode" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Status" class="control-label"></label>
+        <select asp-for="Status" class="form-control">
+            <option value="">-- Select Status --</option>
+            <option value="Draft">Draft</option>
+            <option value="Published">Published</option>
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <div class="form-group form-check">
+        <input asp-for="IsMarksEntry" class="form-check-input" id="isMarksEntryCheckbox" />
+        <label asp-for="IsMarksEntry" class="form-check-label"></label>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="MarksOutOf" class="control-label"></label>
+        <input asp-for="MarksOutOf" type="number" class="form-control" id="marksOutOfField" disabled />
+        <span asp-validation-for="MarksOutOf" class="text-danger"></span>
+    </div>
+
+    <br />
+
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const checkbox = document.getElementById("isMarksEntryCheckbox");
+            const marksOutOf = document.getElementById("marksOutOfField");
+
+            function toggleMarksOutOf() {
+                if (checkbox.checked) {
+                    marksOutOf.disabled = false;
+                } else {
+                    marksOutOf.disabled = true;
+                    marksOutOf.value = "";
+                }
+            }
+
+            checkbox.addEventListener("change", toggleMarksOutOf);
+            toggleMarksOutOf(); // initial load
+        });
+            
+        $(document).ready(function () {
+            $('.datepicker').datepicker({
+                format: 'dd/mm/yyyy',   // force dd/MM/yyyy format
+                autoclose: true,
+                todayHighlight: true
+            });
+        });
+
+    </script>
+}

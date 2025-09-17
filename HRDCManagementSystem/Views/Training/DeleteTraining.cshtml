@@ -1,0 +1,23 @@
+@model HRDCManagementSystem.Models.ViewModels.TrainingViewModel
+
+@{
+	ViewData["Title"] = "Delete Training";
+}
+
+<div class="container mt-4">
+	<h2>Delete Training</h2>
+	<div class="alert alert-warning">Are you sure you want to delete "@Model.Title"?</div>
+	<dl class="row">
+		<dt class="col-sm-3">Trainer</dt>
+		<dd class="col-sm-9">@Model.TrainerName</dd>
+		<dt class="col-sm-3">Dates</dt>
+		<dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy") - @Model.EndDate.ToString("dd MMM yyyy")</dd>
+	</dl>
+	<form asp-action="ConfirmDelete" method="post">
+		<input type="hidden" name="id" value="@Model.TrainingSysID" />
+		<button type="submit" class="btn btn-danger">Delete</button>
+		<a asp-action="TrainingIndex" class="btn btn-secondary">Cancel</a>
+	</form>
+</div>
+
+

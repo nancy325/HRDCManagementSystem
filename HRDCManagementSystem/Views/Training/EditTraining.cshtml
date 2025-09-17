@@ -1,0 +1,82 @@
+@model HRDCManagementSystem.Models.ViewModels.TrainingViewModel
+
+@{
+	ViewData["Title"] = "Edit Training";
+}
+
+<div class="container mt-4">
+	<h2>Edit Training</h2>
+	<form asp-action="EditTraining" method="post">
+		<input type="hidden" name="id" value="@ViewData["TrainingSysID"]" />
+		<div class="row g-3">
+			<div class="col-md-6">
+				<label asp-for="Title" class="form-label"></label>
+				<input asp-for="Title" class="form-control" />
+				<span asp-validation-for="Title" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="TrainerName" class="form-label"></label>
+				<input asp-for="TrainerName" class="form-control" />
+				<span asp-validation-for="TrainerName" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="StartDate" class="form-label"></label>
+				<input asp-for="StartDate" class="form-control" type="date" />
+				<span asp-validation-for="StartDate" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="EndDate" class="form-label"></label>
+				<input asp-for="EndDate" class="form-control" type="date" />
+				<span asp-validation-for="EndDate" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="FromTime" class="form-label">From Time</label>
+				<input asp-for="FromTime" class="form-control" type="time" />
+				<span asp-validation-for="FromTime" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="ToTime" class="form-label">To Time</label>
+				<input asp-for="ToTime" class="form-control" type="time" />
+				<span asp-validation-for="ToTime" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="ValidTill" class="form-label">Registration Valid Till</label>
+				<input asp-for="ValidTill" class="form-control" type="time" />
+				<span asp-validation-for="ValidTill" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="Venue" class="form-label"></label>
+				<input asp-for="Venue" class="form-control" />
+				<span asp-validation-for="Venue" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="EligibilityType" class="form-label"></label>
+				<input asp-for="EligibilityType" class="form-control" />
+				<span asp-validation-for="EligibilityType" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="Capacity" class="form-label"></label>
+				<input asp-for="Capacity" class="form-control" type="number" />
+				<span asp-validation-for="Capacity" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="Mode" class="form-label"></label>
+				<input asp-for="Mode" class="form-control" />
+				<span asp-validation-for="Mode" class="text-danger"></span>
+			</div>
+			<div class="col-md-6">
+				<label asp-for="Status" class="form-label"></label>
+				<input asp-for="Status" class="form-control" />
+				<span asp-validation-for="Status" class="text-danger"></span>
+			</div>
+		</div>
+		<div class="mt-3">
+			<button type="submit" class="btn btn-primary">Update</button>
+			<a asp-action="TrainingIndex" class="btn btn-secondary">Cancel</a>
+		</div>
+	</form>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/_ValidationScriptsPartial.cshtml")
+
+

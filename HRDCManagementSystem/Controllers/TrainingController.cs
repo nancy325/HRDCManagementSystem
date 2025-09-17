@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using HRDCManagementSystem.Data;
-using HRDCManagementSystem.Models;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using HRDCManagementSystem.Models.Entities;
+using HRDCManagementSystem.Models.ViewModels;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace HRDCManagementSystem.Controllers
 {   
@@ -16,108 +18,201 @@ namespace HRDCManagementSystem.Controllers
         {
             _context = context;
         }
-        // GET: TrainingController
+
         [HttpGet]
-        public ActionResult TrainingIndex()
+        public async Task<ActionResult> TrainingIndex()
         {
-            var tarinings = _context.TrainingPrograms.Where(t => t.RecStatus == "active").ToList();
-            return View(tarinings);
+            var trainings = await _context.TrainingPrograms
+                .Where(t => t.RecStatus == "active")
+                .ToListAsync();
+
+            var viewModels = trainings.Select(MapToViewModel).ToList();
+            return View(viewModels);
         }
 
-        // GET: TrainingController/Details/5
         [HttpGet]
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            var training = _context.TrainingPrograms.FirstOrDefault(t => t.TrainingSysID == id);
+            var training = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
             if (training == null)
             {
                 return NotFound();
             }
-            return View(training);
+            return View(MapToViewModel(training));
         }
 
-        // GET: TrainingController/Create
+        // Keep old route used by list page button
         [HttpGet]
         public ActionResult CreateTraining()
         {
-            return View();
+            return RedirectToAction(nameof(Create));
         }
 
-        // POST: TrainingController/Create
+        [HttpGet]
+        public ActionResult Create()
+        {
+            return View("CreateTraining", new TrainingViewModel());
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize("Admin")]
-        public ActionResult CreateTraining(TrainingProgram model)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> Create(TrainingViewModel viewModel)
         {
-            if (ModelState.IsValid) {
-                model.CreateDateTime = DateTime.Now;
-                _context.TrainingPrograms.Add(model);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(TrainingIndex));
+            if (!ModelState.IsValid)
+            {
+                return View("CreateTraining", viewModel);
             }
-            return View(model);
+
+            string uniqueFileName = null;
+            if (viewModel.FilePath != null && viewModel.FilePath.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(viewModel.FilePath.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await viewModel.FilePath.CopyToAsync(stream);
+                }
+            }
+
+            var entity = MapToEntity(viewModel);
+            entity.FilePath = uniqueFileName != null ? "/uploads/" + uniqueFileName : null;
+
+            _context.TrainingPrograms.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(TrainingIndex));
         }
 
-        // GET: TrainingController/Edit/5
+
         [HttpGet]
-        [Authorize("Admin")]
-        public ActionResult EditTraining(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> EditTraining(int id)
         {
-            var training = _context.TrainingPrograms.FirstOrDefault(t => t.TrainingSysID == id && t.RecStatus == "active");
-            if (training == null)
-                return NotFound();
-            return View(training);
-        }
-
-        // POST: TrainingController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult EditTraining(int id, TrainingProgram model)
-        {
-            if (id != model.TrainingSysID) {
-                return BadRequest();
-            }
-            if (ModelState.IsValid) {
-                var exisiting = _context.TrainingPrograms.Find(id);
-                if(exisiting == null)
-                    return BadRequest();
-                model.ModifiedDateTime = DateTime.Now;
-                model.CreateDateTime = exisiting.CreateDateTime; //preserve original
-                _context.Entry(exisiting).CurrentValues.SetValues(model);   
-                _context.SaveChanges();
-                return RedirectToAction(nameof(TrainingIndex));
-            }
-            return View(model);
-        }
-
-        // GET: TrainingController/Delete/5
-        [HttpGet]
-        [Authorize("Admin")]
-        public ActionResult DeleteTraining(int id)
-        {
-            var training = _context.TrainingPrograms.Find(id);
+            var training = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
             if (training == null)
                 return NotFound();
 
-            return View(training);
-
+            var viewModel = MapToViewModel(training);
+            ViewData["TrainingSysID"] = id;
+            return View(viewModel);
         }
 
-        // POST: TrainingController/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize("Admin")]
-        public ActionResult ConfirmDelete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> EditTraining(int id, TrainingViewModel viewModel)
         {
-            var training = _context.TrainingPrograms.Find(id);
+            if (!ModelState.IsValid)
+            {
+                ViewData["TrainingSysID"] = id;
+                return View(viewModel);
+            }
+
+            var existing = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
+            if (existing == null)
+                return NotFound();
+
+            ApplyViewModelToEntity(existing, viewModel);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(TrainingIndex));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DeleteTraining(int id)
+        {
+            var training = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
+            if (training == null)
+                return NotFound();
+
+            return View(MapToViewModel(training));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles ="Admin")]
+        public async Task<ActionResult> ConfirmDelete(int id)
+        {
+            var training = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
             if (training == null)
                 return NotFound();
 
             training.RecStatus = "inactive";
-            training.ModifiedDateTime = DateTime.Now;
-            _context.SaveChanges();
-
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(TrainingIndex));
+        }
+
+        private static TrainingViewModel MapToViewModel(TrainingProgram tp)
+        {
+            return new TrainingViewModel
+            {
+                Title = tp.Title,
+                TrainerName = tp.TrainerName,
+                StartDate = tp.StartDate,
+                EndDate = tp.EndDate,
+                FromTime = tp.fromTime,
+                ToTime = tp.toTime,
+                ValidTill = tp.Validtill ?? tp.EndDate,
+                Venue = tp.Venue,
+                EligibilityType = tp.EligibilityType,
+                Capacity = tp.Capacity,
+                Mode = tp.Mode,
+                Status = tp.Status,
+                MarksOutOf = tp.MarksOutOf,
+                IsMarksEntry = tp.IsMarksEntry
+            };
+        }
+
+        private static TrainingProgram MapToEntity(TrainingViewModel vm)
+        {
+            return new TrainingProgram
+            {
+                Title = vm.Title,
+                TrainerName = vm.TrainerName,
+                StartDate = vm.StartDate,
+                EndDate = vm.EndDate,
+                fromTime = vm.FromTime,
+                toTime = vm.ToTime,
+                Validtill = vm.ValidTill,
+                Venue = vm.Venue,
+                EligibilityType = vm.EligibilityType,
+                Capacity = vm.Capacity,
+                Mode = vm.Mode,
+                Status = vm.Status,
+                MarksOutOf = vm.MarksOutOf,
+                IsMarksEntry = vm.IsMarksEntry
+            };
+        }
+
+        private static void ApplyViewModelToEntity(TrainingProgram entity, TrainingViewModel vm)
+        {
+            entity.Title = vm.Title;
+            entity.TrainerName = vm.TrainerName;
+            entity.StartDate = vm.StartDate;
+            entity.EndDate = vm.EndDate;
+            entity.fromTime = vm.FromTime;
+            entity.toTime = vm.ToTime;
+            entity.Validtill = vm.ValidTill;
+            entity.Venue = vm.Venue;
+            entity.EligibilityType = vm.EligibilityType;
+            entity.Capacity = vm.Capacity;
+             entity.Mode = vm.Mode;
+            entity.Status = vm.Status;
+            entity.MarksOutOf = vm.MarksOutOf;
+            entity.IsMarksEntry = vm.IsMarksEntry;
         }
     }
 }
