@@ -110,23 +110,67 @@ namespace HRDCManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> EditTraining(int id, TrainingViewModel viewModel)
+        public async Task<IActionResult> EditTraining(int id, TrainingViewModel model, IFormFile? newFile)
         {
-            if (!ModelState.IsValid)
+            if (id != model.TrainingSysID)
             {
-                ViewData["TrainingSysID"] = id;
-                return View(viewModel);
+                return NotFound();
             }
 
-            var existing = await _context.TrainingPrograms
-                .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
-            if (existing == null)
-                return NotFound();
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
-            ApplyViewModelToEntity(existing, viewModel);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(TrainingIndex));
+            try
+            {
+                var entity = await _context.TrainingPrograms.FindAsync(id);
+                if (entity == null)
+                {
+                    return NotFound();
+                }
+
+                // Map non-file properties
+                ApplyViewModelToEntity(entity, model);
+
+                // Handle file upload
+                if (model.FilePath != null && model.FilePath.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(model.FilePath.FileName);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.FilePath.CopyToAsync(stream);
+                    }
+
+                    entity.FilePath = "/uploads/" + uniqueFileName;
+                }
+                else
+                {
+                    // Keep existing file
+                    entity.FilePath = model.ExistingPath;
+                }
+
+                _context.Update(entity);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Training updated successfully!";
+                return RedirectToAction(nameof(TrainingIndex));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Unable to update training. Error: {ex.Message}");
+                return View(model);
+            }
         }
+
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
@@ -159,6 +203,7 @@ namespace HRDCManagementSystem.Controllers
         {
             return new TrainingViewModel
             {
+                TrainingSysID = tp.TrainingSysID,
                 Title = tp.Title,
                 TrainerName = tp.TrainerName,
                 StartDate = tp.StartDate,
@@ -169,6 +214,7 @@ namespace HRDCManagementSystem.Controllers
                 Venue = tp.Venue,
                 EligibilityType = tp.EligibilityType,
                 Capacity = tp.Capacity,
+                ExistingPath = tp.FilePath,
                 Mode = tp.Mode,
                 Status = tp.Status,
                 MarksOutOf = tp.MarksOutOf,
@@ -180,6 +226,7 @@ namespace HRDCManagementSystem.Controllers
         {
             return new TrainingProgram
             {
+                TrainingSysID = vm.TrainingSysID,
                 Title = vm.Title,
                 TrainerName = vm.TrainerName,
                 StartDate = vm.StartDate,
@@ -199,6 +246,7 @@ namespace HRDCManagementSystem.Controllers
 
         private static void ApplyViewModelToEntity(TrainingProgram entity, TrainingViewModel vm)
         {
+
             entity.Title = vm.Title;
             entity.TrainerName = vm.TrainerName;
             entity.StartDate = vm.StartDate;

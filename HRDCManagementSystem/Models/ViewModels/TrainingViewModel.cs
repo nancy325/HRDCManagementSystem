@@ -36,8 +36,9 @@ namespace HRDCManagementSystem.Models.ViewModels
         public int Capacity { get; set; }
        
         [Display(Name = "Upload PDF")]
-        public IFormFile? FilePath { get; set; }
+        public IFormFile? FilePath { get; set; } // for new uploads
 
+        public string? ExistingPath {  get; set; } // for showing already uploaded file path/name
         public string Mode { get; set; } = null!;
 
         public string Status { get; set; } = null!;

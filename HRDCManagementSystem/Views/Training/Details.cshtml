@@ -1,41 +1,45 @@
 @model HRDCManagementSystem.Models.ViewModels.TrainingViewModel
 
 @{
-	ViewData["Title"] = "Training Details";
+    ViewData["Title"] = "Training Details";
 }
 
 <div class="container mt-4">
-	<h2 class="mb-3">@Model.Title</h2>
-	<dl class="row">
-		<dt class="col-sm-3">Trainer</dt>
-		<dd class="col-sm-9">@Model.TrainerName</dd>
+    <h2 class="mb-3">@Model.Title</h2>
+    <dl class="row">
+        <dt class="col-sm-3">Trainer</dt>
+        <dd class="col-sm-9">@Model.TrainerName</dd>
 
-		<dt class="col-sm-3">Dates</dt>
-		<dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy") - @Model.EndDate.ToString("dd MMM yyyy")</dd>
+        <dt class="col-sm-3">Dates</dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(m => m.StartDate) - @Html.DisplayFor(m => m.EndDate)
+        </dd>
 
-		<dt class="col-sm-3">Time</dt>
-		<dd class="col-sm-9">@Model.FromTime.ToString("HH:mm") - @Model.ToTime.ToString("HH:mm")</dd>
+        <dt class="col-sm-3">Time</dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(m => m.FromTime) - @Html.DisplayFor(m => m.ToTime)
+        </dd>
 
-		<dt class="col-sm-3">Registration Valid Till</dt>
-		<dd class="col-sm-9">@Model.ValidTill.ToString("HH:mm")</dd>
+        <dt class="col-sm-3">Registration Valid Till</dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(m => m.ValidTill)
+        </dd>
 
-		<dt class="col-sm-3">Venue</dt>
-		<dd class="col-sm-9">@Model.Venue</dd>
+        <dt class="col-sm-3">Venue</dt>
+        <dd class="col-sm-9">@Model.Venue</dd>
 
-		<dt class="col-sm-3">Mode</dt>
-		<dd class="col-sm-9">@Model.Mode</dd>
+        <dt class="col-sm-3">Mode</dt>
+        <dd class="col-sm-9">@Model.Mode</dd>
 
-		<dt class="col-sm-3">Capacity</dt>
-		<dd class="col-sm-9">@Model.Capacity</dd>
+        <dt class="col-sm-3">Capacity</dt>
+        <dd class="col-sm-9">@Model.Capacity</dd>
 
-		<dt class="col-sm-3">Status</dt>
-		<dd class="col-sm-9">@Model.Status</dd>
-	</dl>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">@Model.Status</dd>
+    </dl>
 
-	<div class="mt-3">
-		<a asp-action="EditTraining" asp-route-id="@Model.TrainingSysID" class="btn btn-warning">Edit</a>
-		<a asp-action="TrainingIndex" class="btn btn-secondary">Back</a>
-	</div>
+    <div class="mt-3">
+        <a asp-action="EditTraining" asp-route-id="@Model.TrainingSysID" class="btn btn-warning">Edit</a>
+        <a asp-action="TrainingIndex" class="btn btn-secondary">Back</a>
+    </div>
 </div>
-
-
