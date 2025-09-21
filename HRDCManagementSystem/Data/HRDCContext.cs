@@ -88,8 +88,8 @@ public partial class HRDCContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("active");
 
-            entity.HasOne(d => d.RegSys).WithMany(p => p.Attendances)
-                .HasForeignKey(d => d.RegSysID)
+            entity.HasOne(d => d.TrainingRegSys).WithMany(p => p.Attendances)
+                .HasForeignKey(d => d.TrainingRegSysID)
                 .HasConstraintName("FK__Attendanc__RegSy__70DDC3D8");
         });
 
@@ -107,7 +107,7 @@ public partial class HRDCContext : DbContext
                 .HasDefaultValue("active");
 
             entity.HasOne(d => d.RegSys).WithMany(p => p.Certificates)
-                .HasForeignKey(d => d.RegSysID)
+                .HasForeignKey(d => d.TrainingRegSysID)
                 .HasConstraintName("FK__Certifica__RegSy__7E37BEF6");
         });
 
@@ -176,7 +176,7 @@ public partial class HRDCContext : DbContext
                 .HasConstraintName("FK__Feedback__Questi__787EE5A0");
 
             entity.HasOne(d => d.RegSys).WithMany(p => p.Feedbacks)
-                .HasForeignKey(d => d.RegSysID)
+                .HasForeignKey(d => d.TrainingRegSysID)
                 .HasConstraintName("FK__Feedback__RegSys__778AC167");
         });
 

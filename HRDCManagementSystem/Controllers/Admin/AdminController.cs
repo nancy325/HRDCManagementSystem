@@ -153,7 +153,7 @@ namespace HRDCManagementSystem.Controllers.Admin
         {
             return await _context.TrainingRegistrations
                 .Where(tr => tr.RecStatus == "active" &&
-                           !_context.Feedbacks.Any(f => f.RegSysID == tr.TrainingRegSysID && f.RecStatus == "active"))
+                           !_context.Feedbacks.Any(f => f.TrainingRegSysID == tr.TrainingRegSysID && f.RecStatus == "active"))
                 .CountAsync();
         }
     }
