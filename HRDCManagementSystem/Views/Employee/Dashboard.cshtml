@@ -1,0 +1,169 @@
+﻿@model HRDCManagementSystem.Models.ViewModels.EmployeeDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/css/participantdashboard.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header mb-4">
+        <h1 class="h3">Welcome back, @Model.Employee.FirstName!</h1>
+        <p class="mb-0">Ready to continue your learning journey? You have @Model.UpcomingTrainings.Count upcoming trainings this month.</p>
+    </div>
+
+    <div class="row">
+        <!-- Stats Cards -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card total h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.UpcomingTrainings.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card completed h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed</div>
+                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletedTrainings?.Count ?? 0</div> *@
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card progress h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">In Progress</div>
+                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.InProgressTrainings?.Count ?? 0</div> *@
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-spinner fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card certificates h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Certificates</div>
+                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Certificates?.Count ?? 0</div> *@
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-certificate fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upcoming Trainings -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Trainings</h6>
+                    <span class="badge bg-primary rounded-pill">@Model.UpcomingTrainings.Count</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.UpcomingTrainings.Any())
+                    {
+                        @foreach (var training in Model.UpcomingTrainings)
+                        {
+                            <div class="training-item mb-3">
+                                <h6 class="font-weight-bold">@training.Title</h6>
+                                <div class="mb-1"><i class="far fa-calendar-alt me-2"></i>@training.StartDate.ToString("dd/MM/yyyy") - @training.FromTime - @training.ToTime</div>
+                                <div class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>@training.Venue</div>
+                                <div><i class="fas fa-user me-2"></i>@training.TrainerName</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No upcoming trainings.</p>
+                    }
+                    <a href="@Url.Action("TrainingIndex", "Training")" class="view-all-btn"><i class="fas fa-arrow-right me-1"></i> View All Trainings</a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">View All Trainings</h5>
+                            <p class="card-text">Access all your training materials and history</p>
+                            <a href="@Url.Action("TrainingIndex", "Training")" class="btn btn-primary">Browse All Trainings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Notifications</h6>
+                    @* <span class="badge bg-danger rounded-pill">@Model.Notifications?.Count ?? 0</span> *@
+                </div>
+                <div class="card-body">
+                    @* @if (Model.Notifications != null && Model.Notifications.Any())
+                    {
+                        @foreach (var notification in Model.Notifications)
+                        {
+                            <div class="notification-item mb-2">
+                                <div class="mb-1">@notification.Message</div>
+                                <div class="time-indicator"><i class="far fa-clock me-1"></i>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        }
+                    } *@
+                    else
+                    {
+                        <p>No notifications.</p>
+                    }
+                    <a href="#" class="view-all-btn"><i class="fas fa-arrow-right me-1"></i> View All Notifications</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("TrainingIndex", "Training")" class="btn btn-outline-primary btn-sm"><i class="fas fa-search me-2"></i> Find Trainings</a>
+                        <a href="@Url.Action("Certificates", "Employee")" class="btn btn-outline-success btn-sm"><i class="fas fa-download me-2"></i> Download Certificates</a>
+                        <a href="@Url.Action("Help", "Home")" class="btn btn-outline-info btn-sm"><i class="fas fa-question-circle me-2"></i> Get Help</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

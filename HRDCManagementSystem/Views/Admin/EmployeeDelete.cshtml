@@ -1,0 +1,15 @@
+@model HRDCManagementSystem.Models.Entities.Employee
+@{
+    ViewData["Title"] = "Delete Employee";
+}
+<div class="container mt-4">
+    <h3>Delete Employee</h3>
+    <div class="alert alert-warning">
+        Are you sure you want to delete <strong>@Model.FirstName @Model.LastName</strong>?
+    </div>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="EmployeeSysID" />
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

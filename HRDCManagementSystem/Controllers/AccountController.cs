@@ -54,7 +54,7 @@ namespace HRDCManagementSystem.Controllers
 
             await LoginUserAsync(newUser, RecoverPassword: false);
             
-            return RedirectToAction("Dashboard", newUser.Role == "Admin" ? "Admin" : "Employees");
+            return RedirectToAction("Dashboard", newUser.Role == "Admin" ? "Admin" : "Employee");
         }
 
 
@@ -97,7 +97,7 @@ namespace HRDCManagementSystem.Controllers
                 return Redirect(returnUrl);
             }
 
-            return RedirectToAction("Dashboard", user.Role == "Admin" ? "Admin" : "Employees");
+            return RedirectToAction("Dashboard", user.Role == "Admin" ? "Admin" : "Employee");
         }
 
         private async Task LoginUserAsync(UserMaster user, bool RecoverPassword)

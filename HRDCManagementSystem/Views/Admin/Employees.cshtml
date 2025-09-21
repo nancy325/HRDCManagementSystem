@@ -1,0 +1,188 @@
+﻿@model IEnumerable<HRDCManagementSystem.Models.Entities.Employee>
+@{
+    ViewData["Title"] = "Employee Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2>Employee Management</h2>
+    
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+            
+            @if (TempData["EmailSent"] is bool emailSent)
+            {
+                <div class="mt-2">
+                    @if (emailSent)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-envelope-check"></i> A welcome email with login details was sent to the employee.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-envelope-exclamation"></i> Failed to send welcome email: @TempData["EmailError"]
+                        </div>
+                    }
+                </div>
+            }
+            
+            @if (TempData["NewEmployeeEmail"] != null && TempData["NewEmployeePassword"] != null)
+            {
+                <div class="mt-2 p-3 bg-light border rounded">
+                    <h5>New Employee Login Details:</h5>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Username/Email:</strong> @TempData["NewEmployeeEmail"]
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Password:</strong> @TempData["NewEmployeePassword"]
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <i class="bi bi-info-circle"></i> Please share these login details with the employee if the email was not sent successfully.
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="mb-3">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus me-2"></i>Add New Employee
+        </a>
+    </div>
+    
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Institute</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                <td>
+                    @if (!string.IsNullOrEmpty(emp.ProfilePhotoPath))
+                    {
+                        <img src="~/images/profilephoto/@emp.ProfilePhotoPath" alt="Profile" width="50" height="50" class="rounded-circle" />
+                    }
+                    else
+                    {
+                        <div class="bg-light rounded-circle text-center" style="width: 50px; height: 50px; line-height: 50px;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                    }
+                </td>
+                <td>@emp.FirstName @emp.MiddleName @emp.LastName</td>
+                <td>@(emp.UserSys?.Email ?? "N/A")</td>
+                <td>@emp.Department</td>
+                <td>@emp.Designation</td>
+                <td>@emp.Institute</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@emp.EmployeeSysID">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID">Delete</a> |
+                    <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-link" onclick="return confirm('Resend credentials to this employee?');">Resend Mail</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal for displaying credentials -->
+@if (TempData["NewEmployeeEmail"] != null && TempData["NewEmployeePassword"] != null)
+{
+    <div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="credentialsModalLabel">
+                        <i class="bi bi-check-circle me-2"></i>Employee Created Successfully
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Important!</strong> Please save these login credentials:
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username/Email:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="emailInput" value="@TempData["NewEmployeeEmail"]" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('emailInput')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="passwordInput" value="@TempData["NewEmployeePassword"]" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('passwordInput')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @if (TempData["EmailSent"] is bool emailSent)
+                    {
+                        if (emailSent)
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-envelope-check"></i> An email with these credentials has been sent to the employee.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger">
+                                <i class="bi bi-envelope-x"></i> Failed to send email. Please copy these credentials and provide them to the employee manually.
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show modal automatically when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            var credentialsModal = new bootstrap.Modal(document.getElementById('credentialsModal'));
+            credentialsModal.show();
+        });
+        
+        // Function to copy text to clipboard
+        function copyToClipboard(elementId) {
+            var copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            
+            // Show feedback that text was copied
+            var button = copyText.nextElementSibling;
+            var originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            button.classList.add('btn-success');
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+            }, 2000);
+        }
+    </script>
+}

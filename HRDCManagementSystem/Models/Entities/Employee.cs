@@ -10,28 +10,40 @@ public partial class Employee: BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EmployeeSysID { get; set; }
+
     [ForeignKey("UserSys")]
-    public int UserSysID { get; set; }
+    public int UserSysID { get; set; } // removed [Required] so validation won't fail before controller assigns value
 
-    public string? FirstName { get; set; }
+    [Required]
+    public string FirstName { get; set; }
 
-    public string? MiddleName { get; set; }
+    [Required]
+    public string MiddleName { get; set; }
 
-    public string? LastName { get; set; }
+    [Required]
+    public string LastName { get; set; }
 
-    public string? Department { get; set; }
+    [Required]
+    public string Department { get; set; }
 
-    public string? Designation { get; set; }
+    [Required]
+    public string Designation { get; set; }
 
-    public string? Institute { get; set; }
+    [Required]
+    public string Institute { get; set; }
 
     public string? ProfilePhotoPath { get; set; }
 
-    public string PhoneNumber { get; set; }
+    [Required]
+    public string Type { get; set; }
 
+    [Required]
+    public string PhoneNumber { get; set; }
     public string? AlternatePhone { get; set; }
 
-    public string? Type { get; set; }
+    [Required]
+    public DateTime? JoinDate { get; set; }
+    public DateTime? LeftDate { get; set; }
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
 
     public virtual UserMaster UserSys { get; set; }

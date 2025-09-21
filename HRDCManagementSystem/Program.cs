@@ -42,6 +42,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
     });
 
+// Email service configuration
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
 // Set fallback culture (thread defaults)
 var cultureInfo = new CultureInfo("en-GB");
 cultureInfo.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
@@ -53,7 +58,11 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -71,7 +80,7 @@ app.UseRouting();
 app.UseSession();         // put before authentication if session is needed in login
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Registration}/{id?}");

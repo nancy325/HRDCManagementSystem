@@ -1,0 +1,91 @@
+@model HRDCManagementSystem.Models.Entities.Employee
+@{
+    ViewData["Title"] = "Add Employee";
+}
+<div class="container mt-4">
+    <h3>Add New Employee</h3>
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Existing employee fields -->
+                <div class="mb-3">
+                    <label asp-for="FirstName" class="form-label"></label>
+                    <input asp-for="FirstName" class="form-control" required />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="MiddleName" class="form-label"></label>
+                    <input asp-for="MiddleName" class="form-control" required />
+                    <span asp-validation-for="MiddleName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="LastName" class="form-label"></label>
+                    <input asp-for="LastName" class="form-control" required />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Department" class="form-label"></label>
+                    <input asp-for="Department" class="form-control" required />
+                    <span asp-validation-for="Department" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Designation" class="form-label"></label>
+                    <input asp-for="Designation" class="form-control" required />
+                    <span asp-validation-for="Designation" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Institute" class="form-label"></label>
+                    <input asp-for="Institute" class="form-control" required />
+                    <span asp-validation-for="Institute" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Type" class="form-label"></label>
+                    <input asp-for="Type" class="form-control" required />
+                    <span asp-validation-for="Type" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" required />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="AlternatePhone" class="form-label"></label>
+                    <input asp-for="AlternatePhone" class="form-control" />
+                    <span asp-validation-for="AlternatePhone" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="JoinDate" class="form-label"></label>
+                    <input asp-for="JoinDate" type="date" class="form-control" required />
+                    <span asp-validation-for="JoinDate" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Profile Photo (.jpg, .jpeg, .png, max 2MB)</label>
+                    <input type="file" name="ProfilePhoto" class="form-control" accept=".jpg,.jpeg,.png" />
+                    <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
+                </div>
+                <!-- New fields for UserMaster -->
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="Email" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="Password" class="form-control" required minlength="6" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Role</label>
+                    <select name="Role" class="form-select" required>
+                        <option value="Employee">Employee</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Create</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
