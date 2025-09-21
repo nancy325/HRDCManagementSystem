@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRDCManagementSystem.Models.Entities;
 
 public partial class Employee: BaseEntity
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EmployeeSysID { get; set; }
-
-    public int? UserSysID { get; set; }
+    [ForeignKey("UserSys")]
+    public int UserSysID { get; set; }
 
     public string? FirstName { get; set; }
 
@@ -23,12 +27,12 @@ public partial class Employee: BaseEntity
 
     public string? ProfilePhotoPath { get; set; }
 
-    public string? PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; }
 
     public string? AlternatePhone { get; set; }
 
     public string? Type { get; set; }
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
 
-    public virtual UserMaster? UserSys { get; set; }
+    public virtual UserMaster UserSys { get; set; }
 }

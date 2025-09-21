@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRDCManagementSystem.Models.Entities;
 
 public partial class Certificate : BaseEntity
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int CertificateSysID { get; set; }
-
-    public int? RegSysID { get; set; }
+    [ForeignKey("TrainingRegSys")]
+    public int TrainingRegSysID { get; set; }
 
     public DateOnly? IssueDate { get; set; }
 
