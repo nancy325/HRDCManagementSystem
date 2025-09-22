@@ -12,7 +12,9 @@ public partial class Employee: BaseEntity
     public int EmployeeSysID { get; set; }
 
     [ForeignKey("UserSys")]
-    public int UserSysID { get; set; } // removed [Required] so validation won't fail before controller assigns value
+    [Required]
+    public int UserSysID { get; set; }
+    public UserMaster UserSys { get; set; }
 
     [Required]
     public string FirstName { get; set; }
@@ -45,6 +47,4 @@ public partial class Employee: BaseEntity
     public DateTime? JoinDate { get; set; }
     public DateTime? LeftDate { get; set; }
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
-
-    public virtual UserMaster UserSys { get; set; }
 }

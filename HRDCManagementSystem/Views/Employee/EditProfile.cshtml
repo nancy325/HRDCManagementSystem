@@ -1,0 +1,101 @@
+@model HRDCManagementSystem.Models.Entities.Employee
+@{
+    ViewData["Title"] = "Edit Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Edit Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["Error"]
+                        </div>
+                    }
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["Success"]
+                        </div>
+                    }
+                    
+                    <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="EmployeeSysID" />
+                        <input type="hidden" asp-for="UserSysID" />
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 text-center mb-4">
+                                @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+                                {
+                                    <img src="~/images/profilephoto/@Model.ProfilePhotoPath" alt="Profile" class="img-fluid rounded-circle profile-image mb-3" style="width: 150px; height: 150px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                                        <i class="bi bi-person" style="font-size: 80px;"></i>
+                                    </div>
+                                }
+                                <div class="mb-3">
+                                    <label class="form-label">Profile Photo (.jpg, .jpeg, .png, max 2MB)</label>
+                                    <input type="file" name="ProfilePhoto" class="form-control" accept=".jpg,.jpeg,.png" />
+                                    <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="FirstName" class="form-label"></label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="MiddleName" class="form-label"></label>
+                                    <input asp-for="MiddleName" class="form-control" />
+                                    <span asp-validation-for="MiddleName" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="LastName" class="form-label"></label>
+                                    <input asp-for="LastName" class="form-control" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label"></label>
+                                    <input asp-for="PhoneNumber" class="form-control" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="AlternatePhone" class="form-label"></label>
+                                    <input asp-for="AlternatePhone" class="form-control" />
+                                    <span asp-validation-for="AlternatePhone" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="@Url.Action("Profile", "Employee")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

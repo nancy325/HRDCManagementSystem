@@ -80,9 +80,10 @@ app.UseRouting();
 app.UseSession();         // put before authentication if session is needed in login
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+
+// Register all routes - both attribute routing and conventional routing
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Registration}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

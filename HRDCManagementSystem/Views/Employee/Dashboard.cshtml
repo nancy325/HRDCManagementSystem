@@ -12,7 +12,7 @@
     <!-- Header -->
     <div class="dashboard-header mb-4">
         <h1 class="h3">Welcome back, @Model.Employee.FirstName!</h1>
-        <p class="mb-0">Ready to continue your learning journey? You have @Model.UpcomingTrainings.Count upcoming trainings this month.</p>
+        <p class="mb-0">Ready to continue your learning journey? You have @Model.UpcomingTrainings.Count upcoming trainings.</p>
     </div>
 
     <div class="row">
@@ -23,7 +23,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainings</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.UpcomingTrainings.Count</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@(Model.UpcomingTrainings.Count + Model.InProgressTrainings.Count + Model.CompletedTrainings.Count)</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-calendar-alt fa-2x text-primary"></i>
@@ -39,7 +39,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed</div>
-                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletedTrainings?.Count ?? 0</div> *@
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletedTrainings.Count</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-check-circle fa-2x text-success"></i>
@@ -55,7 +55,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">In Progress</div>
-                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.InProgressTrainings?.Count ?? 0</div> *@
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.InProgressTrainings.Count</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-spinner fa-2x text-info"></i>
@@ -71,7 +71,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Certificates</div>
-                            @* <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Certificates?.Count ?? 0</div> *@
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CertificatesCount</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-certificate fa-2x text-warning"></i>
@@ -111,45 +111,68 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-12 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">View All Trainings</h5>
-                            <p class="card-text">Access all your training materials and history</p>
-                            <a href="@Url.Action("TrainingIndex", "Training")" class="btn btn-primary">Browse All Trainings</a>
-                        </div>
-                    </div>
+            <!-- In Progress Trainings -->
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-info">In Progress Trainings</h6>
+                    <span class="badge bg-info rounded-pill">@Model.InProgressTrainings.Count</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.InProgressTrainings.Any())
+                    {
+                        @foreach (var training in Model.InProgressTrainings)
+                        {
+                            <div class="training-item mb-3">
+                                <h6 class="font-weight-bold">@training.Title</h6>
+                                <div class="mb-1"><i class="far fa-calendar-alt me-2"></i>@training.StartDate.ToString("dd/MM/yyyy") - @training.FromTime - @training.ToTime</div>
+                                <div class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>@training.Venue</div>
+                                <div><i class="fas fa-user me-2"></i>@training.TrainerName</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No trainings in progress.</p>
+                    }
                 </div>
             </div>
         </div>
 
-        <!-- Notifications -->
+        <!-- Right Column -->
         <div class="col-lg-4">
+            <!-- Completed Trainings -->
             <div class="card mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Notifications</h6>
-                    @* <span class="badge bg-danger rounded-pill">@Model.Notifications?.Count ?? 0</span> *@
+                    <h6 class="m-0 font-weight-bold text-success">Completed Trainings</h6>
+                    <span class="badge bg-success rounded-pill">@Model.CompletedTrainings.Count</span>
                 </div>
                 <div class="card-body">
-                    @* @if (Model.Notifications != null && Model.Notifications.Any())
+                    @if (Model.CompletedTrainings.Any())
                     {
-                        @foreach (var notification in Model.Notifications)
+                        @foreach (var training in Model.CompletedTrainings.Take(3))
                         {
-                            <div class="notification-item mb-2">
-                                <div class="mb-1">@notification.Message</div>
-                                <div class="time-indicator"><i class="far fa-clock me-1"></i>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="training-item mb-3">
+                                <h6 class="font-weight-bold">@training.Title</h6>
+                                <div class="mb-1"><i class="far fa-calendar-alt me-2"></i>@training.StartDate.ToString("dd/MM/yyyy")</div>
+                                <div><i class="fas fa-user me-2"></i>@training.TrainerName</div>
                             </div>
                         }
-                    } *@
+                        
+                        @if (Model.CompletedTrainings.Count > 3)
+                        {
+                            <div class="text-center mt-3">
+                                <a href="@Url.Action("TrainingIndex", "Training")" class="btn btn-sm btn-outline-success">View All Completed</a>
+                            </div>
+                        }
+                    }
                     else
                     {
-                        <p>No notifications.</p>
+                        <p>No completed trainings.</p>
                     }
-                    <a href="#" class="view-all-btn"><i class="fas fa-arrow-right me-1"></i> View All Notifications</a>
                 </div>
             </div>
 
+            <!-- Quick Actions -->
             <div class="card">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
@@ -158,7 +181,8 @@
                     <div class="d-grid gap-2">
                         <a href="@Url.Action("TrainingIndex", "Training")" class="btn btn-outline-primary btn-sm"><i class="fas fa-search me-2"></i> Find Trainings</a>
                         <a href="@Url.Action("Certificates", "Employee")" class="btn btn-outline-success btn-sm"><i class="fas fa-download me-2"></i> Download Certificates</a>
-                        <a href="@Url.Action("Help", "Home")" class="btn btn-outline-info btn-sm"><i class="fas fa-question-circle me-2"></i> Get Help</a>
+                        <a href="@Url.Action("Profile", "Employee")" class="btn btn-outline-secondary btn-sm"><i class="fas fa-user-cog me-2"></i> My Profile</a>
+                        <a href="@Url.Action("Dashboard", "Employee")" class="btn btn-outline-info btn-sm"><i class="fas fa-question-circle me-2"></i> Help</a>
                     </div>
                 </div>
             </div>

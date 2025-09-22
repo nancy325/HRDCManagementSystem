@@ -55,74 +55,80 @@ namespace HRDCManagementSystem.Controllers.Admin
 
         private async Task<List<TrainingProgramViewModel>> GetUpcomingTrainings()
         {
-            return await _context.TrainingPrograms
+            // Fix: Split query to avoid EF translation issues
+            var trainingData = await _context.TrainingPrograms
                 .Where(tp => tp.StartDate > currentDate && tp.RecStatus == "active")
                 .OrderBy(tp => tp.StartDate)
-                .Select(tp => new TrainingProgramViewModel
-                {
-                    TrainingSysID = tp.TrainingSysID,
-                    Title = tp.Title,
-                    TrainerName = tp.TrainerName,
-                    StartDate = tp.StartDate,
-                    EndDate = tp.EndDate,
-                    FromTime = tp.fromTime,
-                    ToTime = tp.toTime,
-                    Venue = tp.Venue,
-                    RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
-                    Capacity = tp.Capacity,
-                    Status = tp.Status,
-                    Mode = tp.Mode
-                })
                 .Take(5)
                 .ToListAsync();
+
+            return trainingData.Select(tp => new TrainingProgramViewModel
+            {
+                TrainingSysID = tp.TrainingSysID,
+                Title = tp.Title,
+                TrainerName = tp.TrainerName,
+                StartDate = tp.StartDate,
+                EndDate = tp.EndDate,
+                FromTime = tp.fromTime,
+                ToTime = tp.toTime,
+                Venue = tp.Venue,
+                RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
+                Capacity = tp.Capacity,
+                Status = tp.Status,
+                Mode = tp.Mode
+            }).ToList();
         }
 
         private async Task<List<TrainingProgramViewModel>> GetOngoingTrainings()
         {
-            return await _context.TrainingPrograms
+            // Fix: Split query to avoid EF translation issues
+            var trainingData = await _context.TrainingPrograms
                 .Where(tp => tp.Status == "Ongoing" && tp.RecStatus == "active")
                 .OrderBy(tp => tp.StartDate)
-                .Select(tp => new TrainingProgramViewModel
-                {
-                    TrainingSysID = tp.TrainingSysID,
-                    Title = tp.Title,
-                    TrainerName = tp.TrainerName,
-                    StartDate = tp.StartDate,
-                    EndDate = tp.EndDate,
-                    FromTime = tp.fromTime,
-                    ToTime = tp.toTime,
-                    Venue = tp.Venue,
-                    RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
-                    Capacity = tp.Capacity,
-                    Status = tp.Status,
-                    Mode = tp.Mode
-                })
                 .Take(5)
                 .ToListAsync();
+
+            return trainingData.Select(tp => new TrainingProgramViewModel
+            {
+                TrainingSysID = tp.TrainingSysID,
+                Title = tp.Title,
+                TrainerName = tp.TrainerName,
+                StartDate = tp.StartDate,
+                EndDate = tp.EndDate,
+                FromTime = tp.fromTime,
+                ToTime = tp.toTime,
+                Venue = tp.Venue,
+                RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
+                Capacity = tp.Capacity,
+                Status = tp.Status,
+                Mode = tp.Mode
+            }).ToList();
         }
 
         private async Task<List<TrainingProgramViewModel>> GetCompletedTrainings()
         {
-            return await _context.TrainingPrograms
+            // Fix: Split query to avoid EF translation issues
+            var trainingData = await _context.TrainingPrograms
                 .Where(tp => tp.Status == "Completed" && tp.RecStatus == "active")
                 .OrderByDescending(tp => tp.EndDate)
-                .Select(tp => new TrainingProgramViewModel
-                {
-                    TrainingSysID = tp.TrainingSysID,
-                    Title = tp.Title,
-                    TrainerName = tp.TrainerName,
-                    StartDate = tp.StartDate,
-                    EndDate = tp.EndDate,
-                    FromTime = tp.fromTime,
-                    ToTime = tp.toTime,
-                    Venue = tp.Venue,
-                    RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
-                    Capacity = tp.Capacity,
-                    Status = tp.Status,
-                    Mode = tp.Mode
-                })
                 .Take(5)
                 .ToListAsync();
+
+            return trainingData.Select(tp => new TrainingProgramViewModel
+            {
+                TrainingSysID = tp.TrainingSysID,
+                Title = tp.Title,
+                TrainerName = tp.TrainerName,
+                StartDate = tp.StartDate,
+                EndDate = tp.EndDate,
+                FromTime = tp.fromTime,
+                ToTime = tp.toTime,
+                Venue = tp.Venue,
+                RegisteredCount = _context.TrainingRegistrations.Count(tr => tr.TrainingSysID == tp.TrainingSysID && tr.RecStatus == "active"),
+                Capacity = tp.Capacity,
+                Status = tp.Status,
+                Mode = tp.Mode
+            }).ToList();
         }
 
         private async Task<List<PendingApprovalViewModel>> GetPendingApprovals()

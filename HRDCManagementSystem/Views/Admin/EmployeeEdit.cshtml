@@ -4,10 +4,16 @@
 }
 <div class="container mt-4">
     <h3>Edit Employee</h3>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
     <form asp-action="Edit" method="post" enctype="multipart/form-data">
         <input type="hidden" asp-for="EmployeeSysID" />
         <input type="hidden" asp-for="UserSysID" />
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div asp-validation-summary="All" class="text-danger"></div>
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">

@@ -107,10 +107,10 @@ namespace HRDCManagementSystem.Controllers
             HttpContext.Session.SetString("Email", user.Email);
             HttpContext.Session.SetString("Role", user.Role);
 
-            // Create claims
+            // Create claims - Fix: Set NameIdentifier to email instead of UserSysID
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserSysID.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Email), // Fixed: Use email instead of UserSysID
                 new Claim(ClaimTypes.Name, user.Email),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim("UserSysID", user.UserSysID.ToString())

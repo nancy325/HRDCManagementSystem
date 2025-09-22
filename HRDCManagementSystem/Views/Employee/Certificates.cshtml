@@ -1,0 +1,73 @@
+@model List<HRDCManagementSystem.Models.ViewModels.CertificateViewModel>
+@{
+    ViewData["Title"] = "My Certificates";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">My Certificates</h2>
+            
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Message"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-body">
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Training Title</th>
+                                        <th>Issue Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var certificate in Model)
+                                    {
+                                        <tr>
+                                            <td>@certificate.TrainingTitle</td>
+                                            <td>@(certificate.IssueDate.HasValue ? certificate.IssueDate.Value.ToString("dd MMM yyyy") : "N/A")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(certificate.CertificatePath))
+                                                {
+                                                    <a href="@certificate.CertificatePath" class="btn btn-sm btn-primary" target="_blank">
+                                                        <i class="fas fa-download me-1"></i> Download
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Not available</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i> You don't have any certificates yet. Complete your trainings to earn certificates.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="@Url.Action("Dashboard", "Employee")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

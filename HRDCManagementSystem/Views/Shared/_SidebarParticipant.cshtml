@@ -29,40 +29,33 @@
         <nav class="participant-nav-container flex-grow-1">
             <ul class="participant-nav">
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Dashboard"
-                       class="participant-nav-link @IsActive("Participants", "Dashboard")">
+                    <a asp-controller="Employee" asp-action="Dashboard"
+                       class="participant-nav-link @IsActive("Employee", "Dashboard")">
                         <i class="bi bi-house-door"></i><span>Dashboard</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="TrainingRegistration"
-                       class="participant-nav-link @IsActive("Participants", "TrainingRegistration")">
+                    <a asp-controller="Training" asp-action="TrainingIndex"
+                       class="participant-nav-link @IsActive("Training", "TrainingIndex")">
                         <i class="bi bi-journal-text"></i><span>Training Registration</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="MyTraining"
-                       class="participant-nav-link @IsActive("Participants", "MyTraining")">
+                    <a asp-controller="Training" asp-action="TrainingIndex"
+                       class="participant-nav-link @IsActive("Training", "TrainingIndex")">
                         <i class="bi bi-journal-check"></i><span>My Trainings</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Certificate"
-                       class="participant-nav-link @IsActive("Participants", "Certificate")">
-                        <i class="bi bi-award"></i><span>Certificate</span>
+                    <a asp-controller="Employee" asp-action="Certificates"
+                       class="participant-nav-link @IsActive("Employee", "Certificates")">
+                        <i class="bi bi-award"></i><span>Certificates</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Feedback"
-                       class="participant-nav-link @IsActive("Participants", "Feedback")">
-                        <i class="bi bi-chat-dots"></i><span>Feedback</span>
-                    </a>
-                </li>
-                <li class="participant-nav-item">
-                    <a asp-controller="Participants" asp-action="Notifications"
-                       class="participant-nav-link @IsActive("Participants", "Notifications")">
-                        <i class="bi bi-bell"></i><span>Notifications</span>
-                        <span class="notification-badge">3</span>
+                    <a asp-controller="Employee" asp-action="Profile"
+                       class="participant-nav-link @IsActive("Employee", "Profile")">
+                        <i class="bi bi-person-circle"></i><span>My Profile</span>
                     </a>
                 </li>
             </ul>
@@ -70,17 +63,19 @@
 
         <!-- User Profile Section -->
         <div class="user-profile">
-            <a asp-controller="Participants" asp-action="Profile"
-               class="profile-link @IsActive("Participants", "Profile")">
+            <a asp-controller="Employee" asp-action="Profile"
+               class="profile-link @IsActive("Employee", "Profile")">
                 <div class="profile-avatar"><i class="bi bi-person-circle"></i></div>
                 <div class="profile-info">
-                    <span class="profile-name">John Doe</span>
-                    <small class="profile-email">john.doe@example.com</small>
+                    <span class="profile-name">@User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</span>
+                    <small class="profile-email">@User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</small>
                 </div>
             </a>
-            <button class="logout-btn" onclick="logout()">
-                <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>
-            </button>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -91,12 +86,6 @@
 </button>
 
 <script>
-    function logout() {
-        if (confirm('Are you sure you want to sign out?')) {
-            window.location.href = '/Account/Login';
-        }
-    }
-
     function toggleSidebar() {
         document.getElementById("participantSidebar").classList.toggle("open");
     }

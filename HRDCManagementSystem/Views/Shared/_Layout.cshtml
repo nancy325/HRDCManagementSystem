@@ -58,7 +58,7 @@
             {
                 @await Html.PartialAsync("_SidebarAdmin")
             }
-            else if (User.IsInRole("User") || User.IsInRole("Participants"))
+            else if (User.IsInRole("Employee") || User.IsInRole("User") || User.IsInRole("Participants"))
             {
                 @await Html.PartialAsync("_SidebarParticipant")
             }
