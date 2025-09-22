@@ -4,9 +4,9 @@
     {
         public Models.Entities.Employee Employee { get; set; }
      
-        public List<TrainingItemViewModel> UpcomingTrainings { get; set; } = new List<TrainingItemViewModel>();
-        public List<TrainingItemViewModel> CompletedTrainings { get; set; } = new List<TrainingItemViewModel>();
-        public List<TrainingItemViewModel> InProgressTrainings { get; set; } = new List<TrainingItemViewModel>();
+        public List<TrainingViewModel> UpcomingTrainings { get; set; } = new List<TrainingViewModel>();
+        public List<TrainingViewModel> CompletedTrainings { get; set; } = new List<TrainingViewModel>();
+        public List<TrainingViewModel> InProgressTrainings { get; set; } = new List<TrainingViewModel>();
         public int CertificatesCount { get; set; } = 0;
     }
 }

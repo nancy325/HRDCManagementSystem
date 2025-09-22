@@ -34,7 +34,7 @@ namespace HRDCManagementSystem.Controllers
                 .Where(e => e.RecStatus == "active")
                 .ToListAsync();
 
-            return View("~/Views/Admin/Employees.cshtml", employees);
+            return View("Employee", employees);
         }
 
         // GET: Employees/Create
@@ -42,21 +42,24 @@ namespace HRDCManagementSystem.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            return View("~/Views/Admin/EmployeeCreate.cshtml", new Employee());
+            return View("EmployeeCreate", new Employee());
         }
 
         // POST: Employees/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(Employee employee, IFormFile ProfilePhoto, string Email, string Password, string Role)
+        public async Task<IActionResult> Create(Employee employee, IFormFile ProfilePhoto, string Email, string Role)
         {
             // First, check email uniqueness before processing other validations
             if (await _context.UserMasters.AnyAsync(u => u.Email == Email && u.RecStatus == "active"))
             {
                 ModelState.AddModelError("Email", "Email already exists.");
-                return View("~/Views/Admin/EmployeeCreate.cshtml", employee);
+                return View("EmployeeCreate", employee);
             }
+
+            // Automatically generate a secure password
+            string generatedPassword = GenerateRandomPassword();
 
             // Create UserMaster with hashed password
             var passwordHasher = new PasswordHasher<UserMaster>();
@@ -67,7 +70,7 @@ namespace HRDCManagementSystem.Controllers
                 RecStatus = "active",
                 CreateDateTime = DateTime.Now
             };
-            user.Password = passwordHasher.HashPassword(user, Password);
+            user.Password = passwordHasher.HashPassword(user, generatedPassword);
 
             try
             {
@@ -85,7 +88,7 @@ namespace HRDCManagementSystem.Controllers
                     if (!result.Success)
                     {
                         ModelState.AddModelError("ProfilePhotoPath", result.ErrorMessage);
-                        return View("~/Views/Admin/EmployeeCreate.cshtml", employee);
+                        return View("EmployeeCreate", employee);
                     }
                     employee.ProfilePhotoPath = result.FileName;
                 }
@@ -99,7 +102,7 @@ namespace HRDCManagementSystem.Controllers
                 // Send welcome email with credentials
                 try
                 {
-                    string emailBody = EmailTemplates.GetWelcomeEmailTemplate(employee.FirstName, Email, Password);
+                    string emailBody = EmailTemplates.GetWelcomeEmailTemplate(employee.FirstName, Email, generatedPassword);
                     await _emailService.SendEmailAsync(Email, "Welcome to HRDC Management System", emailBody);
                     TempData["EmailSent"] = true;
                 }
@@ -110,9 +113,9 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 // Store success message and credentials for display
-                TempData["Success"] = "Employee created successfully.";
+                TempData["Success"] = "Employee created successfully. A secure password has been automatically generated and sent to the employee.";
                 TempData["NewEmployeeEmail"] = Email;
-                TempData["NewEmployeePassword"] = Password;
+                TempData["NewEmployeePassword"] = generatedPassword;
 
                 return Redirect("/Admin/Employees");
             }
@@ -130,7 +133,7 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 ModelState.AddModelError("", $"An error occurred: {ex.Message}");
-                return View("~/Views/Admin/EmployeeCreate.cshtml", employee);
+                return View("EmployeeCreate", employee);
             }
         }
 
@@ -141,7 +144,7 @@ namespace HRDCManagementSystem.Controllers
         {
             var employee = await _context.Employees.FindAsync(id);
             if (employee == null) return NotFound();
-            return View("~/Views/Admin/EmployeeEdit.cshtml", employee);
+            return View("EmployeeEdit", employee);
         }
 
         // POST: Employees/Edit/5
@@ -153,7 +156,7 @@ namespace HRDCManagementSystem.Controllers
             if (id != employee.EmployeeSysID)
             {
                 ModelState.AddModelError("", "Employee not found.");
-                return View("~/Views/Admin/EmployeeEdit.cshtml", employee);
+                return View("EmployeeEdit", employee);
             }
 
             // Important: Retrieve the complete employee with UserSys relationship
@@ -164,7 +167,7 @@ namespace HRDCManagementSystem.Controllers
             if (dbEmployee == null)
             {
                 ModelState.AddModelError("", "Employee not found in database.");
-                return View("~/Views/Admin/EmployeeEdit.cshtml", employee);
+                return View("EmployeeEdit", employee);
             }
 
             // Remove validation errors for these fields since we handle them specially
@@ -182,7 +185,7 @@ namespace HRDCManagementSystem.Controllers
                         if (!result.Success)
                         {
                             ModelState.AddModelError("ProfilePhotoPath", result.ErrorMessage);
-                            return View("~/Views/Admin/EmployeeEdit.cshtml", employee);
+                            return View("EmployeeEdit", employee);
                         }
                         dbEmployee.ProfilePhotoPath = result.FileName;
                     }
@@ -217,7 +220,7 @@ namespace HRDCManagementSystem.Controllers
             
             // If we reach here, there was a validation error
             // Make sure to populate navigation properties for view
-            return View("~/Views/Admin/EmployeeEdit.cshtml", employee);
+            return View("EmployeeEdit", employee);
         }
 
         // GET: Employees/Details/5
@@ -227,7 +230,7 @@ namespace HRDCManagementSystem.Controllers
             var employee = await _context.Employees
                 .FirstOrDefaultAsync(e => e.EmployeeSysID == id && e.RecStatus == "active");
             if (employee == null) return NotFound();
-            return View("~/Views/Admin/EmployeeDetails.cshtml", employee);
+            return View("EmployeeDetail", employee);
         }
 
         // GET: Employees/Delete/5
@@ -237,7 +240,7 @@ namespace HRDCManagementSystem.Controllers
         {
             var employee = await _context.Employees.FindAsync(id);
             if (employee == null) return NotFound();
-            return View("~/Views/Admin/EmployeeDelete.cshtml", employee);
+            return View("EmployeeDelete", employee);
         }
 
         // POST: Employees/Delete/5 (Soft Delete)
@@ -286,19 +289,19 @@ namespace HRDCManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 1. Generate a new password
-            string newPassword = Guid.NewGuid().ToString("N").Substring(0, 8); // 8-char random password
+            // 1. Generate a new password using the same method as employee creation
+            string newPassword = GenerateRandomPassword();
 
             // 2. Update password hash
             var passwordHasher = new PasswordHasher<UserMaster>();
             employee.UserSys.Password = passwordHasher.HashPassword(employee.UserSys, newPassword);
             await _context.SaveChangesAsync();
 
-            // 3. Send email with new password
-            string emailBody = EmailTemplates.GetWelcomeEmailTemplate(employee.FirstName, employee.UserSys.Email, newPassword);
+            // 3. Send email with new password using the password reset template
+            string emailBody = EmailTemplates.GetPasswordResetEmailTemplate(employee.FirstName, employee.UserSys.Email, newPassword);
             try
             {
-                await _emailService.SendEmailAsync(employee.UserSys.Email, "Your HRDC Credentials", emailBody);
+                await _emailService.SendEmailAsync(employee.UserSys.Email, "HRDC Management System - Password Reset", emailBody);
                 TempData["Success"] = "Credentials resent successfully.";
                 TempData["NewEmployeeEmail"] = employee.UserSys.Email;
                 TempData["NewEmployeePassword"] = newPassword;
@@ -392,9 +395,16 @@ namespace HRDCManagementSystem.Controllers
                 return View(employee);
             }
 
-            // Remove validation errors for UserSys and ProfilePhotoPath
+            // Remove validation errors for fields that employees cannot edit and optional fields
             ModelState.Remove("UserSys");
             ModelState.Remove("ProfilePhotoPath");
+            ModelState.Remove("Department");
+            ModelState.Remove("Designation");
+            ModelState.Remove("Institute");
+            ModelState.Remove("Type");
+            ModelState.Remove("JoinDate");
+            ModelState.Remove("LeftDate");
+            ModelState.Remove("UserSysID");
 
             if (ModelState.IsValid)
             {
@@ -487,14 +497,24 @@ namespace HRDCManagementSystem.Controllers
                     .ToListAsync();
 
                 var upcomingTrainings = upcomingTrainingData
-                    .Select(tr => new TrainingItemViewModel
+                    .Select(tr => new TrainingViewModel
                     {
+                        TrainingSysID = tr.TrainingSys.TrainingSysID,
                         Title = tr.TrainingSys.Title,
-                        StartDate = tr.TrainingSys.StartDate.ToDateTime(TimeOnly.MinValue),
-                        FromTime = tr.TrainingSys.fromTime.ToString("hh:mm tt"),
-                        ToTime = tr.TrainingSys.toTime.ToString("hh:mm tt"),
+                        StartDate = tr.TrainingSys.StartDate,
+                        EndDate = tr.TrainingSys.EndDate,
+                        FromTime = tr.TrainingSys.fromTime,
+                        ToTime = tr.TrainingSys.toTime,
                         Venue = tr.TrainingSys.Venue,
-                        TrainerName = tr.TrainingSys.TrainerName
+                        TrainerName = tr.TrainingSys.TrainerName,
+                        Mode = tr.TrainingSys.Mode,
+                        Status = tr.TrainingSys.Status,
+                        Capacity = tr.TrainingSys.Capacity,
+                        EligibilityType = tr.TrainingSys.EligibilityType,
+                        ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
+                        MarksOutOf = tr.TrainingSys.MarksOutOf,
+                        IsMarksEntry = tr.TrainingSys.IsMarksEntry,
+                        ExistingPath = tr.TrainingSys.FilePath
                     })
                     .ToList();
 
@@ -510,14 +530,24 @@ namespace HRDCManagementSystem.Controllers
                     .ToListAsync();
 
                 var inProgressTrainings = inProgressTrainingData
-                    .Select(tr => new TrainingItemViewModel
+                    .Select(tr => new TrainingViewModel
                     {
+                        TrainingSysID = tr.TrainingSys.TrainingSysID,
                         Title = tr.TrainingSys.Title,
-                        StartDate = tr.TrainingSys.StartDate.ToDateTime(TimeOnly.MinValue),
-                        FromTime = tr.TrainingSys.fromTime.ToString("hh:mm tt"),
-                        ToTime = tr.TrainingSys.toTime.ToString("hh:mm tt"),
+                        StartDate = tr.TrainingSys.StartDate,
+                        EndDate = tr.TrainingSys.EndDate,
+                        FromTime = tr.TrainingSys.fromTime,
+                        ToTime = tr.TrainingSys.toTime,
                         Venue = tr.TrainingSys.Venue,
-                        TrainerName = tr.TrainingSys.TrainerName
+                        TrainerName = tr.TrainingSys.TrainerName,
+                        Mode = tr.TrainingSys.Mode,
+                        Status = tr.TrainingSys.Status,
+                        Capacity = tr.TrainingSys.Capacity,
+                        EligibilityType = tr.TrainingSys.EligibilityType,
+                        ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
+                        MarksOutOf = tr.TrainingSys.MarksOutOf,
+                        IsMarksEntry = tr.TrainingSys.IsMarksEntry,
+                        ExistingPath = tr.TrainingSys.FilePath
                     })
                     .ToList();
 
@@ -532,14 +562,24 @@ namespace HRDCManagementSystem.Controllers
                     .ToListAsync();
 
                 var completedTrainings = completedTrainingData
-                    .Select(tr => new TrainingItemViewModel
+                    .Select(tr => new TrainingViewModel
                     {
+                        TrainingSysID = tr.TrainingSys.TrainingSysID,
                         Title = tr.TrainingSys.Title,
-                        StartDate = tr.TrainingSys.StartDate.ToDateTime(TimeOnly.MinValue),
-                        FromTime = tr.TrainingSys.fromTime.ToString("hh:mm tt"),
-                        ToTime = tr.TrainingSys.toTime.ToString("hh:mm tt"),
+                        StartDate = tr.TrainingSys.StartDate,
+                        EndDate = tr.TrainingSys.EndDate,
+                        FromTime = tr.TrainingSys.fromTime,
+                        ToTime = tr.TrainingSys.toTime,
                         Venue = tr.TrainingSys.Venue,
-                        TrainerName = tr.TrainingSys.TrainerName
+                        TrainerName = tr.TrainingSys.TrainerName,
+                        Mode = tr.TrainingSys.Mode,
+                        Status = tr.TrainingSys.Status,
+                        Capacity = tr.TrainingSys.Capacity,
+                        EligibilityType = tr.TrainingSys.EligibilityType,
+                        ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
+                        MarksOutOf = tr.TrainingSys.MarksOutOf,
+                        IsMarksEntry = tr.TrainingSys.IsMarksEntry,
+                        ExistingPath = tr.TrainingSys.FilePath
                     })
                     .ToList();
 
@@ -637,6 +677,15 @@ namespace HRDCManagementSystem.Controllers
                 file.CopyTo(stream);
             }
             return (true, fileName, null);
+        }
+
+        // Helper method to generate a random password
+        private string GenerateRandomPassword()
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; // Excludes confusing characters like 0, O, I, l, 1
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 10)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
         [HttpGet("/Admin/Employees")]

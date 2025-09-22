@@ -1,6 +1,7 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models;
 using HRDCManagementSystem.Models.Entities;
+using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -165,8 +166,6 @@ namespace HRDCManagementSystem.Controllers
             return View();
         }
 
-
-
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
@@ -186,19 +185,24 @@ namespace HRDCManagementSystem.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            var profile = new ProfileViewModel
-            {
-                Email = user.Email,
-                Role = user.Role
-            };
+            var profile = new EmployeeViewModel();
 
             if (user.Employees?.Any() == true)
             {
                 var employee = user.Employees.First();
+                profile.EmployeeSysID = employee.EmployeeSysID;
                 profile.FirstName = employee.FirstName;
+                profile.MiddleName = employee.MiddleName;
                 profile.LastName = employee.LastName;
                 profile.Department = employee.Department;
                 profile.Designation = employee.Designation;
+                profile.Institute = employee.Institute;
+                profile.PhoneNumber = employee.PhoneNumber;
+                profile.AlternatePhone = employee.AlternatePhone;
+                profile.Type = employee.Type;
+                profile.ProfilePhotoPath = employee.ProfilePhotoPath;
+                profile.JoinDate = employee.JoinDate;
+                profile.Leftdate = employee.LeftDate;
             }
 
             return View(profile);

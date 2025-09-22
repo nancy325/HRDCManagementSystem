@@ -10,6 +10,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Edit Your Profile</h5>
+                    <small class="text-muted">You can only edit your personal information. Contact your administrator to change work-related details.</small>
                 </div>
                 <div class="card-body">
                     @if (TempData["Error"] != null)
@@ -28,6 +29,13 @@
                     <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
                         <input type="hidden" asp-for="EmployeeSysID" />
                         <input type="hidden" asp-for="UserSysID" />
+                        <input type="hidden" asp-for="Department" />
+                        <input type="hidden" asp-for="Designation" />
+                        <input type="hidden" asp-for="Institute" />
+                        <input type="hidden" asp-for="Type" />
+                        <input type="hidden" asp-for="JoinDate" />
+                        <input type="hidden" asp-for="LeftDate" />
+                        <input type="hidden" asp-for="ProfilePhotoPath" />
                         <div asp-validation-summary="All" class="text-danger"></div>
                         
                         <div class="row">
@@ -43,51 +51,98 @@
                                     </div>
                                 }
                                 <div class="mb-3">
-                                    <label class="form-label">Profile Photo (.jpg, .jpeg, .png, max 2MB)</label>
+                                    <label class="form-label">Profile Photo <small class="text-muted">(Optional)</small></label>
                                     <input type="file" name="ProfilePhoto" class="form-control" accept=".jpg,.jpeg,.png" />
+                                    <div class="form-text">Accepted formats: .jpg, .jpeg, .png (max 2MB)</div>
                                     <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
                                 </div>
                             </div>
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="FirstName" class="form-label"></label>
-                                    <input asp-for="FirstName" class="form-control" />
+                                    <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input asp-for="FirstName" class="form-control" required />
                                     <span asp-validation-for="FirstName" class="text-danger"></span>
                                 </div>
                                 <div class="mb-3">
-                                    <label asp-for="MiddleName" class="form-label"></label>
-                                    <input asp-for="MiddleName" class="form-control" />
+                                    <label asp-for="MiddleName" class="form-label">Middle Name <span class="text-danger">*</span></label>
+                                    <input asp-for="MiddleName" class="form-control" required />
                                     <span asp-validation-for="MiddleName" class="text-danger"></span>
                                 </div>
                                 <div class="mb-3">
-                                    <label asp-for="LastName" class="form-label"></label>
-                                    <input asp-for="LastName" class="form-control" />
+                                    <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input asp-for="LastName" class="form-control" required />
                                     <span asp-validation-for="LastName" class="text-danger"></span>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="PhoneNumber" class="form-label"></label>
-                                    <input asp-for="PhoneNumber" class="form-control" />
+                                    <label asp-for="PhoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    <input asp-for="PhoneNumber" class="form-control" required />
                                     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="AlternatePhone" class="form-label"></label>
+                                    <label asp-for="AlternatePhone" class="form-label">Alternate Phone</label>
                                     <input asp-for="AlternatePhone" class="form-control" />
                                     <span asp-validation-for="AlternatePhone" class="text-danger"></span>
                                 </div>
+                                
+                                <!-- Required Fields Note -->
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <span class="text-danger">*</span> Required fields
+                                    </small>
+                                </div>
+                                
+                                <!-- Work Information (Read-only) -->
+                                <div class="mt-4">
+                                    <h6 class="text-muted">Work Information <small>(Contact admin to change)</small></h6>
+                                    <div class="card bg-light">
+                                        <div class="card-body py-2">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small><strong>Department:</strong></small><br>
+                                                    <small class="text-muted">@Model.Department</small>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small><strong>Designation:</strong></small><br>
+                                                    <small class="text-muted">@Model.Designation</small>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-6">
+                                                    <small><strong>Institute:</strong></small><br>
+                                                    <small class="text-muted">@Model.Institute</small>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small><strong>Employee Type:</strong></small><br>
+                                                    <small class="text-muted">@Model.Type</small>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-6">
+                                                    <small><strong>Join Date:</strong></small><br>
+                                                    <small class="text-muted">@Model.JoinDate?.ToString("dd/MM/yyyy")</small>
+                                                </div>
+                                                @if (Model.LeftDate.HasValue)
+                                                {
+                                                    <div class="col-6">
+                                                        <small><strong>Left Date:</strong></small><br>
+                                                        <small class="text-muted">@Model.LeftDate?.ToString("dd/MM/yyyy")</small>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                            <a href="@Url.Action("Profile", "Employee")" class="btn btn-secondary">Cancel</a>
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Update Profile
+                            </button>
+                            <a asp-action="Profile" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Profile
+                            </a>
                         </div>
                     </form>
                 </div>

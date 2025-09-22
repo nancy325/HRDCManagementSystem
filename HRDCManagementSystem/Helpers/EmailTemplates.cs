@@ -44,5 +44,92 @@ namespace HRDCManagementSystem.Helpers
                 </html>
             ";
         }
+
+        public static string GetPasswordResetEmailTemplate(string firstName, string email, string newPassword)
+        {
+            return $@"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                        .header {{ background-color: #1976d2; color: white; padding: 20px; text-align: center; }}
+                        .content {{ padding: 20px; background-color: #f9f9f9; }}
+                        .credentials {{ background-color: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #ffc107; }}
+                        .footer {{ text-align: center; margin-top: 20px; font-size: 12px; color: #777; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>
+                            <h2>HRDC Management System - Password Reset</h2>
+                        </div>
+                        <div class='content'>
+                            <p>Dear {firstName},</p>
+                            <p>Your password has been reset for the HRDC Management System. Please use the following credentials to log in:</p>
+                            
+                            <div class='credentials'>
+                                <p><strong>Username/Email:</strong> {email}</p>
+                                <p><strong>New Password:</strong> {newPassword}</p>
+                            </div>
+                            
+                            <p><strong>Important:</strong> For security reasons, please change your password immediately after logging in.</p>
+                            <p>If you did not request this password reset, please contact your administrator immediately.</p>
+                            
+                            <p>Best regards,<br>HRDC Management Team</p>
+                        </div>
+                        <div class='footer'>
+                            <p>This is an automated message. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            ";
+        }
+
+        public static string GetTrainingRegistrationEmailTemplate(string firstName, string trainingTitle, DateTime startDate, DateTime endDate, string venue)
+        {
+            return $@"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                        .header {{ background-color: #28a745; color: white; padding: 20px; text-align: center; }}
+                        .content {{ padding: 20px; background-color: #f9f9f9; }}
+                        .training-info {{ background-color: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745; }}
+                        .footer {{ text-align: center; margin-top: 20px; font-size: 12px; color: #777; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>
+                            <h2>Training Registration Confirmation</h2>
+                        </div>
+                        <div class='content'>
+                            <p>Dear {firstName},</p>
+                            <p>You have been successfully registered for the following training:</p>
+                            
+                            <div class='training-info'>
+                                <p><strong>Training Title:</strong> {trainingTitle}</p>
+                                <p><strong>Start Date:</strong> {startDate:dd/MM/yyyy}</p>
+                                <p><strong>End Date:</strong> {endDate:dd/MM/yyyy}</p>
+                                <p><strong>Venue:</strong> {venue}</p>
+                            </div>
+                            
+                            <p>Please make sure to attend the training sessions as scheduled. Further details will be provided by the training coordinator.</p>
+                            
+                            <p>Best regards,<br>HRDC Management Team</p>
+                        </div>
+                        <div class='footer'>
+                            <p>This is an automated message. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            ";
+        }
     }
 }

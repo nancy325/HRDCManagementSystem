@@ -1,0 +1,115 @@
+@model HRDCManagementSystem.Models.Entities.Employee
+@{
+    ViewData["Title"] = "Edit Employee";
+}
+<div class="container mt-4">
+    <h3>Edit Employee</h3>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="EmployeeSysID" />
+        <input type="hidden" asp-for="UserSysID" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Employee Personal Information -->
+                <div class="mb-3">
+                    <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                    <input asp-for="FirstName" class="form-control" required />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="MiddleName" class="form-label">Middle Name <span class="text-danger">*</span></label>
+                    <input asp-for="MiddleName" class="form-control" required />
+                    <span asp-validation-for="MiddleName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                    <input asp-for="LastName" class="form-control" required />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Department" class="form-label">Department <span class="text-danger">*</span></label>
+                    <input asp-for="Department" class="form-control" required />
+                    <span asp-validation-for="Department" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Designation" class="form-label">Designation <span class="text-danger">*</span></label>
+                    <input asp-for="Designation" class="form-control" required />
+                    <span asp-validation-for="Designation" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Institute" class="form-label">Institute <span class="text-danger">*</span></label>
+                    <input asp-for="Institute" class="form-control" required />
+                    <span asp-validation-for="Institute" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Type" class="form-label">Type <span class="text-danger">*</span></label>
+                    <input asp-for="Type" class="form-control" required />
+                    <span asp-validation-for="Type" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                    <input asp-for="PhoneNumber" class="form-control" required />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="AlternatePhone" class="form-label">Alternate Phone</label>
+                    <input asp-for="AlternatePhone" class="form-control" />
+                    <span asp-validation-for="AlternatePhone" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="JoinDate" class="form-label">Join Date <span class="text-danger">*</span></label>
+                    <input asp-for="JoinDate" type="date" class="form-control" required />
+                    <span asp-validation-for="JoinDate" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="LeftDate" class="form-label">Left Date</label>
+                    <input asp-for="LeftDate" type="date" class="form-control" />
+                    <span asp-validation-for="LeftDate" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Profile Photo (Optional) -->
+                <div class="mb-3">
+                    <label class="form-label">Profile Photo <small class="text-muted">(Optional)</small></label>
+                    <input type="file" name="ProfilePhoto" class="form-control" accept=".jpg,.jpeg,.png" />
+                    <div class="form-text">Accepted formats: .jpg, .jpeg, .png (max 2MB). Leave empty to keep existing photo.</div>
+                    @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+                    {
+                        <div class="mt-2">
+                            <small class="text-muted">Current photo:</small><br>
+                            <img src="~/images/profilephoto/@Model.ProfilePhotoPath" alt="Profile" width="80" height="80" class="rounded-circle mt-1" />
+                        </div>
+                    }
+                    <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
+                </div>
+                
+                <!-- Required Fields Note -->
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-info-circle"></i> 
+                            <span class="text-danger">*</span> Required fields
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Update Employee
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
