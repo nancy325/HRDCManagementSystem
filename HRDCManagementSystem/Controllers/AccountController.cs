@@ -20,43 +20,43 @@ namespace HRDCManagementSystem.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult Registration()
-        {
-            return View();
-        }
+        //[HttpGet]
+        //public IActionResult Registration()
+        //{
+        //    return View();
+        //}
 
-        [HttpPost]
-        public async Task<IActionResult> Registration(RegistrationViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
+        //[HttpPost]
+        //public async Task<IActionResult> Registration(RegistrationViewModel model)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return View(model);
 
-            var existingUser = await _context.UserMasters
-                .FirstOrDefaultAsync(u => u.Email == model.Email && u.RecStatus == "active");
+        //    var existingUser = await _context.UserMasters
+        //        .FirstOrDefaultAsync(u => u.Email == model.Email && u.RecStatus == "active");
 
-            if (existingUser != null)
-            {
-                ModelState.AddModelError("Email", "Email already exists");
-                return View(model);
-            }
+        //    if (existingUser != null)
+        //    {
+        //        ModelState.AddModelError("Email", "Email already exists");
+        //        return View(model);
+        //    }
 
-            // Hash the password
-            var passwordHasher = new PasswordHasher<UserMaster>();
-            var newUser = new UserMaster
-            {
-                Email = model.Email,
-                Role = model.Role
-            };
-            newUser.Password = passwordHasher.HashPassword(newUser, model.Password);
+        //    // Hash the password
+        //    var passwordHasher = new PasswordHasher<UserMaster>();
+        //    var newUser = new UserMaster
+        //    {
+        //        Email = model.Email,
+        //        Role = model.Role
+        //    };
+        //    newUser.Password = passwordHasher.HashPassword(newUser, model.Password);
 
-            _context.UserMasters.Add(newUser);
-            await _context.SaveChangesAsync();
+        //    _context.UserMasters.Add(newUser);
+        //    await _context.SaveChangesAsync();
 
-            await LoginUserAsync(newUser, RecoverPassword: false);
+        //    await LoginUserAsync(newUser, RecoverPassword: false);
             
-            return RedirectToAction("Dashboard", newUser.Role == "Admin" ? "Admin" : "Employee");
-        }
+        //    return RedirectToAction("Dashboard", newUser.Role == "Admin" ? "Admin" : "Employee");
+        //}
 
 
         [HttpGet]
