@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using HRDCManagementSystem.Models.Entities;
+﻿using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -64,7 +60,7 @@ public partial class HRDCContext : DbContext
     public virtual DbSet<TrainingProgram> TrainingPrograms { get; set; }
     public virtual DbSet<TrainingRegistration> TrainingRegistrations { get; set; }
     public virtual DbSet<UserMaster> UserMasters { get; set; }
-  
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

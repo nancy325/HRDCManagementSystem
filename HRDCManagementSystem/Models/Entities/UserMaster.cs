@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class UserMaster: BaseEntity
+public partial class UserMaster : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -18,6 +15,6 @@ public partial class UserMaster: BaseEntity
 
     public string Role { get; set; } = null!;
 
-   
+
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 }

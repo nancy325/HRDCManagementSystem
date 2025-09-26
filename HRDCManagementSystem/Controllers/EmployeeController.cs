@@ -1,13 +1,12 @@
 ﻿using HRDCManagementSystem.Data;
+using HRDCManagementSystem.Helpers;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
+using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using HRDCManagementSystem.Services;
-using HRDCManagementSystem.Helpers;
-using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
 namespace HRDCManagementSystem.Controllers
@@ -163,7 +162,7 @@ namespace HRDCManagementSystem.Controllers
             var dbEmployee = await _context.Employees
                 .Include(e => e.UserSys)
                 .FirstOrDefaultAsync(e => e.EmployeeSysID == id);
-                
+
             if (dbEmployee == null)
             {
                 ModelState.AddModelError("", "Employee not found in database.");
@@ -173,7 +172,7 @@ namespace HRDCManagementSystem.Controllers
             // Remove validation errors for these fields since we handle them specially
             ModelState.Remove("UserSys");
             ModelState.Remove("ProfilePhotoPath");
-            
+
             if (ModelState.IsValid)
             {
                 try
@@ -206,7 +205,7 @@ namespace HRDCManagementSystem.Controllers
                     dbEmployee.ModifiedDateTime = DateTime.Now;
 
                     // UserSysID remains unchanged - we don't assign employee.UserSysID to dbEmployee.UserSysID
-                    
+
                     _context.Update(dbEmployee);
                     await _context.SaveChangesAsync();
                     TempData["Success"] = "Employee updated successfully.";
@@ -217,7 +216,7 @@ namespace HRDCManagementSystem.Controllers
                     ModelState.AddModelError("", $"An error occurred while updating: {ex.Message}");
                 }
             }
-            
+
             // If we reach here, there was a validation error
             // Make sure to populate navigation properties for view
             return View("EmployeeEdit", employee);
@@ -453,10 +452,10 @@ namespace HRDCManagementSystem.Controllers
             {
                 // Get the currently logged in user email
                 var currentUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
+
                 // Debug: Log all claims for troubleshooting
                 var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
-                
+
                 if (string.IsNullOrEmpty(currentUser))
                 {
                     return RedirectToAction("Login", "Account");
@@ -476,7 +475,7 @@ namespace HRDCManagementSystem.Controllers
                             .Include(e => e.UserSys)
                             .FirstOrDefaultAsync(e => e.UserSysID == userSysId && e.RecStatus == "active");
                     }
-                    
+
                     if (employee == null)
                     {
                         return NotFound("Employee record not found. Please contact administrator.");
@@ -489,7 +488,7 @@ namespace HRDCManagementSystem.Controllers
                 // Get upcoming trainings for this employee - Fix: Split query into two parts
                 var upcomingTrainingData = await _context.TrainingRegistrations
                     .Include(tr => tr.TrainingSys)
-                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
+                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
                                 tr.TrainingSys.StartDate > currentDate &&
                                 tr.RecStatus == "active" &&
                                 tr.TrainingSys.RecStatus == "active")
@@ -521,7 +520,7 @@ namespace HRDCManagementSystem.Controllers
                 // Get in-progress trainings (started but not ended yet) - Fix: Split query into two parts
                 var inProgressTrainingData = await _context.TrainingRegistrations
                     .Include(tr => tr.TrainingSys)
-                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
+                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
                                 tr.TrainingSys.StartDate <= currentDate &&
                                 tr.TrainingSys.EndDate >= currentDate &&
                                 tr.RecStatus == "active" &&
@@ -554,7 +553,7 @@ namespace HRDCManagementSystem.Controllers
                 // Get completed trainings - Fix: Split query into two parts
                 var completedTrainingData = await _context.TrainingRegistrations
                     .Include(tr => tr.TrainingSys)
-                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
+                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
                                 tr.TrainingSys.EndDate < currentDate &&
                                 tr.RecStatus == "active" &&
                                 tr.TrainingSys.RecStatus == "active")
@@ -585,8 +584,8 @@ namespace HRDCManagementSystem.Controllers
 
                 // Get certificates count
                 var certificatesCount = await _context.Certificates
-                    .CountAsync(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID && 
-                                   c.IsGenerated == true && 
+                    .CountAsync(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID &&
+                                   c.IsGenerated == true &&
                                    c.RecStatus == "active");
 
                 // Create the dashboard view model
@@ -634,8 +633,8 @@ namespace HRDCManagementSystem.Controllers
             var certificates = await _context.Certificates
                 .Include(c => c.RegSys)
                 .ThenInclude(r => r.TrainingSys)
-                .Where(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID && 
-                            c.IsGenerated == true && 
+                .Where(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID &&
+                            c.IsGenerated == true &&
                             c.RecStatus == "active")
                 .Select(c => new CertificateViewModel
                 {
@@ -664,14 +663,14 @@ namespace HRDCManagementSystem.Controllers
 
             var fileName = Guid.NewGuid() + ext;
             var savePath = Path.Combine(_env.WebRootPath, "images/profilephoto", fileName);
-            
+
             // Make sure directory exists
             var directory = Path.GetDirectoryName(savePath);
-            if (!Directory.Exists(directory))   
+            if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             using (var stream = new FileStream(savePath, FileMode.Create))
             {
                 file.CopyTo(stream);

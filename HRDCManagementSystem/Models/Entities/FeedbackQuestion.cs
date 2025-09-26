@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace HRDCManagementSystem.Models.Entities;
 
-namespace HRDCManagementSystem.Models.Entities;
-
-public partial class FeedbackQuestion: BaseEntity
+public partial class FeedbackQuestion : BaseEntity
 {
     public int QuestionID { get; set; }
 

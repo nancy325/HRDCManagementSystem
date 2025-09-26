@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRDCManagementSystem.Models.Entities;
@@ -18,5 +16,5 @@ public partial class Attendance : BaseEntity
 
     public bool IsPresent { get; set; }
 
-    public virtual TrainingRegistration? TrainingRegSys{ get; set; }
+    public virtual TrainingRegistration? TrainingRegSys { get; set; }
 }

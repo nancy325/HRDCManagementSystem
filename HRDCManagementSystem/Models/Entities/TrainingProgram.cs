@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class TrainingProgram: BaseEntity
+public partial class TrainingProgram : BaseEntity
 {
     [Key]
     public int TrainingSysID { get; set; }
@@ -41,11 +39,11 @@ public partial class TrainingProgram: BaseEntity
     public string Mode { get; set; } = null!;
 
     public string Status { get; set; } = null!;
-    
+
     public int? MarksOutOf { get; set; }
 
     public bool IsMarksEntry { get; set; }
 
-    
+
     public virtual ICollection<TrainingRegistration> TrainingRegistrations { get; set; } = new List<TrainingRegistration>();
 }

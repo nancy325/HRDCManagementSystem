@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HRDCManagementSystem.Models.Admin
+﻿namespace HRDCManagementSystem.Models.Admin
 {
     public class AdminDashboardViewModel
     {

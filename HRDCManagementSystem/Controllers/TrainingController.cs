@@ -1,15 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using HRDCManagementSystem.Data;
-using System.Linq;
-using Microsoft.AspNetCore.Authorization;
+﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace HRDCManagementSystem.Controllers
-{   
+{
     public class TrainingController : Controller
     {
         private readonly HRDCContext _context;
@@ -20,6 +18,7 @@ namespace HRDCManagementSystem.Controllers
         }
 
         [HttpGet]
+        [ActionName("TrainingIndex")]
         public async Task<ActionResult> TrainingIndex()
         {
             var trainings = await _context.TrainingPrograms
@@ -31,25 +30,45 @@ namespace HRDCManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> Details(int id)
+        [ActionName("Details")]
+        public async Task<ActionResult> DetailsTraining(int id)
         {
             var training = await _context.TrainingPrograms
                 .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
+
             if (training == null)
             {
                 return NotFound();
             }
-            return View(MapToViewModel(training));
+
+            var viewModel = MapToViewModel(training);
+
+            // If there is a file, pass its relative URL to the view so the user can open it in a new tab
+            if (!string.IsNullOrEmpty(training.FilePath))
+            {
+                // Ensure the file path is a web path (starts with /)
+                viewModel.ExistingPath = training.FilePath.StartsWith("/")
+                    ? training.FilePath
+                    : "/" + training.FilePath;
+            }
+            else
+            {
+                viewModel.ExistingPath = null;
+            }
+
+            return View("Details", viewModel);
         }
 
-        // Keep old route used by list page button
+
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public ActionResult CreateTraining()
         {
-            return RedirectToAction(nameof(Create));
+            return View("CreateTraining", new TrainingViewModel());
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View("CreateTraining", new TrainingViewModel());
@@ -58,7 +77,8 @@ namespace HRDCManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> Create(TrainingViewModel viewModel)
+        [ActionName("Create")]
+        public async Task<ActionResult> CreateTrainingTraining(TrainingViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {
@@ -95,7 +115,8 @@ namespace HRDCManagementSystem.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> EditTraining(int id)
+        [ActionName("EditTraining")]
+        public async Task<ActionResult> EditTrainingTraining(int id)
         {
             var training = await _context.TrainingPrograms
                 .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
@@ -104,13 +125,14 @@ namespace HRDCManagementSystem.Controllers
 
             var viewModel = MapToViewModel(training);
             ViewData["TrainingSysID"] = id;
-            return View(viewModel);
+            return View("EditTraining", viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> EditTraining(int id, TrainingViewModel model, IFormFile? newFile)
+        [ActionName("EditTraining")]
+        public async Task<IActionResult> EditTrainingTraining(int id, TrainingViewModel model)
         {
             if (id != model.TrainingSysID)
             {
@@ -119,7 +141,7 @@ namespace HRDCManagementSystem.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View("EditTraining", model);
             }
 
             try
@@ -167,27 +189,29 @@ namespace HRDCManagementSystem.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Unable to update training. Error: {ex.Message}");
-                return View(model);
+                return View("EditTraining", model);
             }
         }
 
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteTraining(int id)
+        [ActionName("DeleteTraining")]
+        public async Task<ActionResult> DeleteTrainingTraining(int id)
         {
             var training = await _context.TrainingPrograms
                 .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
             if (training == null)
                 return NotFound();
 
-            return View(MapToViewModel(training));
+            return View("DeleteTraining", MapToViewModel(training));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles ="Admin")]
-        public async Task<ActionResult> ConfirmDelete(int id)
+        [Authorize(Roles = "Admin")]
+        [ActionName("ConfirmDelete")]
+        public async Task<ActionResult> ConfirmDeleteTraining(int id)
         {
             var training = await _context.TrainingPrograms
                 .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
@@ -257,7 +281,7 @@ namespace HRDCManagementSystem.Controllers
             entity.Venue = vm.Venue;
             entity.EligibilityType = vm.EligibilityType;
             entity.Capacity = vm.Capacity;
-             entity.Mode = vm.Mode;
+            entity.Mode = vm.Mode;
             entity.Status = vm.Status;
             entity.MarksOutOf = vm.MarksOutOf;
             entity.IsMarksEntry = vm.IsMarksEntry;

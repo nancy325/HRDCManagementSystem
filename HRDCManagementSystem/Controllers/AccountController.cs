@@ -54,7 +54,7 @@ namespace HRDCManagementSystem.Controllers
         //    await _context.SaveChangesAsync();
 
         //    await LoginUserAsync(newUser, RecoverPassword: false);
-            
+
         //    return RedirectToAction("Dashboard", newUser.Role == "Admin" ? "Admin" : "Employee");
         //}
 

@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRDCManagementSystem.Models.Entities;
 
-public partial class Feedback: BaseEntity
+public partial class Feedback : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int FeedbackID { get; set; }
     [ForeignKey("TrainingRegSysID")]
     public int TrainingRegSysID { get; set; }
-    
+
     [ForeignKey("QuestionID")]
     public int? QuestionID { get; set; }
 

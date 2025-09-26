@@ -1,7 +1,6 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.Threading.Tasks;
 
 namespace HRDCManagementSystem.Services
 {
@@ -12,7 +11,7 @@ namespace HRDCManagementSystem.Services
         public SmtpEmailService(EmailSettings emailSettings)
         {
             _emailSettings = emailSettings;
-        }               
+        }
 
         public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
         {
@@ -35,13 +34,13 @@ namespace HRDCManagementSystem.Services
             {
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
-                
+
                 // Add multiple recipients
                 foreach (var recipient in to)
                 {
                     message.To.Add(new MailboxAddress("", recipient));
                 }
-                
+
                 message.Subject = subject;
 
                 var bodyBuilder = new BodyBuilder();
@@ -67,7 +66,7 @@ namespace HRDCManagementSystem.Services
                 using (var client = new SmtpClient())
                 {
                     // Configure SSL certificate validation
-                    client.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => 
+                    client.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
                     {
                         // In production, you should validate the certificate properly
                         // For now, accept all certificates for Gmail
@@ -80,8 +79,8 @@ namespace HRDCManagementSystem.Services
                     {
                         // Port 465 typically uses SSL from the start
                         // Port 587 typically uses StartTLS
-                        secureSocketOptions = _emailSettings.Port == 465 
-                            ? SecureSocketOptions.SslOnConnect 
+                        secureSocketOptions = _emailSettings.Port == 465
+                            ? SecureSocketOptions.SslOnConnect
                             : SecureSocketOptions.StartTls;
                     }
                     else
@@ -96,7 +95,7 @@ namespace HRDCManagementSystem.Services
                     {
                         await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
                     }
-                    
+
                     await client.SendAsync(message);
                     await client.DisconnectAsync(true);
                 }

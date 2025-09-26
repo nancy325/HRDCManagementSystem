@@ -36,7 +36,19 @@
 
         <dt class="col-sm-3">Status</dt>
         <dd class="col-sm-9">@Model.Status</dd>
+
+        <dt class="col-sm-3">File</dt>
+        <dd class="col-sm-9">
+            @if (!string.IsNullOrEmpty(Model.ExistingPath))
+            {
+                <a href="@Url.Content(Model.ExistingPath)" target="_blank">View File</a>
+            }
+            else
+            {
+                <span>No file uploaded.</span>
+            }
     </dl>
+
 
     <div class="mt-3">
         <a asp-action="EditTraining" asp-route-id="@Model.TrainingSysID" class="btn btn-warning">Edit</a>

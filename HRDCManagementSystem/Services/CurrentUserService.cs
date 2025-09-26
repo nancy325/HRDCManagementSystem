@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-
-namespace HRDCManagementSystem.Services
+﻿namespace HRDCManagementSystem.Services
 {
     public class CurrentUserService : ICurrentUserService
     {

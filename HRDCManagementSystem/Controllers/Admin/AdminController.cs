@@ -1,6 +1,5 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Admin;
-using HRDCManagementSystem.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
