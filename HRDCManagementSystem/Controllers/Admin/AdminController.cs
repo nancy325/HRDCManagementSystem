@@ -27,7 +27,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                 OverallCompletionRate = await CalculateCompletionRate(),
                 UpcomingTrainings = await GetUpcomingTrainings(),
                 OngoingTrainings = await GetOngoingTrainings(),
-                CompletedTrainings = await GetCompletedTrainings(),
+                CompletedTrainings = await GetCompletedTrainings(), // This will now show past trainings
                 PendingApprovals = await GetPendingApprovals(),
                 PendingFeedbackCount = await GetPendingFeedbackCount(),
                 UpcomingTrainingCount = await _context.TrainingPrograms.CountAsync(tp => tp.StartDate > currentDate && tp.RecStatus == "active"),
@@ -106,9 +106,13 @@ namespace HRDCManagementSystem.Controllers.Admin
 
         private async Task<List<TrainingProgramViewModel>> GetCompletedTrainings()
         {
-            // Fix: Split query to avoid EF translation issues
+            // Show past trainings: Completed or EndDate in the past
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
             var trainingData = await _context.TrainingPrograms
-                .Where(tp => tp.Status == "Completed" && tp.RecStatus == "active")
+                .Where(tp => 
+                    (tp.Status == "Completed" || tp.EndDate < today) 
+                    && tp.RecStatus == "active")
                 .OrderByDescending(tp => tp.EndDate)
                 .Take(5)
                 .ToListAsync();

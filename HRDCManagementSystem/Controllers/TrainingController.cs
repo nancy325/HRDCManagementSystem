@@ -43,13 +43,27 @@ namespace HRDCManagementSystem.Controllers
 
             var viewModel = MapToViewModel(training);
 
-            // If there is a file, pass its relative URL to the view so the user can open it in a new tab
+            // If there is a file, check if it exists on disk and pass its relative URL to the view
             if (!string.IsNullOrEmpty(training.FilePath))
             {
                 // Ensure the file path is a web path (starts with /)
-                viewModel.ExistingPath = training.FilePath.StartsWith("/")
+                var relativePath = training.FilePath.StartsWith("/")
                     ? training.FilePath
                     : "/" + training.FilePath;
+
+                // Map the relative path to the physical path
+                var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath.TrimStart('/'));
+
+                if (System.IO.File.Exists(physicalPath))
+                {
+                    viewModel.ExistingPath = relativePath;
+                }
+                else
+                {
+                    // File does not exist, so do not provide a link
+                    viewModel.ExistingPath = null;
+                    ViewBag.FileError = "The uploaded file could not be found or is unavailable.";
+                }
             }
             else
             {
