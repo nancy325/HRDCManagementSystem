@@ -27,7 +27,7 @@ namespace HRDCManagementSystem.Models.ViewModels
         [Required]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-        public DateOnly ValidTill { get; set; }
+        public DateOnly? ValidTill { get; set; }
 
         public string? Venue { get; set; }
 

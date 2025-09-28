@@ -37,13 +37,13 @@
                 <li class="participant-nav-item">
                     <a asp-controller="Training" asp-action="TrainingIndex"
                        class="participant-nav-link @IsActive("Training", "TrainingIndex")">
-                        <i class="bi bi-journal-text"></i><span>Training Registration</span>
+                        <i class="bi bi-journal-text"></i><span>Available Trainings</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">
-                    <a asp-controller="Training" asp-action="TrainingIndex"
-                       class="participant-nav-link @IsActive("Training", "TrainingIndex")">
-                        <i class="bi bi-journal-check"></i><span>My Trainings</span>
+                    <a asp-controller="TrainingRegistration" asp-action="MyRegistrations"
+                       class="participant-nav-link @IsActive("TrainingRegistration", "MyRegistrations")">
+                        <i class="bi bi-journal-check"></i><span>My Registrations</span>
                     </a>
                 </li>
                 <li class="participant-nav-item">

@@ -4,6 +4,7 @@ using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 
 namespace HRDCManagementSystem.Controllers
@@ -69,6 +70,31 @@ namespace HRDCManagementSystem.Controllers
             {
                 viewModel.ExistingPath = null;
             }
+
+            // Check if current user is registered for this training (for employees)
+            if (User.IsInRole("Employee"))
+            {
+                var currentUserEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(currentUserEmail))
+                {
+                    var employee = await _context.Employees
+                        .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
+
+                    if (employee != null)
+                    {
+                        var isRegistered = await _context.TrainingRegistrations
+                            .AnyAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
+                                          tr.TrainingSysID == id && 
+                                          tr.RecStatus == "active");
+                        ViewBag.IsRegistered = isRegistered;
+                    }
+                }
+            }
+
+            // Get current registration count
+            var currentRegistrations = await _context.TrainingRegistrations
+                .CountAsync(tr => tr.TrainingSysID == id && tr.RecStatus == "active");
+            ViewBag.CurrentRegistrations = currentRegistrations;
 
             return View("Details", viewModel);
         }
@@ -188,11 +214,8 @@ namespace HRDCManagementSystem.Controllers
 
                     entity.FilePath = "/uploads/" + uniqueFileName;
                 }
-                else
-                {
-                    // Keep existing file
-                    entity.FilePath = model.ExistingPath;
-                }
+                // If no new file is uploaded, keep the existing file path from the database
+                // (entity.FilePath already contains the existing value, so no need to change it)
 
                 _context.Update(entity);
                 await _context.SaveChangesAsync();
