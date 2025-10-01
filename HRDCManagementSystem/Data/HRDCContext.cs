@@ -60,6 +60,7 @@ public partial class HRDCContext : DbContext
     public virtual DbSet<TrainingProgram> TrainingPrograms { get; set; }
     public virtual DbSet<TrainingRegistration> TrainingRegistrations { get; set; }
     public virtual DbSet<UserMaster> UserMasters { get; set; }
+    public virtual DbSet<HelpQuery> HelpQueries { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -272,6 +273,44 @@ public partial class HRDCContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+        });
+
+        // Configuration for HelpQuery entity
+        modelBuilder.Entity<HelpQuery>(entity =>
+        {
+            entity.HasKey(e => e.HelpQueryID).HasName("PK__HelpQuer__D810FCCB1A14E395");
+            entity.Property(e => e.HelpQueryID).ValueGeneratedOnAdd().UseIdentityColumn();
+            entity.ToTable("HelpQueries");
+            entity.Property(e => e.CreateDateTime).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.ResolvedDate).HasColumnType("datetime");
+            
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.QueryType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Subject)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.Message)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.RecStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasDefaultValue("active");
+
+            entity.HasOne(d => d.EmployeeSys).WithMany()
+                .HasForeignKey(d => d.EmployeeSysID)
+                .HasConstraintName("FK__HelpQueri__Emplo__NEWCONSTRAINT");
         });
 
         OnModelCreatingPartial(modelBuilder);

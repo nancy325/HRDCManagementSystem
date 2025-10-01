@@ -1,5 +1,6 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Admin;
+using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,8 @@ namespace HRDCManagementSystem.Controllers.Admin
                 PendingApprovals = await GetPendingApprovals(),
                 PendingFeedbackCount = await GetPendingFeedbackCount(),
                 UpcomingTrainingCount = await _context.TrainingPrograms.CountAsync(tp => tp.StartDate > currentDate && tp.RecStatus == "active"),
-                TotalTrainingRegistrations = await _context.TrainingRegistrations.CountAsync(tr => tr.RecStatus == "active")
+                TotalTrainingRegistrations = await _context.TrainingRegistrations.CountAsync(tr => tr.RecStatus == "active"),
+                NewHelpQueriesCount = await _context.HelpQueries.CountAsync(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active")
             };
 
             return View(dashboard);
@@ -370,6 +372,93 @@ namespace HRDCManagementSystem.Controllers.Admin
                 .Where(tr => tr.RecStatus == "active" &&
                            !_context.Feedbacks.Any(f => f.TrainingRegSysID == tr.TrainingRegSysID && f.RecStatus == "active"))
                 .CountAsync();
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> HelpQueries(string status = "all", bool? viewed = null)
+        {
+            // Build the query
+            var queryable = _context.HelpQueries
+                .Include(hq => hq.EmployeeSys)
+                .Where(hq => hq.RecStatus == "active");
+            
+            // Filter by status if specified
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
+            {
+                queryable = queryable.Where(hq => hq.Status == status);
+            }
+            
+            // Filter by viewed status if specified
+            if (viewed.HasValue)
+            {
+                queryable = queryable.Where(hq => hq.ViewedByAdmin == viewed.Value);
+            }
+            
+            // Get the query results
+            var helpQueries = await queryable
+                .OrderByDescending(hq => hq.CreateDateTime)
+                .Select(hq => new HelpQueryViewModel
+                {
+                    HelpQueryID = hq.HelpQueryID,
+                    EmployeeSysID = hq.EmployeeSysID,
+                    EmployeeName = hq.EmployeeSys.FirstName + " " + hq.EmployeeSys.LastName,
+                    Name = hq.Name,
+                    Email = hq.Email,
+                    QueryType = hq.QueryType,
+                    Subject = hq.Subject,
+                    Message = hq.Message,
+                    Status = hq.Status,
+                    ViewedByAdmin = hq.ViewedByAdmin,
+                    ResolvedDate = hq.ResolvedDate,
+                    CreateDateTime = hq.CreateDateTime
+                })
+                .ToListAsync();
+            
+            // Update any unviewed queries to viewed
+            var unviewedQueries = await _context.HelpQueries
+                .Where(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active")
+                .ToListAsync();
+            
+            if (unviewedQueries.Any())
+            {
+                foreach (var helpItem in unviewedQueries)
+                {
+                    helpItem.ViewedByAdmin = true;
+                    helpItem.ModifiedDateTime = DateTime.Now;
+                }
+                await _context.SaveChangesAsync();
+            }
+            
+            // Set ViewBag for filters
+            ViewBag.Status = status;
+            ViewBag.Viewed = viewed;
+            
+            // Return the view with the queries
+            return View(helpQueries);
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateQueryStatus(int id, string status)
+        {
+            var helpQuery = await _context.HelpQueries.FindAsync(id);
+            if (helpQuery == null)
+            {
+                TempData["ErrorMessage"] = "Query not found.";
+                return RedirectToAction(nameof(HelpQueries));
+            }
+            
+            helpQuery.Status = status;
+            if (status == "Resolved")
+            {
+                helpQuery.ResolvedDate = DateTime.Now;
+            }
+            helpQuery.ModifiedDateTime = DateTime.Now;
+            
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Query status updated successfully.";
+            
+            return RedirectToAction(nameof(HelpQueries));
         }
     }
 }

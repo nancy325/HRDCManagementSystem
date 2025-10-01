@@ -22,6 +22,17 @@
         </div>
         <div class="col-md-6 text-end">
             <div class="d-flex justify-content-end align-items-center gap-3">
+                <div class="notification-icon me-2">
+                    <a href="@Url.Action("HelpQueries", "Admin")" class="btn btn-icon position-relative">
+                        <i class="bi bi-question-circle fs-5"></i>
+                        @if (Model.NewHelpQueriesCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @Model.NewHelpQueriesCount
+                            </span>
+                        }
+                    </a>
+                </div>
                 <div class="notification-icon">
                     <button class="btn btn-icon position-relative">
                         <i class="bi bi-bell fs-5"></i>
@@ -213,6 +224,23 @@
                     }
                 </div>
             </div>
+            
+            <!-- Help Queries Card -->
+            @if (Model.NewHelpQueriesCount > 0)
+            {
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="section-title">
+                            <i class="bi bi-question-circle me-2"></i>New Help Queries
+                            <span class="badge bg-danger ms-2">@Model.NewHelpQueriesCount</span>
+                        </h2>
+                        <p>There are new help queries waiting for your review.</p>
+                        <a href="@Url.Action("HelpQueries", "Admin")" class="btn btn-primary">
+                            <i class="bi bi-eye me-2"></i>View Queries
+                        </a>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </main>
