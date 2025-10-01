@@ -22,7 +22,8 @@ namespace HRDCManagementSystem.Controllers.Admin
             var dashboard = new AdminDashboardViewModel
             {
                 TotalEmployees = await _context.Employees.CountAsync(e => e.RecStatus == "active"),
-                ActiveTrainings = await _context.TrainingPrograms.CountAsync(tp => tp.Status == "Ongoing" && tp.RecStatus == "active"),
+                // Ongoing trainings determined by date window (inclusive)
+                ActiveTrainings = await _context.TrainingPrograms.CountAsync(tp => tp.StartDate <= currentDate && tp.EndDate >= currentDate && tp.RecStatus == "active"),
                 CertificatesIssued = await _context.Certificates.CountAsync(c => c.RecStatus == "active"),
                 OverallCompletionRate = await CalculateCompletionRate(),
                 UpcomingTrainings = await GetUpcomingTrainings(),
@@ -82,7 +83,8 @@ namespace HRDCManagementSystem.Controllers.Admin
         {
             // Fix: Split query to avoid EF translation issues
             var trainingData = await _context.TrainingPrograms
-                .Where(tp => tp.Status == "Ongoing" && tp.RecStatus == "active")
+                // Ongoing determined by current date range
+                .Where(tp => tp.StartDate <= currentDate && tp.EndDate >= currentDate && tp.RecStatus == "active")
                 .OrderBy(tp => tp.StartDate)
                 .Take(5)
                 .ToListAsync();
@@ -110,8 +112,8 @@ namespace HRDCManagementSystem.Controllers.Admin
             var today = DateOnly.FromDateTime(DateTime.Now);
 
             var trainingData = await _context.TrainingPrograms
-                .Where(tp => 
-                    (tp.Status == "Completed" || tp.EndDate < today) 
+                .Where(tp =>
+                    (tp.Status == "Completed" || tp.EndDate < today)
                     && tp.RecStatus == "active")
                 .OrderByDescending(tp => tp.EndDate)
                 .Take(5)
@@ -134,10 +136,17 @@ namespace HRDCManagementSystem.Controllers.Admin
             }).ToList();
         }
 
+        // Returns a list of employees who have registered for any training and are awaiting confirmation,
+        // and provides a method to approve (set confirmation = true) for a registration.
         private async Task<List<PendingApprovalViewModel>> GetPendingApprovals()
         {
-            return await _context.TrainingRegistrations
-                .Where(tr => tr.Confirmation == null && tr.RecStatus == "active")
+            // List all employees who have registered and are awaiting admin confirmation
+            // Include legacy records where pending was stored as false
+            // Exclude trainings that are already completed/past
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            var pending = await _context.TrainingRegistrations
+                .Where(tr => tr.Registration == true && (tr.Confirmation == null || tr.Confirmation == false) && tr.RecStatus == "active")
                 .Join(_context.Employees,
                     tr => tr.EmployeeSysID,
                     e => e.EmployeeSysID,
@@ -145,17 +154,214 @@ namespace HRDCManagementSystem.Controllers.Admin
                 .Join(_context.TrainingPrograms,
                     combined => combined.tr.TrainingSysID,
                     tp => tp.TrainingSysID,
-                    (combined, tp) => new PendingApprovalViewModel
-                    {
-                        TrainingRegSysID = combined.tr.TrainingRegSysID,
-                        EmployeeSysID = combined.e.EmployeeSysID,
-                        EmployeeName = $"{combined.e.FirstName} {combined.e.LastName}",
-                        TrainingTitle = tp.Title,
-                        Department = combined.e.Department,
-                        RegistrationDate = combined.tr.CreateDateTime ?? DateTime.Now
-                    })
-                .Take(5)
+                    (combined, tp) => new { combined.tr, combined.e, tp })
+                .Where(x => x.tp.RecStatus == "active" && x.tp.EndDate >= today && x.tp.Status != "Completed")
+                .Select(x => new PendingApprovalViewModel
+                {
+                    TrainingRegSysID = x.tr.TrainingRegSysID,
+                    EmployeeSysID = x.e.EmployeeSysID,
+                    EmployeeName = $"{x.e.FirstName} {x.e.LastName}",
+                    TrainingTitle = x.tp.Title,
+                    Department = x.e.Department,
+                    RegistrationDate = x.tr.CreateDateTime ?? DateTime.Now
+                })
+                .OrderByDescending(x => x.RegistrationDate)
+                .Take(10)
                 .ToListAsync();
+
+            return pending;
+        }
+
+        // JSON handler for dashboard approve/reject buttons
+        public class ApprovalRequest
+        {
+            public int RegistrationId { get; set; }
+            public string Action { get; set; } = string.Empty; // approve or reject
+        }
+
+        [HttpPost]
+        [Route("Admin/HandleApproval")]
+        public async Task<IActionResult> HandleApproval([FromBody] ApprovalRequest request)
+        {
+            if (request == null || request.RegistrationId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid request." });
+            }
+
+            var reg = await _context.TrainingRegistrations
+                .Include(r => r.TrainingSys)
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == request.RegistrationId && r.RecStatus == "active");
+
+            if (reg == null)
+            {
+                return Json(new { success = false, message = "Registration not found." });
+            }
+
+            // If training is completed/past, skip confirmation requirement
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+            {
+                return Json(new { success = true, message = "Training already completed - no action required." });
+            }
+
+            var action = (request.Action ?? string.Empty).ToLowerInvariant();
+            if (action == "approve")
+            {
+                reg.Confirmation = true;
+                reg.ModifiedDateTime = DateTime.Now;
+            }
+            else if (action == "reject")
+            {
+                reg.Confirmation = false;
+                reg.ModifiedDateTime = DateTime.Now;
+            }
+            else
+            {
+                return Json(new { success = false, message = "Unknown action." });
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        // Approve a registration by setting Confirmation = true
+        [HttpPost]
+        public async Task<IActionResult> ApproveRegistration(int trainingRegSysId)
+        {
+            var registration = await _context.TrainingRegistrations
+                .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == trainingRegSysId && tr.RecStatus == "active");
+
+            if (registration == null)
+            {
+                return NotFound();
+            }
+
+            registration.Confirmation = true;
+            registration.ModifiedDateTime = DateTime.Now;
+
+            _context.TrainingRegistrations.Update(registration);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Registrations(int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+        {
+            var query = _context.TrainingRegistrations
+                .Include(tr => tr.TrainingSys)
+                .Include(tr => tr.EmployeeSys)
+                .Where(tr => tr.Registration == true && tr.RecStatus == "active");
+
+            if (trainingId.HasValue)
+            {
+                query = query.Where(tr => tr.TrainingSysID == trainingId.Value);
+            }
+
+            if (startDate.HasValue)
+            {
+                var start = startDate.Value.Date;
+                query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) >= start);
+            }
+
+            if (endDate.HasValue)
+            {
+                var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) <= end);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                switch (status.ToLower())
+                {
+                    case "pending":
+                        query = query.Where(tr => tr.Confirmation == null);
+                        break;
+                    case "approved":
+                        query = query.Where(tr => tr.Confirmation == true);
+                        break;
+                    case "rejected":
+                        query = query.Where(tr => tr.Confirmation == false);
+                        break;
+                }
+            }
+
+            var items = await query
+                .OrderByDescending(tr => tr.CreateDateTime)
+                .Select(tr => new AdminRegistrationItemViewModel
+                {
+                    TrainingRegSysID = tr.TrainingRegSysID,
+                    TrainingSysID = tr.TrainingSysID,
+                    TrainingTitle = tr.TrainingSys.Title,
+                    EmployeeSysID = tr.EmployeeSysID,
+                    EmployeeName = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
+                    Department = tr.EmployeeSys.Department,
+                    Confirmation = tr.Confirmation,
+                    RegistrationDate = tr.CreateDateTime ?? DateTime.Now
+                })
+                .ToListAsync();
+
+            ViewBag.TrainingId = trainingId;
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.Status = status;
+            ViewBag.TrainingOptions = await _context.TrainingPrograms
+                .Where(tp => tp.RecStatus == "active")
+                .OrderBy(tp => tp.Title)
+                .Select(tp => new { tp.TrainingSysID, tp.Title })
+                .ToListAsync();
+
+            return View(items);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveRegistration(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+        {
+            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
+            if (reg == null)
+            {
+                TempData["ErrorMessage"] = "Registration not found.";
+            }
+            else
+            {
+                reg.Confirmation = true;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Registration approved.";
+            }
+
+            return RedirectToAction("Registrations", new
+            {
+                trainingId,
+                startDate = startDate?.ToString("yyyy-MM-dd"),
+                endDate = endDate?.ToString("yyyy-MM-dd"),
+                status
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectRegistration(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+        {
+            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
+            if (reg == null)
+            {
+                TempData["ErrorMessage"] = "Registration not found.";
+            }
+            else
+            {
+                reg.Confirmation = false;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Registration rejected.";
+            }
+
+            return RedirectToAction("Registrations", new
+            {
+                trainingId,
+                startDate = startDate?.ToString("yyyy-MM-dd"),
+                endDate = endDate?.ToString("yyyy-MM-dd"),
+                status
+            });
         }
 
         private async Task<int> GetPendingFeedbackCount()

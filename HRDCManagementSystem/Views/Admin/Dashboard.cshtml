@@ -228,13 +228,13 @@
             const name = card.querySelector('h5').textContent;
 
             // AJAX call to handle approval/rejection
-            fetch('/Training/HandleApproval', {
+            fetch('/Admin/HandleApproval', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    registrationId: registrationId,
+                    registrationId: parseInt(registrationId),
                     action: action
                 })
             })

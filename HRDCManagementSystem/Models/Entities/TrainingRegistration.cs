@@ -26,9 +26,11 @@ public partial class TrainingRegistration : BaseEntity
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
-    public virtual Employee? EmployeeSys { get; set; }
+    [Required]
+    public virtual Employee EmployeeSys { get; set; }
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual TrainingProgram? TrainingSys { get; set; }
+    [Required]
+    public virtual TrainingProgram TrainingSys { get; set; }
 }

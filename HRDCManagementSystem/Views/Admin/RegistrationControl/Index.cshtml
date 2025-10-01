@@ -1,0 +1,146 @@
+@using HRDCManagementSystem.Models.Admin
+@model List<AdminRegistrationItemViewModel>
+@{
+    ViewData["Title"] = "Training Registration Control";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Training Registration Control</h2>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "Admin")">Back to Dashboard</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Training</label>
+                    <div class="input-group">
+                        <select class="form-select" name="trainingId">
+                            <option value="">All Trainings</option>
+                            @if (ViewBag.TrainingOptions != null)
+                            {
+                                foreach (var t in ViewBag.TrainingOptions)
+                                {
+                                    var selected = (ViewBag.TrainingId != null && (int)ViewBag.TrainingId == (int)t.TrainingSysID) ? "selected" : "";
+                                    <option value="@t.TrainingSysID" selected>@t.Title</option>
+                                }
+                            }
+                        </select>
+                        @if (ViewBag.TrainingId != null)
+                        {
+                            <a class="btn btn-outline-success" href="@Url.Action("ExportApprovedCsv", "RegistrationControl", new { trainingId = (int)ViewBag.TrainingId })">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All</option>
+                        <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                        <option value="approved" selected="@(ViewBag.Status == "approved")">Approved</option>
+                        <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="@Url.Action("Index", "RegistrationControl")" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Training</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Registered On</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Count > 0)
+                        {
+                            var i = 1;
+                            foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td>@i</td>
+                                    <td>@r.TrainingTitle</td>
+                                    <td>@r.EmployeeName</td>
+                                    <td>@r.Department</td>
+                                    <td>@r.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (r.Confirmation == true)
+                                        {
+                                            <span class="badge bg-success">Approved</span>
+                                        }
+                                        else if (r.Confirmation == null)
+                                        {
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Rejected</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-2">
+                                            <form asp-action="Approve" asp-controller="RegistrationControl" method="post">
+                                                <input type="hidden" name="id" value="@r.TrainingRegSysID" />
+                                                <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
+                                                <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
+                                                <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
+                                                <input type="hidden" name="status" value="@ViewBag.Status" />
+                                                <button type="submit" class="btn btn-success btn-sm" @(r.Confirmation == true ? "disabled" : null)>
+                                                    <i class="bi bi-check-circle"></i> Approve
+                                                </button>
+                                            </form>
+                                            <form asp-action="Reject" asp-controller="RegistrationControl" method="post">
+                                                <input type="hidden" name="id" value="@r.TrainingRegSysID" />
+                                                <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
+                                                <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
+                                                <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
+                                                <input type="hidden" name="status" value="@ViewBag.Status" />
+                                                <button type="submit" class="btn btn-danger btn-sm" @(r.Confirmation == false ? "disabled" : null)>
+                                                    <i class="bi bi-x-circle"></i> Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No registrations found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+

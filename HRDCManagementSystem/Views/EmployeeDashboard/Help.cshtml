@@ -1,0 +1,246 @@
+@model HRDCManagementSystem.Models.ViewModels.HelpViewModel
+@{
+    ViewData["Title"] = "Help & Support";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/css/participantdashboard.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header mb-4">
+        <h1 class="h3"><i class="fas fa-question-circle me-2"></i>Help & Support</h1>
+        <p class="mb-0">Find answers to common questions or submit a query for assistance.</p>
+    </div>
+
+    <div class="row">
+        <!-- FAQs Section -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <!-- Training Related FAQs -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTraining">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTraining" aria-expanded="false" aria-controls="collapseTraining">
+                                    <i class="fas fa-graduation-cap me-2"></i>Training Related
+                                </button>
+                            </h2>
+                            <div id="collapseTraining" class="accordion-collapse collapse" aria-labelledby="headingTraining" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">How do I register for a training?</h6>
+                                        <p class="mb-0">Go to the "Find Trainings" section, browse available trainings, and click "Register" on the training you're interested in. You'll receive a confirmation email once registered.</p>
+                                    </div>
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">Can I cancel my training registration?</h6>
+                                        <p class="mb-0">Yes, you can cancel your registration up to 24 hours before the training starts. Go to "My Registrations" and click "Cancel" next to the training you want to cancel.</p>
+                                    </div>
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">How do I know if my registration was approved?</h6>
+                                        <p class="mb-0">You'll receive an email notification once your registration is approved or rejected. You can also check the status in your dashboard under "My Registrations".</p>
+                                    </div>
+                                    <div class="faq-item">
+                                        <h6 class="font-weight-bold text-primary">What if I miss a training session?</h6>
+                                        <p class="mb-0">If you miss a training session, contact the training coordinator immediately. Depending on the training type, you may be able to attend a make-up session or receive materials to review.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Certificate Related FAQs -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCertificates">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCertificates" aria-expanded="false" aria-controls="collapseCertificates">
+                                    <i class="fas fa-certificate me-2"></i>Certificates
+                                </button>
+                            </h2>
+                            <div id="collapseCertificates" class="accordion-collapse collapse" aria-labelledby="headingCertificates" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">When will I receive my certificate?</h6>
+                                        <p class="mb-0">Certificates are typically generated within 5-7 business days after completing a training program. You'll receive an email notification when your certificate is ready for download.</p>
+                                    </div>
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">How do I download my certificate?</h6>
+                                        <p class="mb-0">Go to the "Certificates" section in your dashboard, find the certificate you want to download, and click the "Download" button. The certificate will be saved to your device.</p>
+                                    </div>
+                                    <div class="faq-item">
+                                        <h6 class="font-weight-bold text-primary">What if my certificate is not generated?</h6>
+                                        <p class="mb-0">If your certificate hasn't been generated after 7 business days, please contact the training coordinator or submit a query through this help form.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Related FAQs -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingProfile">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProfile" aria-expanded="false" aria-controls="collapseProfile">
+                                    <i class="fas fa-user me-2"></i>Profile & Account
+                                </button>
+                            </h2>
+                            <div id="collapseProfile" class="accordion-collapse collapse" aria-labelledby="headingProfile" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">How do I update my profile information?</h6>
+                                        <p class="mb-0">Go to "My Profile" in your dashboard, make the necessary changes, and click "Update Profile". Note that some fields like Department and Designation can only be changed by an administrator.</p>
+                                    </div>
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">How do I change my password?</h6>
+                                        <p class="mb-0">Currently, password changes must be requested through your administrator. Contact your HR department or IT support for assistance with password changes.</p>
+                                    </div>
+                                    <div class="faq-item">
+                                        <h6 class="font-weight-bold text-primary">What if I can't log in to my account?</h6>
+                                        <p class="mb-0">If you're having trouble logging in, first check that you're using the correct email address and password. If the problem persists, contact your administrator or submit a query through this help form.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Support FAQs -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTechnical">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTechnical" aria-expanded="false" aria-controls="collapseTechnical">
+                                    <i class="fas fa-cog me-2"></i>Technical Support
+                                </button>
+                            </h2>
+                            <div id="collapseTechnical" class="accordion-collapse collapse" aria-labelledby="headingTechnical" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">What browsers are supported?</h6>
+                                        <p class="mb-0">The portal works best with modern browsers including Chrome, Firefox, Safari, and Edge. Please ensure your browser is updated to the latest version for the best experience.</p>
+                                    </div>
+                                    <div class="faq-item mb-3">
+                                        <h6 class="font-weight-bold text-primary">The page is loading slowly. What should I do?</h6>
+                                        <p class="mb-0">Try refreshing the page or clearing your browser cache. If the problem persists, check your internet connection or try accessing the portal from a different device.</p>
+                                    </div>
+                                    <div class="faq-item">
+                                        <h6 class="font-weight-bold text-primary">I'm getting an error message. What should I do?</h6>
+                                        <p class="mb-0">Note down the exact error message and submit a query through this help form. Include details about what you were trying to do when the error occurred.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Form Section -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-envelope me-2"></i>Submit a Query</h6>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Help" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Your Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" placeholder="Enter your full name" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input asp-for="Email" class="form-control" placeholder="Enter your email address" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="QueryType" class="form-label">Query Type</label>
+                            <select asp-for="QueryType" class="form-select">
+                                <option value="General">General Inquiry</option>
+                                <option value="Training">Training Related</option>
+                                <option value="Certificate">Certificate Issue</option>
+                                <option value="Technical">Technical Support</option>
+                                <option value="Account">Account Related</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input asp-for="Subject" class="form-control" placeholder="Brief description of your query" />
+                            <span asp-validation-for="Subject" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Message" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea asp-for="Message" class="form-control" rows="4" placeholder="Please provide detailed information about your query..."></textarea>
+                            <span asp-validation-for="Message" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Query
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <h6 class="font-weight-bold text-muted mb-3">Need Immediate Help?</h6>
+                        <div class="d-grid gap-2">
+                            <a href="mailto:support@hrdc.com" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-envelope me-2"></i>Email Support
+                            </a>
+                            <a href="tel:+1234567890" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-phone me-2"></i>Call Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation/1.19.3/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
+<style>
+    .faq-item {
+        border-left: 3px solid #007bff;
+        padding-left: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .faq-item h6 {
+        color: #007bff;
+        margin-bottom: 8px;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #e3f2fd;
+        color: #007bff;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .text-danger {
+        font-size: 0.875rem;
+    }
+</style>
