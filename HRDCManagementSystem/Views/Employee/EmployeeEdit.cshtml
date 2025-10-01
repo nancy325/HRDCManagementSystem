@@ -86,7 +86,6 @@
                             <img src="~/images/profilephoto/@Model.ProfilePhotoPath" alt="Profile" width="80" height="80" class="rounded-circle mt-1" />
                         </div>
                     }
-                    <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
                 </div>
                 
                 <!-- Required Fields Note -->
@@ -112,4 +111,16 @@
 </div>
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Remove any validation rules for ProfilePhoto to ensure it's treated as optional
+            $('input[name="ProfilePhoto"]').rules('remove');
+            
+            // Ensure form validation doesn't prevent submission when ProfilePhoto is empty
+            $('form').on('submit', function() {
+                $('input[name="ProfilePhoto"]').removeClass('input-validation-error');
+                $('.field-validation-error[data-valmsg-for="ProfilePhotoPath"]').hide();
+            });
+        });
+    </script>
 }
