@@ -55,11 +55,16 @@
 
     <div class="card">
         <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <button type="button" id="approveAllBtn" class="btn btn-primary btn-sm" onclick="approveAllPending()">
+                    <i class="bi bi-check2-all"></i> Approve All Pending
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th>Sr.No.</th>
                             <th>Training</th>
                             <th>Employee</th>
                             <th>Department</th>
@@ -74,7 +79,10 @@
                             var i = 1;
                             foreach (var r in Model)
                             {
-                                <tr>
+                                // Assume r.TrainingStatus is "Completed" if the training is completed
+                                bool isTrainingCompleted = (r.TrainingStatus != null && r.TrainingStatus.ToLower() == "completed");
+                                var statusText = r.Confirmation == null ? "pending" : (r.Confirmation == true ? "approved" : "rejected");
+                                <tr data-reg-id="@r.TrainingRegSysID" data-is-completed="@isTrainingCompleted.ToString().ToLower()" data-status="@statusText">
                                     <td>@i</td>
                                     <td>@r.TrainingTitle</td>
                                     <td>@r.EmployeeName</td>
@@ -96,27 +104,35 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-2">
-                                            <form asp-action="ApproveRegistration" asp-controller="Admin" method="post">
+                                            <form asp-action="Approve" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApproveClick(this, @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
                                                 <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
                                                 <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
                                                 <input type="hidden" name="status" value="@ViewBag.Status" />
-                                                <button type="submit" class="btn btn-success btn-sm" @(r.Confirmation == true ? "disabled" : null)>
+                                                <button type="submit" class="btn btn-success btn-sm"
+                                                    @(r.Confirmation == true || isTrainingCompleted ? "disabled" : null)
+                                                    title="@(isTrainingCompleted ? "Training is completed. You cannot approve." : "")">
                                                     <i class="bi bi-check-circle"></i> Approve
                                                 </button>
                                             </form>
-                                            <form asp-action="RejectRegistration" asp-controller="Admin" method="post">
+                                            <form asp-action="Reject" asp-controller="TrainingRegistration" method="post" onsubmit="return handleRejectClick(@isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
                                                 <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
                                                 <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
                                                 <input type="hidden" name="status" value="@ViewBag.Status" />
-                                                <button type="submit" class="btn btn-danger btn-sm" @(r.Confirmation == false ? "disabled" : null)>
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                    @(r.Confirmation == false || isTrainingCompleted ? "disabled" : null)
+                                                    title="@(isTrainingCompleted ? "Training is completed. You cannot reject." : "")">
                                                     <i class="bi bi-x-circle"></i> Reject
                                                 </button>
                                             </form>
                                         </div>
+                                        @if (isTrainingCompleted)
+                                        {
+                                            <div class="text-danger small mt-1">Training is completed. You cannot approve or reject.</div>
+                                        }
                                     </td>
                                 </tr>
                                 i++;
@@ -135,4 +151,68 @@
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        // Prevent form submission and show message if training is completed
+        function handleApproveClick(form, isCompleted) {
+            if (isCompleted) {
+                alert("Training is completed. You cannot approve.");
+                return false;
+            }
+            return true;
+        }
 
+        function handleRejectClick(isCompleted) {
+            if (isCompleted) {
+                alert("Training is completed. You cannot reject.");
+                return false;
+            }
+            return true;
+        }
+
+        async function approveAllPending() {
+            const btn = document.getElementById('approveAllBtn');
+            if (!btn) return;
+
+            // Collect all rows that are pending and not completed
+            const rows = Array.from(document.querySelectorAll('tr[data-reg-id]'));
+            const targets = rows.filter(r => r.getAttribute('data-is-completed') === 'false' && r.getAttribute('data-status') === 'pending');
+
+            if (targets.length === 0) {
+                alert('No pending registrations to approve.');
+                return;
+            }
+
+            if (!confirm(`Approve all pending registrations (${targets.length})?`)) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Approving...';
+
+            let successCount = 0;
+            let failedCount = 0;
+            for (const row of targets) {
+                const regId = parseInt(row.getAttribute('data-reg-id'));
+                try {
+                    const res = await fetch('/TrainingRegistration/HandleApproval', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ registrationId: regId, action: 'approve' })
+                    });
+                    const data = await res.json();
+                    if (data && data.success) {
+                        successCount++;
+                    } else {
+                        failedCount++;
+                    }
+                } catch (e) {
+                    failedCount++;
+                }
+            }
+
+            alert(`Approve All completed. Success: ${successCount}, Failed: ${failedCount}`);
+            window.location.reload();
+        }
+    </script>
+}

@@ -53,8 +53,11 @@
         <dt class="col-sm-3">Current Registrations</dt>
         <dd class="col-sm-9">@ViewBag.CurrentRegistrations / @Model.Capacity</dd>
 
-        <dt class="col-sm-3">Status</dt>
-        <dd class="col-sm-9">@Model.Status</dd>
+        @if (User.IsInRole("Admin"))
+        {
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+        }
 
         <dt class="col-sm-3">File</dt>
         <dd class="col-sm-9">

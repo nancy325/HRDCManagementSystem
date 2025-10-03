@@ -120,6 +120,137 @@ namespace HRDCManagementSystem.Controllers
             }
         }
 
+        // Admin: Approve/Reject via AJAX (unified endpoint)
+        public class ApprovalRequest
+        {
+            public int RegistrationId { get; set; }
+            public string Action { get; set; } = string.Empty; // approve or reject
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [Route("TrainingRegistration/HandleApproval")]
+        public async Task<IActionResult> HandleApproval([FromBody] ApprovalRequest request)
+        {
+            if (request == null || request.RegistrationId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid request." });
+            }
+
+            var reg = await _context.TrainingRegistrations
+                .Include(r => r.TrainingSys)
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == request.RegistrationId && r.RecStatus == "active");
+
+            if (reg == null)
+            {
+                return Json(new { success = false, message = "Registration not found." });
+            }
+
+            // Prevent approval/rejection if training is completed or past end date
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+            {
+                return Json(new { success = true, message = "Training already completed - no action required." });
+            }
+
+            var action = (request.Action ?? string.Empty).ToLowerInvariant();
+            if (action == "approve")
+            {
+                reg.Confirmation = true;
+                reg.ModifiedDateTime = DateTime.Now;
+            }
+            else if (action == "reject")
+            {
+                reg.Confirmation = false;
+                reg.ModifiedDateTime = DateTime.Now;
+            }
+            else
+            {
+                return Json(new { success = false, message = "Unknown action." });
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        // Admin: Approve (unified, with completion guard)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Approve(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+        {
+            var reg = await _context.TrainingRegistrations
+                .Include(r => r.TrainingSys)
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
+
+            if (reg == null)
+            {
+                TempData["ErrorMessage"] = "Registration not found.";
+            }
+            else
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+                {
+                    TempData["SuccessMessage"] = "Training already completed - no action required.";
+                }
+                else
+                {
+                    reg.Confirmation = true;
+                    reg.ModifiedDateTime = DateTime.Now;
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Registration approved.";
+                }
+            }
+
+            return RedirectToAction("Registrations", "Admin", new
+            {
+                trainingId,
+                startDate = startDate?.ToString("yyyy-MM-dd"),
+                endDate = endDate?.ToString("yyyy-MM-dd"),
+                status
+            });
+        }
+
+        // Admin: Reject (unified, with completion guard)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Reject(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+        {
+            var reg = await _context.TrainingRegistrations
+                .Include(r => r.TrainingSys)
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
+
+            if (reg == null)
+            {
+                TempData["ErrorMessage"] = "Registration not found.";
+            }
+            else
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+                {
+                    TempData["SuccessMessage"] = "Training already completed - no action required.";
+                }
+                else
+                {
+                    reg.Confirmation = false;
+                    reg.ModifiedDateTime = DateTime.Now;
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Registration rejected.";
+                }
+            }
+
+            return RedirectToAction("Registrations", "Admin", new
+            {
+                trainingId,
+                startDate = startDate?.ToString("yyyy-MM-dd"),
+                endDate = endDate?.ToString("yyyy-MM-dd"),
+                status
+            });
+        }
+
         [HttpGet]
         [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> MyRegistrations()

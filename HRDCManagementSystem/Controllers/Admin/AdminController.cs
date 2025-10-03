@@ -172,79 +172,6 @@ namespace HRDCManagementSystem.Controllers.Admin
             return pending;
         }
 
-        // JSON handler for dashboard approve/reject buttons
-        public class ApprovalRequest
-        {
-            public int RegistrationId { get; set; }
-            public string Action { get; set; } = string.Empty; // approve or reject
-        }
-
-        [HttpPost]
-        [Route("Admin/HandleApproval")]
-        public async Task<IActionResult> HandleApproval([FromBody] ApprovalRequest request)
-        {
-            if (request == null || request.RegistrationId <= 0)
-            {
-                return Json(new { success = false, message = "Invalid request." });
-            }
-
-            var reg = await _context.TrainingRegistrations
-                .Include(r => r.TrainingSys)
-                .FirstOrDefaultAsync(r => r.TrainingRegSysID == request.RegistrationId && r.RecStatus == "active");
-
-            if (reg == null)
-            {
-                return Json(new { success = false, message = "Registration not found." });
-            }
-
-            // If training is completed/past, skip confirmation requirement
-            var today = DateOnly.FromDateTime(DateTime.Now);
-            if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
-            {
-                return Json(new { success = true, message = "Training already completed - no action required." });
-            }
-
-            var action = (request.Action ?? string.Empty).ToLowerInvariant();
-            if (action == "approve")
-            {
-                reg.Confirmation = true;
-                reg.ModifiedDateTime = DateTime.Now;
-            }
-            else if (action == "reject")
-            {
-                reg.Confirmation = false;
-                reg.ModifiedDateTime = DateTime.Now;
-            }
-            else
-            {
-                return Json(new { success = false, message = "Unknown action." });
-            }
-
-            await _context.SaveChangesAsync();
-            return Json(new { success = true });
-        }
-
-        // Approve a registration by setting Confirmation = true
-        [HttpPost]
-        public async Task<IActionResult> ApproveRegistration(int trainingRegSysId)
-        {
-            var registration = await _context.TrainingRegistrations
-                .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == trainingRegSysId && tr.RecStatus == "active");
-
-            if (registration == null)
-            {
-                return NotFound();
-            }
-
-            registration.Confirmation = true;
-            registration.ModifiedDateTime = DateTime.Now;
-
-            _context.TrainingRegistrations.Update(registration);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true });
-        }
-
         [HttpGet]
         public async Task<IActionResult> Registrations(int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
         {
@@ -297,7 +224,8 @@ namespace HRDCManagementSystem.Controllers.Admin
                     EmployeeName = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
                     Department = tr.EmployeeSys.Department,
                     Confirmation = tr.Confirmation,
-                    RegistrationDate = tr.CreateDateTime ?? DateTime.Now
+                        RegistrationDate = tr.CreateDateTime ?? DateTime.Now,
+                        TrainingStatus = tr.TrainingSys.Status
                 })
                 .ToListAsync();
 
@@ -314,55 +242,7 @@ namespace HRDCManagementSystem.Controllers.Admin
             return View(items);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApproveRegistration(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                reg.Confirmation = true;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Registration approved.";
-            }
-
-            return RedirectToAction("Registrations", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RejectRegistration(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                reg.Confirmation = false;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Registration rejected.";
-            }
-
-            return RedirectToAction("Registrations", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
+        // Duplicate approval endpoints removed. Now handled by TrainingRegistrationController.
 
         private async Task<int> GetPendingFeedbackCount()
         {

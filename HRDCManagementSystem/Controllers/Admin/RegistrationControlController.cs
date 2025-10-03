@@ -70,7 +70,8 @@ namespace HRDCManagementSystem.Controllers.Admin
                     EmployeeName = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
                     Department = tr.EmployeeSys.Department,
                     Confirmation = tr.Confirmation,
-                    RegistrationDate = tr.CreateDateTime ?? DateTime.Now
+                    RegistrationDate = tr.CreateDateTime ?? DateTime.Now,
+                    TrainingStatus = tr.TrainingSys.Status
                 })
                 .ToListAsync();
 
@@ -87,55 +88,7 @@ namespace HRDCManagementSystem.Controllers.Admin
             return View(items);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                reg.Confirmation = true;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Registration approved.";
-            }
-
-            return RedirectToAction("Index", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Reject(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations.FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                reg.Confirmation = false;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Registration rejected.";
-            }
-
-            return RedirectToAction("Index", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
+        // Duplicate Approve/Reject endpoints removed. Use TrainingRegistrationController instead.
 
         [HttpGet]
         public async Task<IActionResult> ExportApprovedCsv(int trainingId)

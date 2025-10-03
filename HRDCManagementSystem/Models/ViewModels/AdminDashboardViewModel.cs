@@ -56,5 +56,6 @@
         public string Department { get; set; } = string.Empty;
         public bool? Confirmation { get; set; }
         public DateTime RegistrationDate { get; set; }
+        public string TrainingStatus { get; set; } = string.Empty;
     }
 }
