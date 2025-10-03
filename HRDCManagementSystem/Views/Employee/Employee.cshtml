@@ -90,12 +90,35 @@
                 <td>@emp.Designation</td>
                 <td>@emp.Institute</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@emp.EmployeeSysID">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID">Delete</a> |
-                    <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" style="display:inline;">
+                        <!-- Edit -->
+                    @* <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID">Edit</a> | *@
+                        <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <!-- Details -->
+                    @* <a asp-action="Details" asp-route-id="@emp.EmployeeSysID">Details</a> | *@
+                        <a asp-action="Details" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-info me-1" title="Details">
+                            <i class="bi bi-eye"></i>
+                        </a>
+
+                        <!-- Delete -->
+                        @* <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID">Delete</a> | *@
+                        <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-danger me-1"
+                           onclick="return confirm('Are you sure you want to delete this employee?');" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+
+                        <!-- Resend Mail -->
+                    @* <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" style="display:inline;">
                         <button type="submit" class="btn btn-link" onclick="return confirm('Resend credentials to this employee?');">Resend Mail</button>
-                    </form>
+                    </form> *@
+                        <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Resend Mail"
+                                    onclick="return confirm('Resend credentials to this employee?');">
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                        </form>
                 </td>
             </tr>
         }

@@ -173,6 +173,13 @@ namespace HRDCManagementSystem.Controllers
             ModelState.Remove("UserSys");
             ModelState.Remove("ProfilePhotoPath");
 
+            // Clear any ProfilePhoto related validation errors to ensure it's treated as optional
+            var profilePhotoKeys = ModelState.Keys.Where(k => k.Contains("ProfilePhoto")).ToList();
+            foreach (var key in profilePhotoKeys)
+            {
+                ModelState.Remove(key);
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -404,6 +411,13 @@ namespace HRDCManagementSystem.Controllers
             ModelState.Remove("JoinDate");
             ModelState.Remove("LeftDate");
             ModelState.Remove("UserSysID");
+
+            // Clear any ProfilePhoto related validation errors to ensure it's treated as optional
+            var profilePhotoKeys = ModelState.Keys.Where(k => k.Contains("ProfilePhoto")).ToList();
+            foreach (var key in profilePhotoKeys)
+            {
+                ModelState.Remove(key);
+            }
 
             if (ModelState.IsValid)
             {

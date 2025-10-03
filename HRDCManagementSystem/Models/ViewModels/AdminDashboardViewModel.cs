@@ -18,6 +18,9 @@
         public int TotalTrainingRegistrations { get; set; }
         public int PendingFeedbackCount { get; set; }
         public int UpcomingTrainingCount { get; set; }
+        
+        // Help Queries
+        public int NewHelpQueriesCount { get; set; }
     }
 
     public class TrainingProgramViewModel

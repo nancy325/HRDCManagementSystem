@@ -1,4 +1,5 @@
 using HRDCManagementSystem.Data;
+using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
 using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +13,11 @@ namespace HRDCManagementSystem.Controllers
     public class EmployeeDashboardController : Controller
     {
         private readonly HRDCContext _context;
-        private readonly ICurrentUserService _currentUserService;
         private readonly IEmailService _emailService;
 
-        public EmployeeDashboardController(HRDCContext context, ICurrentUserService currentUserService, IEmailService emailService)
+        public EmployeeDashboardController(HRDCContext context, IEmailService emailService)
         {
             _context = context;
-            _currentUserService = currentUserService;
             _emailService = emailService;
         }
 
@@ -204,8 +203,16 @@ namespace HRDCManagementSystem.Controllers
         [HttpGet]
         public IActionResult Help()
         {
-            var viewModel = new HelpViewModel();
-            return View(viewModel);
+            try
+            {
+                var viewModel = new HelpViewModel();
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                return StatusCode(500, $"Error loading Help page: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -224,17 +231,66 @@ namespace HRDCManagementSystem.Controllers
 
             try
             {
-                // TODO: Implement email sending logic here
-                // You can use the _emailService to send the query to admin/support
+                // Get the currently logged in user email
+                var currentUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 
-                // For now, we'll just show a success message
-                TempData["Success"] = "Your query has been submitted successfully. We'll get back to you soon!";
+                if (string.IsNullOrEmpty(currentUser))
+                {
+                    ModelState.AddModelError("", "User not authenticated.");
+                    return View(model);
+                }
                 
-                return RedirectToAction(nameof(Help));
+                // Find the employee based on user email
+                var employee = await _context.Employees
+                    .Include(e => e.UserSys)
+                    .FirstOrDefaultAsync(e => e.UserSys.Email == currentUser && e.RecStatus == "active");
+
+                if (employee == null)
+                {
+                    ModelState.AddModelError("", "Employee record not found.");
+                    return View(model);
+                }
+
+                // Map ViewModel to Entity
+                var helpQuery = new HelpQuery
+                {
+                    EmployeeSysID = employee.EmployeeSysID,
+                    Name = model.Name,
+                    Email = model.Email,
+                    QueryType = model.QueryType,
+                    Subject = model.Subject,
+                    Message = model.Message,
+                    Status = "Open",
+                    ViewedByAdmin = false,
+                    ResolvedDate = null
+                };
+
+                try
+                {
+                    _context.HelpQueries.Add(helpQuery);
+                    await _context.SaveChangesAsync();
+                    
+                    TempData["Success"] = "Your query has been submitted successfully. We'll get back to you soon!";
+                    return RedirectToAction(nameof(Help));
+                }
+                catch (Exception ex)
+                {
+                    // Provide more specific database error information
+                    ModelState.AddModelError("", $"Database error: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        ModelState.AddModelError("", $"Inner exception: {ex.InnerException.Message}");
+                    }
+                    return View(model);
+                }
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"An error occurred while submitting your query: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    ModelState.AddModelError("", $"Inner exception: {ex.InnerException.Message}");
+                }
                 return View(model);
             }
         }

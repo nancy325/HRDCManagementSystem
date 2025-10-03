@@ -53,8 +53,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Profile Photo <small class="text-muted">(Optional)</small></label>
                                     <input type="file" name="ProfilePhoto" class="form-control" accept=".jpg,.jpeg,.png" />
-                                    <div class="form-text">Accepted formats: .jpg, .jpeg, .png (max 2MB)</div>
-                                    <span asp-validation-for="ProfilePhotoPath" class="text-danger"></span>
+                                    <div class="form-text">Accepted formats: .jpg, .jpeg, .png (max 2MB). Leave empty to keep existing photo.</div>
                                 </div>
                             </div>
                             
@@ -153,4 +152,16 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Remove any validation rules for ProfilePhoto to ensure it's treated as optional
+            $('input[name="ProfilePhoto"]').rules('remove');
+            
+            // Ensure form validation doesn't prevent submission when ProfilePhoto is empty
+            $('form').on('submit', function() {
+                $('input[name="ProfilePhoto"]').removeClass('input-validation-error');
+                $('.field-validation-error[data-valmsg-for="ProfilePhotoPath"]').hide();
+            });
+        });
+    </script>
 }

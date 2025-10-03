@@ -51,11 +51,28 @@
 					<td>@t.Status</td>
 					<td>@t.Mode</td>
 					<td>
-						<a asp-action="Details" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-info">Details</a>
+						@* <a asp-action="Details" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-info">Details</a> *@
+					@* <td class="text-center"> *@
+						<!-- Details -->
+						<a asp-action="Details" asp-route-id="@t.TrainingSysID"
+						   class="btn btn-sm btn-info" title="View Details">
+							<i class="bi bi-info-circle"></i>
+						</a>
 						@if (User.IsInRole("Admin"))
 						{
-							<a asp-action="EditTraining" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-warning">Edit</a>
-							<a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-danger">Delete</a>
+							@* <a asp-action="EditTraining" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-warning">Edit</a>
+							<a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID" class="btn btn-sm btn-danger">Delete</a> *@
+							<!-- Edit -->
+							<a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
+							   class="btn btn-sm btn-warning" title="Edit Training">
+								<i class="bi bi-pencil-square"></i>
+							</a>
+
+							<!-- Delete -->
+							<a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
+							   class="btn btn-sm btn-danger" title="Delete Training">
+								<i class="bi bi-trash"></i>
+							</a>
 						}
 						else if (User.IsInRole("Employee"))
 						{
