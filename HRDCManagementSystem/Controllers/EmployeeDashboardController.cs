@@ -1,4 +1,4 @@
-using HRDCManagementSystem.Data;
+﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
 using HRDCManagementSystem.Services;
@@ -206,7 +206,7 @@ namespace HRDCManagementSystem.Controllers
             try
             {
                 var viewModel = new HelpViewModel();
-                return View(viewModel);
+                return View("~/Views/Employee/Help.cshtml",viewModel);
             }
             catch (Exception ex)
             {
@@ -218,7 +218,6 @@ namespace HRDCManagementSystem.Controllers
         /// <summary>
         /// Handles the submission of help query form
         /// </summary>
-        /// <param name="model">Help query form data</param>
         /// <returns>Redirect to help page with success message</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -226,7 +225,7 @@ namespace HRDCManagementSystem.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View("~/Views/Employee/Help.cshtml",model);
             }
 
             try
@@ -237,7 +236,7 @@ namespace HRDCManagementSystem.Controllers
                 if (string.IsNullOrEmpty(currentUser))
                 {
                     ModelState.AddModelError("", "User not authenticated.");
-                    return View(model);
+                    return View("~/Views/Employee/Help.cshtml", model);
                 }
 
                 // Find the employee based on user email
@@ -248,7 +247,7 @@ namespace HRDCManagementSystem.Controllers
                 if (employee == null)
                 {
                     ModelState.AddModelError("", "Employee record not found.");
-                    return View(model);
+                    return View("~/Views/Employee/Help.cshtml", model);
                 }
 
                 // Map ViewModel to Entity
@@ -281,7 +280,7 @@ namespace HRDCManagementSystem.Controllers
                     {
                         ModelState.AddModelError("", $"Inner exception: {ex.InnerException.Message}");
                     }
-                    return View(model);
+                    return View("~/Views/Employee/Help.cshtml", model);
                 }
             }
             catch (Exception ex)
@@ -291,7 +290,7 @@ namespace HRDCManagementSystem.Controllers
                 {
                     ModelState.AddModelError("", $"Inner exception: {ex.InnerException.Message}");
                 }
-                return View(model);
+                return View("~/Views/Employee/Help.cshtml", model);
             }
         }
     }

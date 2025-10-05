@@ -161,9 +161,87 @@ namespace HRDCManagementSystem.Controllers
         }
 
         [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            var user = await _context.UserMasters
+                .FirstOrDefaultAsync(u => u.Email == vm.Email && u.RecStatus == "active");
+
+            if (user == null)
+            {
+                ModelState.AddModelError("Email", "No active account found with this email.");
+                return View(vm);
+            }
+
+            var passwordHasher = new PasswordHasher<UserMaster>();
+            user.Password = passwordHasher.HashPassword(user, vm.NewPassword);
+
+            _context.UserMasters.Update(user);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Password has been reset. Please login with your new password.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            var userSysId = HttpContext.Session.GetInt32("UserSysID");
+            if (userSysId == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel vm)
+        {
+            var userSysId = HttpContext.Session.GetInt32("UserSysID");
+            if (userSysId == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            var user = await _context.UserMasters
+                .FirstOrDefaultAsync(u => u.UserSysID == userSysId && u.RecStatus == "active");
+
+            if (user == null)
+            {
+                await Logout();
+                return RedirectToAction(nameof(Login));
+            }
+
+            var passwordHasher = new PasswordHasher<UserMaster>();
+            user.Password = passwordHasher.HashPassword(user, vm.NewPassword);
+            _context.UserMasters.Update(user);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Password changed successfully.";
+            return RedirectToAction("Profile");
         }
 
         [HttpGet]
