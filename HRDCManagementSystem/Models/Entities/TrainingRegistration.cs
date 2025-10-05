@@ -17,7 +17,7 @@ public partial class TrainingRegistration : BaseEntity
 
     public bool Registration { get; set; }
 
-    public bool? Confirmation { get; set; }
+    public bool Confirmation { get; set; }
 
     public int? Marks { get; set; }
 

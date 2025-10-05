@@ -101,7 +101,7 @@ namespace HRDCManagementSystem.Controllers
                     TrainingSysID = trainingId,
                     Registration = true,
                     // Pending by default => admin needs to approve/reject
-                    Confirmation = null,
+                    Confirmation = false,
                     RecStatus = "active",
                     CreateUserId = employee.EmployeeSysID,
                     CreateDateTime = DateTime.Now

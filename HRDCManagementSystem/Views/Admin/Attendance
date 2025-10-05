@@ -1,0 +1,44 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Mark Attendance - Completed Trainings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Completed/Over Trainings</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var t in Model)
+    {
+        <tr>
+            <td>@t.Title</td>
+            <td>@t.StartDate</td>
+            <td>@t.EndDate</td>
+            <td>@t.Status</td>
+            <td>
+                <a class="btn btn-primary" asp-action="Mark" asp-route-trainingId="@t.TrainingSysID">Mark Attendance</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+    </table>
+
+

@@ -1,0 +1,61 @@
+@model HRDCManagementSystem.Models.ViewModels.AttendanceMarkViewModel
+@{
+    ViewData["Title"] = "Mark Attendance";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Mark Attendance - @Model.TrainingTitle (@Model.AttendanceDate)</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<form asp-action="Mark" asp-route-trainingId="" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="TrainingSysID" />
+
+    <div class="mb-3">
+        <label asp-for="AttendanceDate" class="form-label"></label>
+        <input asp-for="AttendanceDate" class="form-control" type="date" />
+        <span asp-validation-for="AttendanceDate" class="text-danger"></span>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Present</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (int i = 0; i < Model.Items.Count; i++)
+        {
+            <tr>
+                <td>
+                    @Model.Items[i].EmployeeName
+                    <input type="hidden" asp-for="Items[@i].TrainingRegSysID" />
+                    <input type="hidden" asp-for="Items[@i].EmployeeSysID" />
+                    <input type="hidden" asp-for="Items[@i].EmployeeName" />
+                </td>
+                <td>
+                    <input class="form-check-input" asp-for="Items[@i].IsPresent" />
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-success">Save Attendance</button>
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+

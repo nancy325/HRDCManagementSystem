@@ -206,7 +206,7 @@ namespace HRDCManagementSystem.Controllers
             try
             {
                 var viewModel = new HelpViewModel();
-                return View("~/Views/Employee/Help.cshtml",viewModel);
+                return View("~/Views/Employee/Help.cshtml", viewModel);
             }
             catch (Exception ex)
             {
@@ -225,7 +225,7 @@ namespace HRDCManagementSystem.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("~/Views/Employee/Help.cshtml",model);
+                return View("~/Views/Employee/Help.cshtml", model);
             }
 
             try
