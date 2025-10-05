@@ -226,8 +226,8 @@ namespace HRDCManagementSystem.Controllers.Admin
                     EmployeeName = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
                     Department = tr.EmployeeSys.Department,
                     Confirmation = tr.Confirmation,
-                        RegistrationDate = tr.CreateDateTime ?? DateTime.Now,
-                        TrainingStatus = tr.TrainingSys.Status
+                    RegistrationDate = tr.CreateDateTime ?? DateTime.Now,
+                    TrainingStatus = tr.TrainingSys.Status
                 })
                 .ToListAsync();
 
@@ -253,7 +253,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                            !_context.Feedbacks.Any(f => f.TrainingRegSysID == tr.TrainingRegSysID && f.RecStatus == "active"))
                 .CountAsync();
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> HelpQueries(string status = "all", bool? viewed = null)
         {
@@ -261,19 +261,19 @@ namespace HRDCManagementSystem.Controllers.Admin
             var queryable = _context.HelpQueries
                 .Include(hq => hq.EmployeeSys)
                 .Where(hq => hq.RecStatus == "active");
-            
+
             // Filter by status if specified
             if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
             {
                 queryable = queryable.Where(hq => hq.Status == status);
             }
-            
+
             // Filter by viewed status if specified
             if (viewed.HasValue)
             {
                 queryable = queryable.Where(hq => hq.ViewedByAdmin == viewed.Value);
             }
-            
+
             // Get the query results
             var helpQueries = await queryable
                 .OrderByDescending(hq => hq.CreateDateTime)
@@ -293,12 +293,12 @@ namespace HRDCManagementSystem.Controllers.Admin
                     CreateDateTime = hq.CreateDateTime
                 })
                 .ToListAsync();
-            
+
             // Update any unviewed queries to viewed
             var unviewedQueries = await _context.HelpQueries
                 .Where(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active")
                 .ToListAsync();
-            
+
             if (unviewedQueries.Any())
             {
                 foreach (var helpItem in unviewedQueries)
@@ -308,15 +308,15 @@ namespace HRDCManagementSystem.Controllers.Admin
                 }
                 await _context.SaveChangesAsync();
             }
-            
+
             // Set ViewBag for filters
             ViewBag.Status = status;
             ViewBag.Viewed = viewed;
-            
+
             // Return the view with the queries
             return View(helpQueries);
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateQueryStatus(int id, string status)
@@ -327,17 +327,17 @@ namespace HRDCManagementSystem.Controllers.Admin
                 TempData["ErrorMessage"] = "Query not found.";
                 return RedirectToAction(nameof(HelpQueries));
             }
-            
+
             helpQuery.Status = status;
             if (status == "Resolved")
             {
                 helpQuery.ResolvedDate = DateTime.Now;
             }
             helpQuery.ModifiedDateTime = DateTime.Now;
-            
+
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = "Query status updated successfully.";
-            
+
             return RedirectToAction(nameof(HelpQueries));
         }
     }

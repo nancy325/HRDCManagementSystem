@@ -66,8 +66,8 @@ namespace HRDCManagementSystem.Controllers
 
                 // Check if employee is already registered for this training
                 var existingRegistration = await _context.TrainingRegistrations
-                    .FirstOrDefaultAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
-                                             tr.TrainingSysID == trainingId && 
+                    .FirstOrDefaultAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
+                                             tr.TrainingSysID == trainingId &&
                                              tr.RecStatus == "active");
 
                 if (existingRegistration != null)
@@ -321,8 +321,8 @@ namespace HRDCManagementSystem.Controllers
 
                 // Find the registration
                 var registration = await _context.TrainingRegistrations
-                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == registrationId && 
-                                             tr.EmployeeSysID == employee.EmployeeSysID && 
+                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == registrationId &&
+                                             tr.EmployeeSysID == employee.EmployeeSysID &&
                                              tr.RecStatus == "active");
 
                 if (registration == null)

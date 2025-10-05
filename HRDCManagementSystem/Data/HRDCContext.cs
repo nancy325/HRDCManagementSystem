@@ -63,14 +63,6 @@ public partial class HRDCContext : DbContext
     public virtual DbSet<HelpQuery> HelpQueries { get; set; }
 
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Server=tcp:hrdc-server.database.windows.net,1433;Initial Catalog=HRDC_DB;Persist Security Info=False;User ID=CloudSAfca3f148;Password=Hrdc2025;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
-        }
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Attendance>(entity =>
@@ -284,7 +276,7 @@ public partial class HRDCContext : DbContext
             entity.Property(e => e.CreateDateTime).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDateTime).HasColumnType("datetime");
             entity.Property(e => e.ResolvedDate).HasColumnType("datetime");
-            
+
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .IsUnicode(false);

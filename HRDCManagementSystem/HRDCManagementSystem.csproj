@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\Employees\**" />
+    <Compile Remove="Models\Admin\**" />
     <Content Remove="Controllers\Employees\**" />
+    <Content Remove="Models\Admin\**" />
     <EmbeddedResource Remove="Controllers\Employees\**" />
+    <EmbeddedResource Remove="Models\Admin\**" />
     <None Remove="Controllers\Employees\**" />
+    <None Remove="Models\Admin\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,10 +38,6 @@
     <Compile Update="Program.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Admin\" />
   </ItemGroup>
 
 </Project>

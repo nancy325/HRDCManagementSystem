@@ -233,13 +233,13 @@ namespace HRDCManagementSystem.Controllers
             {
                 // Get the currently logged in user email
                 var currentUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
+
                 if (string.IsNullOrEmpty(currentUser))
                 {
                     ModelState.AddModelError("", "User not authenticated.");
                     return View(model);
                 }
-                
+
                 // Find the employee based on user email
                 var employee = await _context.Employees
                     .Include(e => e.UserSys)
@@ -269,7 +269,7 @@ namespace HRDCManagementSystem.Controllers
                 {
                     _context.HelpQueries.Add(helpQuery);
                     await _context.SaveChangesAsync();
-                    
+
                     TempData["Success"] = "Your query has been submitted successfully. We'll get back to you soon!";
                     return RedirectToAction(nameof(Help));
                 }

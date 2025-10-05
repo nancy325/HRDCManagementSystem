@@ -83,8 +83,8 @@ namespace HRDCManagementSystem.Controllers
                     if (employee != null)
                     {
                         var isRegistered = await _context.TrainingRegistrations
-                            .AnyAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID && 
-                                          tr.TrainingSysID == id && 
+                            .AnyAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
+                                          tr.TrainingSysID == id &&
                                           tr.RecStatus == "active");
                         ViewBag.IsRegistered = isRegistered;
                     }

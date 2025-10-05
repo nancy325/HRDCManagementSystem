@@ -77,7 +77,7 @@ app.UseRequestLocalization(localizationOptions);
 
 app.UseRouting();
 
-app.UseSession();         // put before authentication if session is needed in login
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
