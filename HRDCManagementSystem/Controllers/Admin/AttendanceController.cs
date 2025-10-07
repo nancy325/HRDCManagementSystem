@@ -4,6 +4,7 @@ using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace HRDCManagementSystem.Controllers.Admin;
 
@@ -110,8 +111,21 @@ public class AttendanceController : Controller
                         IsPresent = existingForDate.Any(a => a.TrainingRegSysID == r.TrainingRegSysID && a.IsPresent)
                     })
                     .OrderBy(i => i.EmployeeName)
-                    .ToList()
+                    .ToList(),
+                IsAlreadyTaken = existingForDate.Any(),
+                AbsentParticipants = existingForDate.Any()
+                    ? registrations
+                        .Where(r => !existingForDate.Any(a => a.TrainingRegSysID == r.TrainingRegSysID && a.IsPresent))
+                        .Select(r => $"{r.EmployeeSys.FirstName} {r.EmployeeSys.LastName}")
+                        .OrderBy(n => n)
+                        .ToList()
+                    : new List<string>()
             };
+
+            if (vm.IsAlreadyTaken)
+            {
+                TempData["ErrorMessage"] = "Attendance is already taken for this training.";
+            }
 
             return View(vm);
         }
@@ -158,6 +172,13 @@ public class AttendanceController : Controller
                 .Where(a => regIds.Contains(a.TrainingRegSysID) && a.AttendanceDate == dateToMark)
                 .ToListAsync();
 
+            // Prevent re-submission if already taken
+            if (existing.Any())
+            {
+                TempData["ErrorMessage"] = "Attendance has already been taken for this training on the selected date.";
+                return RedirectToAction(nameof(Mark), new { trainingId = model.TrainingSysID });
+            }
+
             // Upsert attendance rows for the provided date
             foreach (var item in model.Items)
             {
@@ -186,6 +207,58 @@ public class AttendanceController : Controller
             _logger.LogError(ex, "Failed to save attendance for training {TrainingId}", model.TrainingSysID);
             TempData["ErrorMessage"] = "An unexpected error occurred while saving attendance.";
             return View(model);
+        }
+    }
+
+    // GET: Admin/Attendance/ExportCsv?trainingId=1&date=2025-01-01
+    [HttpGet("ExportCsv")]
+    public async Task<IActionResult> ExportCsv(int trainingId, DateOnly? date)
+    {
+        try
+        {
+            var training = await _context.TrainingPrograms.FirstOrDefaultAsync(t => t.TrainingSysID == trainingId);
+            if (training == null)
+            {
+                return NotFound("Training not found");
+            }
+
+            var exportDate = date ?? training.EndDate;
+
+            var attendees = await _context.TrainingRegistrations
+                .Include(r => r.EmployeeSys)
+                .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && r.Confirmation == true)
+                .Select(r => new
+                {
+                    r.TrainingRegSysID,
+                    Name = r.EmployeeSys.FirstName + " " + r.EmployeeSys.LastName
+                })
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            var regIds = attendees.Select(a => a.TrainingRegSysID).ToList();
+            var attendanceRows = await _context.Attendances
+                .Where(a => regIds.Contains(a.TrainingRegSysID) && a.AttendanceDate == exportDate)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Employee Name,Present");
+            foreach (var a in attendees)
+            {
+                var present = attendanceRows.Any(x => x.TrainingRegSysID == a.TrainingRegSysID && x.IsPresent);
+                var presentText = present ? "Yes" : "No";
+                // basic CSV escaping for commas
+                var name = a.Name.Contains(',') ? $"\"{a.Name.Replace("\"", "\"\"")}\"" : a.Name;
+                sb.AppendLine($"{name},{presentText}");
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+            var fileName = $"attendance-{training.Title.Replace(' ', '-')}-{exportDate:yyyyMMdd}.csv";
+            return File(bytes, "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export attendance CSV for training {TrainingId}", trainingId);
+            return StatusCode(500, "Internal server error while exporting CSV");
         }
     }
 }

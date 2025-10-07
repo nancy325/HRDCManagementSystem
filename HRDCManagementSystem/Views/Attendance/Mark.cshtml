@@ -6,7 +6,7 @@
 
 <h2>Mark Attendance - @Model.TrainingTitle (@Model.AttendanceDate)</h2>
 
-@if (TempData["ErrorMessage"] != null)
+@if (TempData["ErrorMessage"] != null && !(Model?.IsAlreadyTaken ?? false))
 {
     <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
@@ -15,13 +15,18 @@
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
 }
 
-<form asp-action="Mark" asp-route-trainingId="" method="post">
+@if (Model.IsAlreadyTaken)
+{
+    <div class="alert alert-warning">Attendance is already taken for this training/date. You can export below.</div>
+}
+
+<form asp-action="Mark" method="post" onsubmit="return confirmSave()">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="TrainingSysID" />
 
     <div class="mb-3">
         <label asp-for="AttendanceDate" class="form-label"></label>
-        <input asp-for="AttendanceDate" class="form-control" type="date" />
+        <input asp-for="AttendanceDate" class="form-control" type="date" (Model.IsAlreadyTaken ? "disabled" : "") />
         <span asp-validation-for="AttendanceDate" class="text-danger"></span>
     </div>
 
@@ -33,29 +38,37 @@
             </tr>
         </thead>
         <tbody>
-        @for (int i = 0; i < Model.Items.Count; i++)
-        {
-            <tr>
-                <td>
-                    @Model.Items[i].EmployeeName
-                    <input type="hidden" asp-for="Items[@i].TrainingRegSysID" />
-                    <input type="hidden" asp-for="Items[@i].EmployeeSysID" />
-                    <input type="hidden" asp-for="Items[@i].EmployeeName" />
-                </td>
-                <td>
-                    <input class="form-check-input" asp-for="Items[@i].IsPresent" />
-                </td>
-            </tr>
-        }
+            @for (int i = 0; i < Model.Items.Count; i++)
+            {
+                <tr>
+                    <td>
+                        @Model.Items[i].EmployeeName
+                        <input type="hidden" name="Items[@i].TrainingRegSysID" value="@Model.Items[i].TrainingRegSysID" />
+                        <input type="hidden" name="Items[@i].EmployeeSysID" value="@Model.Items[i].EmployeeSysID" />
+                        <input type="hidden" name="Items[@i].EmployeeName" value="@Model.Items[i].EmployeeName" />
+                    </td>
+                    <td>
+                        <input class="form-check-input" name="Items[@i].IsPresent" type="checkbox" value="true" @(Model.Items[i].IsPresent ? "checked" : "") @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "") />
+                        <input type="hidden" name="Items[@i].IsPresent" value="false" />
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 
-    <button type="submit" class="btn btn-success">Save Attendance</button>
+    <button type="submit" class="btn btn-success" @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "")>Save Attendance</button>
     <a asp-action="Index" class="btn btn-secondary">Back</a>
+    <a asp-action="ExportCsv" asp-route-trainingId="@Model.TrainingSysID" asp-route-date="@Model.AttendanceDate" class="btn btn-outline-primary">Export CSV</a>
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function confirmSave() {
+            if (@(Model.IsAlreadyTaken.ToString().ToLowerInvariant())) {
+                return false;
+            }
+            return confirm('Are you sure you want to save the attendance?');
+        }
+    </script>
 }
-
-

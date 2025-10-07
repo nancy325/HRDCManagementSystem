@@ -48,6 +48,8 @@
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
                     <a href="@Url.Action("Registrations", "Admin")" class="btn btn-outline-secondary">Reset</a>
+                    <a class="btn btn-outline-primary" href="@Url.Action("ExportRegistrationsCsv", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">Export CSV</a>
+                    <a class="btn btn-outline-dark" target="_blank" href="@Url.Action("PrintRegistrations", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">Print / PDF</a>
                 </div>
             </form>
         </div>

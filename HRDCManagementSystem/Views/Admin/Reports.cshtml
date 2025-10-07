@@ -1,0 +1,135 @@
+@{
+    ViewData["Title"] = "Training Reports";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Training Reports</h4>
+            <small class="text-muted">Filter and manage training results</small>
+        </div>
+
+        <div class="card-body">
+            <!-- Filter Section -->
+            <form id="filterForm" class="row g-3 align-items-end mb-3">
+                <!-- Hidden field to store current training ID - THIS IS CRITICAL -->
+                <input type="hidden" id="currentTrainingId" name="currentTrainingId" value="" />
+
+                <div class="col-md-4">
+                    <label for="trainingSelect" class="form-label fw-semibold">Select Training</label>
+                    <select id="trainingSelect" name="trainingId" class="form-select">
+                        <option value="">-- Select Training --</option>
+                        @foreach (var t in ViewBag.Trainings)
+                        {
+                            <option value="@t.TrainingSysID">@t.Title</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="fromDate" class="form-label fw-semibold">From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label for="toDate" class="form-label fw-semibold">To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" />
+                </div>
+
+                <div class="col-md-1 text-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            <hr />
+
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-outline-primary" onclick="exportReport('csv')">
+                    <i class="bi bi-filetype-csv"></i> Export CSV
+                </button>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="text-center my-4 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Fetching training data...</p>
+            </div>
+
+            <!-- Result Container -->
+            <div id="reportContainer">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-bar-chart-line fs-1"></i>
+                    <p class="mt-2">Please select a training and apply filter to view report.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const form = document.getElementById('filterForm');
+        const loader = document.getElementById('loader');
+        const reportContainer = document.getElementById('reportContainer');
+        const currentTrainingId = document.getElementById('currentTrainingId');
+        const fromDateInput = document.getElementById('fromDate');
+        const toDateInput = document.getElementById('toDate');
+
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const trainingId = document.getElementById('trainingSelect').value;
+            const fromDate = fromDateInput.value;
+            const toDate = toDateInput.value;
+            let params = new URLSearchParams();
+            if (trainingId) {
+                params.set('trainingId', trainingId);
+                currentTrainingId.value = trainingId;
+            }
+            if (fromDate) params.set('fromDate', fromDate);
+            if (toDate) params.set('toDate', toDate);
+
+            loader.classList.remove('d-none');
+            reportContainer.innerHTML = '';
+
+            try {
+                const url = `/AdminReport/GetReports?${params.toString()}`;
+                const response = await fetch(url, { method: 'GET' });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const html = await response.text();
+                reportContainer.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading report:', error);
+                reportContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Failed to load report data. Please try again.
+                    </div>`;
+            } finally {
+                loader.classList.add('d-none');
+            }
+        });
+
+        function exportReport(kind) {
+            const trainingId = document.getElementById('trainingSelect').value;
+            const fromDate = fromDateInput.value;
+            const toDate = toDateInput.value;
+
+            const base = kind === 'excel' ? '/AdminReport/ExportToExcel' : '/AdminReport/ExportToCsv';
+            let params = new URLSearchParams();
+
+            if (trainingId) params.set('trainingId', trainingId);
+            if (fromDate) params.set('fromDate', fromDate);
+            if (toDate) params.set('toDate', toDate);
+
+            const url = `${base}?${params.toString()}`;
+            window.location.href = url;
+        }
+    </script>
+}

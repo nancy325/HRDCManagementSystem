@@ -4,6 +4,9 @@ using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using System.Text;
+using System.IO;
 
 namespace HRDCManagementSystem.Controllers.Admin
 {
@@ -243,6 +246,228 @@ namespace HRDCManagementSystem.Controllers.Admin
 
             return View(items);
         }
+
+		// Exports for the Registrations grid (CSV/Excel) and Print-friendly
+		[HttpGet]
+		public async Task<IActionResult> ExportRegistrationsCsv(int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+		{
+			var query = _context.TrainingRegistrations
+				.Include(tr => tr.TrainingSys)
+				.Include(tr => tr.EmployeeSys)
+				.Where(tr => tr.Registration == true && tr.RecStatus == "active");
+
+			if (trainingId.HasValue)
+			{
+				query = query.Where(tr => tr.TrainingSysID == trainingId.Value);
+			}
+
+			if (startDate.HasValue)
+			{
+				var start = startDate.Value.Date;
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) >= start);
+			}
+
+			if (endDate.HasValue)
+			{
+				var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) <= end);
+			}
+
+			if (!string.IsNullOrWhiteSpace(status))
+			{
+				switch (status.ToLower())
+				{
+					case "pending":
+						query = query.Where(tr => tr.Confirmation == null);
+						break;
+					case "approved":
+						query = query.Where(tr => tr.Confirmation == true);
+						break;
+					case "rejected":
+						query = query.Where(tr => tr.Confirmation == false);
+						break;
+				}
+			}
+
+			var rows = await query
+				.OrderByDescending(tr => tr.CreateDateTime)
+				.Select(tr => new
+				{
+					Training = tr.TrainingSys.Title,
+					Employee = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
+					Department = tr.EmployeeSys.Department,
+					RegisteredOn = (tr.CreateDateTime ?? DateTime.MinValue),
+					Status = tr.Confirmation == null ? "Pending" : (tr.Confirmation == true ? "Approved" : "Rejected")
+				})
+				.ToListAsync();
+
+			var sb = new StringBuilder();
+			sb.AppendLine("Training,Employee,Department,Registered On,Status");
+			foreach (var r in rows)
+			{
+				var values = new[]
+				{
+					EscapeCsv(r.Training ?? string.Empty),
+					EscapeCsv(r.Employee ?? string.Empty),
+					EscapeCsv(r.Department ?? string.Empty),
+					EscapeCsv(r.RegisteredOn.ToString("dd/MM/yyyy HH:mm")),
+					EscapeCsv(r.Status)
+				};
+				sb.AppendLine(string.Join(',', values));
+			}
+
+			var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+			var fileName = $"registrations-{DateTime.Now:yyyyMMdd}.csv";
+			return File(bytes, "text/csv", fileName);
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> ExportRegistrationsExcel(int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+		{
+			var query = _context.TrainingRegistrations
+				.Include(tr => tr.TrainingSys)
+				.Include(tr => tr.EmployeeSys)
+				.Where(tr => tr.Registration == true && tr.RecStatus == "active");
+
+			if (trainingId.HasValue)
+			{
+				query = query.Where(tr => tr.TrainingSysID == trainingId.Value);
+			}
+
+			if (startDate.HasValue)
+			{
+				var start = startDate.Value.Date;
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) >= start);
+			}
+
+			if (endDate.HasValue)
+			{
+				var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) <= end);
+			}
+
+			if (!string.IsNullOrWhiteSpace(status))
+			{
+				switch (status.ToLower())
+				{
+					case "pending":
+						query = query.Where(tr => tr.Confirmation == null);
+						break;
+					case "approved":
+						query = query.Where(tr => tr.Confirmation == true);
+						break;
+					case "rejected":
+						query = query.Where(tr => tr.Confirmation == false);
+						break;
+				}
+			}
+
+			var rows = await query
+				.OrderByDescending(tr => tr.CreateDateTime)
+				.Select(tr => new
+				{
+					Training = tr.TrainingSys.Title,
+					Employee = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
+					Department = tr.EmployeeSys.Department,
+					RegisteredOn = (tr.CreateDateTime ?? DateTime.MinValue),
+					Status = tr.Confirmation == null ? "Pending" : (tr.Confirmation == true ? "Approved" : "Rejected")
+				})
+				.ToListAsync();
+
+			ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+			using var package = new ExcelPackage();
+			var ws = package.Workbook.Worksheets.Add("Registrations");
+			// Headers
+			ws.Cells[1, 1].Value = "Training";
+			ws.Cells[1, 2].Value = "Employee";
+			ws.Cells[1, 3].Value = "Department";
+			ws.Cells[1, 4].Value = "Registered On";
+			ws.Cells[1, 5].Value = "Status";
+
+			var row = 2;
+			foreach (var r in rows)
+			{
+				ws.Cells[row, 1].Value = r.Training;
+				ws.Cells[row, 2].Value = r.Employee;
+				ws.Cells[row, 3].Value = r.Department;
+				ws.Cells[row, 4].Value = r.RegisteredOn.ToString("dd/MM/yyyy HH:mm");
+				ws.Cells[row, 5].Value = r.Status;
+				row++;
+			}
+
+			ws.Cells.AutoFitColumns();
+			var bytes = package.GetAsByteArray();
+			var fileName = $"registrations-{DateTime.Now:yyyyMMdd}.xlsx";
+			return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> PrintRegistrations(int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
+		{
+			var query = _context.TrainingRegistrations
+				.Include(tr => tr.TrainingSys)
+				.Include(tr => tr.EmployeeSys)
+				.Where(tr => tr.Registration == true && tr.RecStatus == "active");
+
+			if (trainingId.HasValue)
+			{
+				query = query.Where(tr => tr.TrainingSysID == trainingId.Value);
+			}
+
+			if (startDate.HasValue)
+			{
+				var start = startDate.Value.Date;
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) >= start);
+			}
+
+			if (endDate.HasValue)
+			{
+				var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+				query = query.Where(tr => (tr.CreateDateTime ?? DateTime.MinValue) <= end);
+			}
+
+			if (!string.IsNullOrWhiteSpace(status))
+			{
+				switch (status.ToLower())
+				{
+					case "pending":
+						query = query.Where(tr => tr.Confirmation == null);
+						break;
+					case "approved":
+						query = query.Where(tr => tr.Confirmation == true);
+						break;
+					case "rejected":
+						query = query.Where(tr => tr.Confirmation == false);
+						break;
+				}
+			}
+
+			var items = await query
+				.OrderByDescending(tr => tr.CreateDateTime)
+				.Select(tr => new AdminRegistrationItemViewModel
+				{
+					TrainingRegSysID = tr.TrainingRegSysID,
+					TrainingSysID = tr.TrainingSysID,
+					TrainingTitle = tr.TrainingSys.Title,
+					EmployeeSysID = tr.EmployeeSysID,
+					EmployeeName = tr.EmployeeSys.FirstName + " " + tr.EmployeeSys.LastName,
+					Department = tr.EmployeeSys.Department,
+					Confirmation = tr.Confirmation,
+					RegistrationDate = tr.CreateDateTime ?? DateTime.Now,
+					TrainingStatus = tr.TrainingSys.Status
+				})
+				.ToListAsync();
+
+			return View("~/Views/Admin/RegistrationsPrint.cshtml", items);
+		}
+
+		private static string EscapeCsv(string input)
+		{
+			if (string.IsNullOrEmpty(input)) return string.Empty;
+			var needsQuotes = input.Contains(',') || input.Contains('"') || input.Contains('\n') || input.Contains('\r');
+			var value = input.Replace("\"", "\"\"");
+			return needsQuotes ? $"\"{value}\"" : value;
+		}
 
         // Duplicate approval endpoints removed. Now handled by TrainingRegistrationController.
 

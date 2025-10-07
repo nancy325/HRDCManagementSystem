@@ -1,0 +1,81 @@
+@model IEnumerable<HRDCManagementSystem.Models.ViewModels.TrainingReportViewModel>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Training Report</h5>
+       
+    </div>
+
+    <div class="table-responsive mt-2">
+        <table class="table table-bordered table-striped align-middle mb-0">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Training</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>From Time</th>
+                    <th>To Time</th>
+                    <th>Attendance %</th>
+                    <th>Marks</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>@r.EmployeeName</td>
+                            <td>@r.Department</td>
+                            <td>@r.Email</td>
+                            <td>@r.TrainingName</td>
+                            <td>@r.StartDate.ToString("dd/MM/yyyy")</td>
+                            <td>@r.EndDate.ToString("dd/MM/yyyy")</td>
+                            <td>@r.FromTime.ToString("HH:mm")</td>
+                            <td>@r.ToTime.ToString("HH:mm")</td>
+                            <td>@r.AttendancePercent.ToString("0.##")%</td>
+                            <td>@(r.Marks?.ToString() ?? "-")</td>
+                            <td class="fw-semibold @(r.ResultStatus == "Pass" ? "text-success" : r.ResultStatus == "Fail" ? "text-danger" : "text-muted")">
+                                @r.ResultStatus
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-3">No records found</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Export to CSV - FIXED VERSION
+    document.getElementById('btnExportCsv')?.addEventListener('click', function () {
+        // Get trainingId from the hidden field in the main page
+        const trainingId = document.getElementById('currentTrainingId')?.value;
+
+        if (!trainingId || trainingId === '' || trainingId === '0') {
+            alert('Please select a training first.');
+            return;
+        }
+
+        // Get date filters
+        const fromDate = document.getElementById('fromDate')?.value || '';
+        const toDate = document.getElementById('toDate')?.value || '';
+
+        // Build URL with parameters
+        let url = `/AdminReport/ExportToCsv?trainingId=${trainingId}`;
+        if (fromDate) url += `&fromDate=${fromDate}`;
+        if (toDate) url += `&toDate=${toDate}`;
+
+        window.location.href = url;
+    });
+</script>

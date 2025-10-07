@@ -23,6 +23,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<HRDCContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // Register other services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();

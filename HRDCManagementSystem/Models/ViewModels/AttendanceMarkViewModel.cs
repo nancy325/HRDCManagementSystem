@@ -22,6 +22,12 @@ public class AttendanceMarkViewModel
     public string TrainingTitle { get; set; } = string.Empty;
 
     public List<AttendanceMarkItem> Items { get; set; } = new();
+
+    // Indicates whether attendance has already been taken for this training/date
+    public bool IsAlreadyTaken { get; set; }
+
+    // Names of absent participants when attendance is already taken
+    public List<string> AbsentParticipants { get; set; } = new();
 }
 
 
