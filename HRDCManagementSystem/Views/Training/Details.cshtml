@@ -22,102 +22,151 @@
     }
 
     <h2 class="mb-3">@Model.Title</h2>
-    <dl class="row">
-        <dt class="col-sm-3">Trainer</dt>
-        <dd class="col-sm-9">@Model.TrainerName</dd>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <dl class="row">
+                <dt class="col-sm-4">Trainer</dt>
+                <dd class="col-sm-8">@Model.TrainerName</dd>
 
-        <dt class="col-sm-3">Dates</dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(m => m.StartDate) - @Html.DisplayFor(m => m.EndDate)
-        </dd>
+                <dt class="col-sm-4">Dates</dt>
+                <dd class="col-sm-8">
+                    @Html.DisplayFor(m => m.StartDate) - @Html.DisplayFor(m => m.EndDate)
+                </dd>
 
-        <dt class="col-sm-3">Time</dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(m => m.FromTime) - @Html.DisplayFor(m => m.ToTime)
-        </dd>
+                <dt class="col-sm-4">Time</dt>
+                <dd class="col-sm-8">
+                    @Html.DisplayFor(m => m.FromTime) - @Html.DisplayFor(m => m.ToTime)
+                </dd>
 
-        <dt class="col-sm-3">Registration Valid Till</dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(m => m.ValidTill)
-        </dd>
+                <dt class="col-sm-4">Registration Valid Till</dt>
+                <dd class="col-sm-8">
+                    @Html.DisplayFor(m => m.ValidTill)
+                </dd>
 
-        <dt class="col-sm-3">Venue</dt>
-        <dd class="col-sm-9">@Model.Venue</dd>
+                <dt class="col-sm-4">Venue</dt>
+                <dd class="col-sm-8">@Model.Venue</dd>
 
-        <dt class="col-sm-3">Mode</dt>
-        <dd class="col-sm-9">@Model.Mode</dd>
+                <dt class="col-sm-4">Mode</dt>
+                <dd class="col-sm-8">@Model.Mode</dd>
 
-        <dt class="col-sm-3">Capacity</dt>
-        <dd class="col-sm-9">@Model.Capacity</dd>
+                <dt class="col-sm-4">Capacity</dt>
+                <dd class="col-sm-8">@Model.Capacity</dd>
 
-        <dt class="col-sm-3">Current Registrations</dt>
-        <dd class="col-sm-9">@ViewBag.CurrentRegistrations / @Model.Capacity</dd>
+                <dt class="col-sm-4">Current Registrations</dt>
+                <dd class="col-sm-8">@ViewBag.CurrentRegistrations / @Model.Capacity</dd>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">@Model.Status</dd>
+                }
+
+                <dt class="col-sm-4">File</dt>
+                <dd class="col-sm-8">
+                    @if (!string.IsNullOrEmpty(Model.ExistingPath))
+                    {
+                        <a href="@Url.Content(Model.ExistingPath)" target="_blank">View File</a>
+                    }
+                    else
+                    {
+                        <span>No file uploaded.</span>
+                    }
+                </dd>
+            </dl>
+
+            <div class="mt-3">
+                @if (User.IsInRole("Employee"))
+                {
+                    if (ViewBag.IsRegistered == true)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-check-circle"></i> You are already registered for this training.
+                        </div>
+                    }
+                    else
+                    {
+                        var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                        var canRegister = (!Model.ValidTill.HasValue) || (Model.ValidTill >= currentDate);
+                        var hasCapacity = (ViewBag.CurrentRegistrations < Model.Capacity);
+
+                        @if (canRegister && hasCapacity)
+                        {
+                            <form asp-action="Register" asp-controller="TrainingRegistration" method="post" class="d-inline">
+                                <input type="hidden" name="trainingId" value="@Model.TrainingSysID" />
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to register for this training?')">
+                                    <i class="fas fa-user-plus"></i> Register for Training
+                                </button>
+                            </form>
+                        }
+                        else if (!canRegister)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Registration period has expired for this training.
+                            </div>
+                        }
+                        else if (!hasCapacity)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> This training is full. No more registrations are accepted.
+                            </div>
+                        }
+                    }
+                }
+                <a asp-action="EditTraining" asp-route-id="@Model.TrainingSysID" class="btn btn-warning btn-sm">Edit Training</a>
+                <a asp-action="TrainingIndex" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
 
         @if (User.IsInRole("Admin"))
         {
-            <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">@Model.Status</dd>
-        }
-
-        <dt class="col-sm-3">File</dt>
-        <dd class="col-sm-9">
-            @if (!string.IsNullOrEmpty(Model.ExistingPath))
-            {
-                <a href="@Url.Content(Model.ExistingPath)" target="_blank">View File</a>
-            }
-            else
-            {
-                <span>No file uploaded.</span>
-            }
-        </dd>
-    </dl>
-
-    <div class="mt-3">
-        @if (User.IsInRole("Employee"))
-        {
-            if (ViewBag.IsRegistered == true)
-            {
-                <div class="alert alert-info">
-                    <i class="fas fa-check-circle"></i> You are already registered for this training.
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Registered Employees</h5>
+                   
                 </div>
-            }
-            else
-            {
-                
-                    var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                    var canRegister = (!Model.ValidTill.HasValue) || (Model.ValidTill >= currentDate);
-                    var hasCapacity = (ViewBag.CurrentRegistrations < Model.Capacity);
-
-                    if (canRegister && hasCapacity)
-                    {
-                        <form asp-action="Register" asp-controller="TrainingRegistration" method="post" class="d-inline">
-                            <input type="hidden" name="trainingId" value="@Model.TrainingSysID" />
-                            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to register for this training?')">
-                                <i class="fas fa-user-plus"></i> Register for Training
-                            </button>
-                        </form>
-                    }
-                    else if (!canRegister)
-                    {
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> Registration period has expired for this training.
-                        </div>
-                    }
-                    else if (!hasCapacity)
-                    {
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> This training is full. No more registrations are accepted.
-                        </div>
-                    }
-                
-            }
+                @{
+                    var regs = ViewBag.RegisteredEmployees as IEnumerable<dynamic>;
+                }
+                @if (regs != null && regs.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Registered On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var e in regs)
+                                {
+                                    <tr>
+                                        <td>@e.Name</td>
+                                        <td>@e.Department</td>
+                                        <td>
+                                            @if (e.Confirmation == true)
+                                            {
+                                                <span class="badge bg-success">Approved</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Pending/Rejected</span>
+                                            }
+                                        </td>
+                                        <td>@(((DateTime)e.RegisteredOn).ToString("dd/MM/yyyy HH:mm"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">No registrations yet.</div>
+                }
+            </div>
         }
-
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-action="EditTraining" asp-route-id="@Model.TrainingSysID" class="btn btn-warning">Edit</a>
-        }
-
-        <a asp-action="TrainingIndex" class="btn btn-secondary">Back</a>
     </div>
 </div>

@@ -106,7 +106,7 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-2">
-                                            <form asp-action="Approve" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApproveClick(this, @isTrainingCompleted.ToString().ToLower());">
+                                            <form asp-action="Approve" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'approve', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
                                                 <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
@@ -118,7 +118,7 @@
                                                     <i class="bi bi-check-circle"></i> Approve
                                                 </button>
                                             </form>
-                                            <form asp-action="Reject" asp-controller="TrainingRegistration" method="post" onsubmit="return handleRejectClick(@isTrainingCompleted.ToString().ToLower());">
+                                            <form asp-action="Reject" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'reject', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
                                                 <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
@@ -155,21 +155,52 @@
 
 @section Scripts {
     <script>
-        // Prevent form submission and show message if training is completed
-        function handleApproveClick(form, isCompleted) {
+        // Intercept Approve/Reject and call AJAX endpoint to avoid full page reload
+        async function handleApprovalAjax(form, action, isCompleted) {
             if (isCompleted) {
-                alert("Training is completed. You cannot approve.");
+                alert(action === 'approve' ? 'Training is completed. You cannot approve.' : 'Training is completed. You cannot reject.');
                 return false;
             }
-            return true;
-        }
 
-        function handleRejectClick(isCompleted) {
-            if (isCompleted) {
-                alert("Training is completed. You cannot reject.");
-                return false;
+            try {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                }
+
+                const regId = parseInt(form.querySelector('input[name="id"]').value);
+                const response = await fetch('/TrainingRegistration/HandleApproval', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registrationId: regId, action })
+                });
+                const data = await response.json();
+
+                if (data && data.success) {
+                    // Update row UI: badge, dataset, and disable both buttons
+                    const row = form.closest('tr[data-reg-id]');
+                    if (row) {
+                        row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
+                        const statusCell = row.querySelector('td:nth-child(6)');
+                        if (statusCell) {
+                            statusCell.innerHTML = action === 'approve'
+                                ? '<span class="badge bg-success">Approved</span>'
+                                : '<span class="badge bg-danger">Rejected</span>';
+                        }
+                        row.querySelectorAll('button.btn-success, button.btn-danger').forEach(b => b.disabled = true);
+                    }
+                    alert(data.message || (action === 'approve' ? 'Registration approved.' : 'Registration rejected.'));
+                } else {
+                    alert(data && data.message ? data.message : 'Action failed. Please try again.');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            } catch (err) {
+                alert('An unexpected error occurred. Please try again.');
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = false;
             }
-            return true;
+
+            return false; // always prevent default submit
         }
 
         async function approveAllPending() {

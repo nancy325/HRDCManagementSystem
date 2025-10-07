@@ -64,6 +64,14 @@ namespace HRDCManagementSystem.Controllers
                     return RedirectToAction("Details", "Training", new { id = trainingId });
                 }
 
+                // Check if training is already completed
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                if (training.EndDate < currentDate || training.Status == "Completed")
+                {
+                    TempData["ErrorMessage"] = "This training has already been completed. Registration is closed.";
+                    return RedirectToAction("Details", "Training", new { id = trainingId });
+                }
+
                 // Check if employee is already registered for this training
                 var existingRegistration = await _context.TrainingRegistrations
                     .FirstOrDefaultAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
@@ -77,7 +85,6 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 // Check if registration is still valid (before ValidTill date)
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
                 if (training.Validtill.HasValue && training.Validtill.Value < currentDate)
                 {
                     TempData["ErrorMessage"] = "Registration period has expired for this training.";
@@ -120,6 +127,15 @@ namespace HRDCManagementSystem.Controllers
             }
         }
 
+        // Helper method to check if training is completed
+        private bool IsTrainingCompleted(TrainingProgram training)
+        {
+            if (training == null) return true;
+
+            var currentDate = DateOnly.FromDateTime(DateTime.Now);
+            return training.EndDate < currentDate || training.Status == "Completed";
+        }
+
         // Admin: Approve/Reject via AJAX (unified endpoint)
         public class ApprovalRequest
         {
@@ -146,11 +162,10 @@ namespace HRDCManagementSystem.Controllers
                 return Json(new { success = false, message = "Registration not found." });
             }
 
-            // Prevent approval/rejection if training is completed or past end date
-            var today = DateOnly.FromDateTime(DateTime.Now);
-            if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+            // Prevent approval/rejection if training is completed
+            if (IsTrainingCompleted(reg.TrainingSys))
             {
-                return Json(new { success = true, message = "Training already completed - no action required." });
+                return Json(new { success = false, message = "Training already completed - no action required." });
             }
 
             var action = (request.Action ?? string.Empty).ToLowerInvariant();
@@ -170,7 +185,7 @@ namespace HRDCManagementSystem.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return Json(new { success = true });
+            return Json(new { success = true, message = $"Registration {action}d successfully." });
         }
 
         // Admin: Approve (unified, with completion guard)
@@ -189,10 +204,10 @@ namespace HRDCManagementSystem.Controllers
             }
             else
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
-                if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+                // Prevent approval if training is completed
+                if (IsTrainingCompleted(reg.TrainingSys))
                 {
-                    TempData["SuccessMessage"] = "Training already completed - no action required.";
+                    TempData["InfoMessage"] = "Training already completed - no action required.";
                 }
                 else
                 {
@@ -228,10 +243,10 @@ namespace HRDCManagementSystem.Controllers
             }
             else
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
-                if (reg.TrainingSys == null || reg.TrainingSys.EndDate < today || reg.TrainingSys.Status == "Completed")
+                // Prevent rejection if training is completed
+                if (IsTrainingCompleted(reg.TrainingSys))
                 {
-                    TempData["SuccessMessage"] = "Training already completed - no action required.";
+                    TempData["InfoMessage"] = "Training already completed - no action required.";
                 }
                 else
                 {
@@ -321,6 +336,7 @@ namespace HRDCManagementSystem.Controllers
 
                 // Find the registration
                 var registration = await _context.TrainingRegistrations
+                    .Include(tr => tr.TrainingSys)
                     .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == registrationId &&
                                              tr.EmployeeSysID == employee.EmployeeSysID &&
                                              tr.RecStatus == "active");
@@ -331,16 +347,13 @@ namespace HRDCManagementSystem.Controllers
                     return RedirectToAction("MyRegistrations");
                 }
 
-                // Check if training has already started
-                var training = await _context.TrainingPrograms
-                    .FirstOrDefaultAsync(t => t.TrainingSysID == registration.TrainingSysID);
-
-                if (training != null)
+                // Check if training has already started or completed
+                if (registration.TrainingSys != null)
                 {
                     var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                    if (training.StartDate <= currentDate)
+                    if (registration.TrainingSys.StartDate <= currentDate || IsTrainingCompleted(registration.TrainingSys))
                     {
-                        TempData["ErrorMessage"] = "Cannot cancel registration as the training has already started.";
+                        TempData["ErrorMessage"] = "Cannot cancel registration as the training has already started or been completed.";
                         return RedirectToAction("MyRegistrations");
                     }
                 }

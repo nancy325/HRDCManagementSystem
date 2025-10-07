@@ -143,6 +143,13 @@
                         <div class="tab-pane fade" id="ongoing" role="tabpanel">
                             @foreach (var training in Model.OngoingTrainings.Take(2))
                             {
+                                var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+                                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+
+                                if (training.ToTime < currentTime && training.EndDate < currentDate)
+                                {
+                                    continue; // Skip trainings that have already ended
+                                }
                                 <div class="training-card">
                                     <h4>@training.Title</h4>
                                     <div class="d-flex flex-wrap gap-3 mt-2">

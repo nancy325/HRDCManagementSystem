@@ -96,6 +96,24 @@ namespace HRDCManagementSystem.Controllers
                 .CountAsync(tr => tr.TrainingSysID == id && tr.RecStatus == "active");
             ViewBag.CurrentRegistrations = currentRegistrations;
 
+            // Load registered employees for this training (active registrations)
+            var registrations = await _context.TrainingRegistrations
+                .Where(tr => tr.TrainingSysID == id && tr.RecStatus == "active")
+                .Include(tr => tr.EmployeeSys)
+                .ToListAsync();
+
+            var registeredEmployees = registrations
+                .Select(tr => new
+                {
+                    Name = ($"{tr.EmployeeSys.FirstName} {tr.EmployeeSys.LastName}").Trim(),
+                    Department = tr.EmployeeSys.Department,
+                    Confirmation = tr.Confirmation,
+                    RegisteredOn = tr.CreateDateTime ?? DateTime.Now
+                })
+                .OrderByDescending(x => x.RegisteredOn)
+                .ToList();
+            ViewBag.RegisteredEmployees = registeredEmployees;
+
             return View("Details", viewModel);
         }
 
