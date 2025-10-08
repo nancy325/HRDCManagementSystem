@@ -4,165 +4,166 @@
     ViewData["Title"] = "Create Training Program";
 }
 
-<h2>Create Training Program</h2>
-
-<hr />
-
-<form asp-action="Create" method="post" enctype="multipart/form-data">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <div class="form-group">
-        <label asp-for="Title" class="control-label"></label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="TrainerName" class="control-label"></label>
-        <input asp-for="TrainerName" class="form-control" />
-        <span asp-validation-for="TrainerName" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label for="StartDate">Start Date</label>
-        <input type="text" class="form-control datepicker" name="StartDate" id="StartDate" />
-    </div>
-
-    <div class="form-group">
-        <label for="EndDate">End Date</label>
-        <input type="text" class="form-control datepicker" id="EndDate" name="EndDate" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="FromTime" class="control-label"></label>
-        <input asp-for="FromTime" type="time" class="form-control" />
-        <span asp-validation-for="FromTime" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="ToTime" class="control-label"></label>
-        <input asp-for="ToTime" type="time" class="form-control" />
-        <span asp-validation-for="ToTime" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label for="ValidTill">Valid Till</label>
-        <input type="text" class="form-control datepicker" id="ValidTill" name="ValidTill" />
-    </div>
-  
-
-    <div class="form-group">
-        <label asp-for="Venue" class="control-label"></label>
-        <input asp-for="Venue" class="form-control" />
-        <span asp-validation-for="Venue" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="EligibilityType" class="control-label"></label>
-        <select asp-for="EligibilityType" class="form-control">
-            <option value="">-- Select Eligibility --</option>
-            <option value="Technical">Technical</option>
-            <option value="Non-Technical">Non-Technical</option>
-        </select>
-        <span asp-validation-for="EligibilityType" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Capacity" class="control-label"></label>
-        <input asp-for="Capacity" type="number" class="form-control" />
-        <span asp-validation-for="Capacity" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="FilePath" class="control-label">Upload File</label>
-        <input asp-for="FilePath" type="file" class="form-control" />
-        <span asp-validation-for="FilePath" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Mode" class="control-label"></label>
-        <select asp-for="Mode" class="form-control">
-            <option value="">-- Select Mode --</option>
-            <option value="Online">Online</option>
-            <option value="Offline">Offline</option>
-        </select>
-        <span asp-validation-for="Mode" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Status" class="control-label"></label>
-        <select asp-for="Status" class="form-control">
-            <option value="">-- Select Status --</option>
-            <option value="Draft">Draft</option>
-            <option value="Published">Published</option>
-        </select>
-        <span asp-validation-for="Status" class="text-danger"></span>
-    </div>
-
-    <div class="form-group form-check">
-        <input asp-for="IsMarksEntry" class="form-check-input" id="isMarksEntryCheckbox" />
-        <label asp-for="IsMarksEntry" class="form-check-label"></label>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="MarksOutOf" class="control-label"></label>
-        <input asp-for="MarksOutOf" type="number" class="form-control" id="marksOutOfField" disabled />
-        <span asp-validation-for="MarksOutOf" class="text-danger"></span>
-    </div>
-
-    <!-- Google Form Test Section -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-file-alt"></i> Google Form Test Configuration</h5>
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-journal-plus me-2"></i> Create Training Program</h4>
         </div>
+
         <div class="card-body">
-            <div class="form-group">
-                <label asp-for="GoogleFormTestLink" class="control-label"></label>
-                <input asp-for="GoogleFormTestLink" type="url" class="form-control" placeholder="https://forms.google.com/..." />
-                <span asp-validation-for="GoogleFormTestLink" class="text-danger"></span>
-                <small class="form-text text-muted">Enter the Google Form test link for this training</small>
-            </div>
+            <form asp-action="Create" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="form-group">
-                <label asp-for="TestInstructions" class="control-label"></label>
-                <textarea asp-for="TestInstructions" class="form-control" rows="4" placeholder="Enter test instructions for participants..."></textarea>
-                <span asp-validation-for="TestInstructions" class="text-danger"></span>
-                <small class="form-text text-muted">Provide instructions for participants taking the test</small>
-            </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Title" class="form-label fw-semibold"></label>
+                        <input asp-for="Title" class="form-control" placeholder="Enter training title" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="TestAvailableFrom" class="control-label"></label>
-                        <input asp-for="TestAvailableFrom" type="text" class="form-control datepicker" id="TestAvailableFrom" />
-                        <span asp-validation-for="TestAvailableFrom" class="text-danger"></span>
-                        <small class="form-text text-muted">When should the test become available?</small>
+                    <div class="col-md-6">
+                        <label asp-for="TrainerName" class="form-label fw-semibold"></label>
+                        <input asp-for="TrainerName" class="form-control" placeholder="Trainer’s full name" />
+                        <span asp-validation-for="TrainerName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="StartDate" class="form-label fw-semibold">Start Date</label>
+                        <input type="text" class="form-control datepicker" name="StartDate" id="StartDate" placeholder="dd/mm/yyyy" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="EndDate" class="form-label fw-semibold">End Date</label>
+                        <input type="text" class="form-control datepicker" id="EndDate" name="EndDate" placeholder="dd/mm/yyyy" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="ValidTill" class="form-label fw-semibold">Valid Till</label>
+                        <input type="text" class="form-control datepicker" id="ValidTill" name="ValidTill" placeholder="dd/mm/yyyy" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="FromTime" class="form-label fw-semibold"></label>
+                        <input asp-for="FromTime" type="time" class="form-control" />
+                        <span asp-validation-for="FromTime" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ToTime" class="form-label fw-semibold"></label>
+                        <input asp-for="ToTime" type="time" class="form-control" />
+                        <span asp-validation-for="ToTime" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Venue" class="form-label fw-semibold"></label>
+                        <input asp-for="Venue" class="form-control" placeholder="Enter venue name" />
+                        <span asp-validation-for="Venue" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EligibilityType" class="form-label fw-semibold"></label>
+                        <select asp-for="EligibilityType" class="form-select">
+                            <option value="">-- Select Eligibility --</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Non-Technical">Non-Technical</option>
+                        </select>
+                        <span asp-validation-for="EligibilityType" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Capacity" class="form-label fw-semibold"></label>
+                        <input asp-for="Capacity" type="number" class="form-control" placeholder="Enter capacity" />
+                        <span asp-validation-for="Capacity" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Mode" class="form-label fw-semibold"></label>
+                        <select asp-for="Mode" class="form-select">
+                            <option value="">-- Select Mode --</option>
+                            <option value="Online">Online</option>
+                            <option value="Offline">Offline</option>
+                        </select>
+                        <span asp-validation-for="Mode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label fw-semibold"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="">-- Select Status --</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Published">Published</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="FilePath" class="form-label fw-semibold">Upload File</label>
+                        <input asp-for="FilePath" type="file" class="form-control" />
+                        <span asp-validation-for="FilePath" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mt-4">
+                        <div class="form-check">
+                            <input asp-for="IsMarksEntry" class="form-check-input" id="isMarksEntryCheckbox" />
+                            <label asp-for="IsMarksEntry" class="form-check-label fw-semibold"></label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="MarksOutOf" class="form-label fw-semibold"></label>
+                        <input asp-for="MarksOutOf" type="number" class="form-control" id="marksOutOfField" disabled placeholder="e.g. 100" />
+                        <span asp-validation-for="MarksOutOf" class="text-danger small"></span>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="TestAvailableUntil" class="control-label"></label>
-                        <input asp-for="TestAvailableUntil" type="text" class="form-control datepicker" id="TestAvailableUntil" />
-                        <span asp-validation-for="TestAvailableUntil" class="text-danger"></span>
-                        <small class="form-text text-muted">When should the test expire?</small>
+
+                <!-- Google Form Test Section -->
+                <div class="card mt-4 border-0 shadow-sm">
+                    <div class="card-header bg-light fw-semibold">
+                        <i class="bi bi-file-earmark-text me-2"></i> Google Form Test Configuration
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="GoogleFormTestLink" class="form-label fw-semibold"></label>
+                            <input asp-for="GoogleFormTestLink" type="url" class="form-control" placeholder="https://forms.google.com/..." />
+                            <span asp-validation-for="GoogleFormTestLink" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TestInstructions" class="form-label fw-semibold"></label>
+                            <textarea asp-for="TestInstructions" class="form-control" rows="3" placeholder="Enter test instructions..."></textarea>
+                            <span asp-validation-for="TestInstructions" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="TestAvailableFrom" class="form-label fw-semibold"></label>
+                                <input asp-for="TestAvailableFrom" type="text" class="form-control datepicker" id="TestAvailableFrom" />
+                                <span asp-validation-for="TestAvailableFrom" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TestAvailableUntil" class="form-label fw-semibold"></label>
+                                <input asp-for="TestAvailableUntil" type="text" class="form-control datepicker" id="TestAvailableUntil" />
+                                <span asp-validation-for="TestAvailableUntil" class="text-danger small"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="mt-4 d-flex justify-content-end">
+                    <a asp-action="TrainingIndex" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save Training
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <br />
-
-    <div class="form-group">
-        <input type="submit" value="Save" class="btn btn-primary" />
-        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -170,25 +171,18 @@
             const marksOutOf = document.getElementById("marksOutOfField");
 
             function toggleMarksOutOf() {
-                if (checkbox.checked) {
-                    marksOutOf.disabled = false;
-                } else {
-                    marksOutOf.disabled = true;
-                    marksOutOf.value = "";
-                }
+                marksOutOf.disabled = !checkbox.checked;
+                if (marksOutOf.disabled) marksOutOf.value = "";
             }
 
             checkbox.addEventListener("change", toggleMarksOutOf);
-            toggleMarksOutOf(); // initial load
-        });
-            
-        $(document).ready(function () {
+            toggleMarksOutOf();
+
             $('.datepicker').datepicker({
-                format: 'dd/mm/yyyy',   // force dd/MM/yyyy format
+                format: 'dd/mm/yyyy',
                 autoclose: true,
                 todayHighlight: true
             });
         });
-
     </script>
 }

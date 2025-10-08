@@ -1,144 +1,257 @@
-﻿/* layout.css */
+﻿/* 🌟 Unified Modern Layout.css */
+
+/* =========================
+   Theme Variables
+========================= */
 :root {
-    --primary-color: #1a56db;
-    --secondary-color: #0e2b5c;
+    --primary-color: #2563eb; /* Calm Blue */
+    --primary-hover: #1e40af;
+    --secondary-color: #0f172a; /* Deep Navy */
     --accent-color: #3b82f6;
-    --light-color: #f3f4f6;
-    --dark-color: #1f2937;
+    --light-bg: #f9fafb;
+    --surface: #ffffff;
+    --border-color: #e5e7eb;
+    --text-color: #1f2937;
+    --muted-text: #6b7280;
     --success-color: #10b981;
-    --sidebar-width: 280px;
-    --header-height: 70px;
-    --transition-speed: 0.3s;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --radius: 12px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --transition: 0.25s ease;
 }
 
+/* =========================
+   Base Styles
+========================= */
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f8fafc;
-    overflow-x: hidden;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
-/* Header Styles */
+/* =========================
+   Header
+========================= */
 .main-header {
-    background: #0d51e8;
-    height: var(--header-height);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: #fff;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    padding: 0 1.5rem;
     position: sticky;
     top: 0;
     z-index: 1030;
 }
 
-.header-container {
-    height: 100%;
-    padding: 0 1.5rem;
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.logo-img {
-    height: 45px;
-    width: auto;
-    filter: brightness(0) invert(1);
-}
-
 .header-title-full {
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     font-weight: 600;
-    color: white;
-    line-height: 1.2;
-}
-
-.header-title-mobile {
-    display: none;
 }
 
 .sidebar-toggle {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255,255,255,0.15);
     border: none;
-    border-radius: 6px;
-    color: white;
+    border-radius: 8px;
     width: 42px;
     height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-speed);
+    color: #fff;
+    transition: background var(--transition);
 }
 
     .sidebar-toggle:hover {
-        background: rgba(255, 255, 255, 0.25);
+        background: rgba(255,255,255,0.25);
     }
 
-/* Layout Wrapper */
-.layout-wrapper {
-    display: flex;
-    flex: 1;
+/* =========================
+   Sidebar
+========================= */
+.sidebar {
+    width: 260px;
+    background: var(--surface);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    transition: transform var(--transition);
 }
 
-/* Main Content */
-.main-content {
-    flex: 1;
-    padding: 2rem;
-    transition: margin var(--transition-speed);
-}
-
-.content-wrapper {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-/* Footer */
-.main-footer {
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 1rem 2rem;
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.footer-text {
-    color: #6b7280;
-    font-size: 0.875rem;
-}
-
-.footer-links {
-    display: flex;
-    gap: 1.5rem;
-}
-
-    .footer-links a {
-        color: #6b7280;
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.75rem 1rem;
         text-decoration: none;
-        font-size: 0.875rem;
-        transition: color 0.2s;
+        color: var(--text-color);
+        border-left: 4px solid transparent;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all var(--transition);
     }
 
-        .footer-links a:hover {
+        .sidebar a:hover {
+            background-color: #f0f4ff;
+            border-left-color: var(--primary-color);
             color: var(--primary-color);
         }
 
-/* Animation for page content */
+        .sidebar a.active {
+            background-color: #e0ebff;
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+@media(max-width:992px) {
+    .sidebar {
+        position: fixed;
+        top: 70px;
+        left: -260px;
+        height: calc(100vh - 70px);
+    }
+
+        .sidebar.show {
+            left: 0;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+}
+
+/* =========================
+   Content
+========================= */
+.main-content {
+    flex: 1;
+    background: #f8fafc;
+    padding: 2rem;
+}
+
+.content-wrapper {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 2rem;
+    animation: fadeIn 0.4s ease;
+}
+
+/* =========================
+   Cards
+========================= */
+.card {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+/* =========================
+   Forms
+========================= */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 0.6rem 0.8rem;
+    transition: border var(--transition), box-shadow var(--transition);
+}
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.15rem rgba(37,99,235,0.15);
+    }
+
+/* =========================
+   Buttons
+========================= */
+.btn {
+    border-radius: 8px;
+    transition: all var(--transition);
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border: none;
+}
+
+    .btn-primary:hover {
+        background: var(--primary-hover);
+    }
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--danger-color);
+    color: #fff;
+}
+
+.btn-outline-warning:hover {
+    background-color: var(--warning-color);
+    color: #fff;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+/* =========================
+   Tables
+========================= */
+.table {
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.95rem;
+}
+
+    .table thead {
+        background-color: #f9fafc;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .table th {
+        font-weight: 600;
+        color: #374151;
+    }
+
+.table-hover tbody tr:hover {
+    background-color: #f3f4f6;
+}
+
+/* =========================
+   Alerts
+========================= */
+.alert {
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.95rem;
+}
+
+/* =========================
+   Animations
+========================= */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(6px);
     }
 
     to {
@@ -147,6 +260,176 @@ body {
     }
 }
 
-.content-wrapper {
-    animation: fadeIn 0.4s ease-out;
+
+/* =========================
+   Employee Detail Page
+========================= */
+.employee-detail-page .employee-detail-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.employee-detail-page .employee-photo {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
+.employee-detail-page .employee-name {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.employee-detail-page .employee-role {
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+.employee-detail-page .info-box {
+    background: #f9fafc;
+    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .employee-detail-page .info-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+.employee-detail-page .back-btn {
+    border-radius: 8px;
+    padding: 0.45rem 1rem;
+}
+
+@media (max-width: 768px) {
+    .employee-detail-page .profile-section {
+        border: none !important;
+        margin-bottom: 1.5rem;
+    }
+
+    .employee-detail-page .info-box {
+        text-align: center;
+    }
+}
+/* =========================
+   Assessment Page Styling
+========================= */
+.assessment-page h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.assessment-page .input-group .form-control {
+    border-radius: 0 8px 8px 0;
+}
+
+.assessment-page .table th {
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.assessment-page .table td {
+    vertical-align: middle;
+}
+
+.assessment-page .badge {
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+}
+
+.assessment-page .card {
+    border-radius: 12px;
+}
+
+.assessment-page .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+/* =========================
+   Trainings Page Styling
+========================= */
+.trainings-page h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.trainings-page .table th {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.trainings-page .table-row-hover:hover {
+    background-color: #f9fafc;
+    transition: all 0.2s ease-in-out;
+    transform: scale(1.01);
+}
+
+.trainings-page .badge {
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+.action-btn {
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+}
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+/* Registrations Table */
+.table-row-hover:hover {
+    background-color: #f9fafc;
+    transition: all 0.2s ease-in-out;
+}
+
+.badge {
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+.action-btn {
+    border-radius: 8px !important;
+    transition: all 0.2s ease-in-out;
+}
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+/* 🌟 Training Details Page Styles */
+.training-banner {
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #4b5563, #1f2937);
+}
+
+.info-box {
+    margin-bottom: 1rem;
+}
+
+h1.display-5 {
+    font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+    h1.display-5 {
+        font-size: 2rem;
+    }
 }

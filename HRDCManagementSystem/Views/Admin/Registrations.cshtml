@@ -1,70 +1,96 @@
 ﻿@using HRDCManagementSystem.Models.Admin
 @model List<AdminRegistrationItemViewModel>
+
 @{
-    ViewData["Title"] = "Registrations";
+    ViewData["Title"] = "Training Registrations";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Training Registrations</h2>
-        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "Admin")">Back to Dashboard</a>
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-semibold text-primary mb-1">
+                <i class="bi bi-people-fill me-2"></i> Training Registrations
+            </h2>
+            <p class="text-muted mb-0">View, filter, and manage all training registrations.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Dashboard", "Admin")">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to Dashboard
+        </a>
     </div>
 
-    <div class="card mb-3">
+    <!-- Filter Card -->
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3">
+            <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label">Training</label>
-                    <select class="form-select" name="trainingId">
+                    <label class="form-label fw-semibold text-secondary">Training</label>
+                    <select class="form-select shadow-sm" name="trainingId">
                         <option value="">All Trainings</option>
                         @if (ViewBag.TrainingOptions != null)
                         {
                             foreach (var t in ViewBag.TrainingOptions)
                             {
-                                var selected = (ViewBag.TrainingId != null && (int)ViewBag.TrainingId == (int)t.TrainingSysID) ? "selected" : "";
-                                <option value="@t.TrainingSysID" selected>@t.Title</option>
+                                <option value="@t.TrainingSysID"
+                                        selected="@(ViewBag.TrainingId != null && (int)ViewBag.TrainingId == (int)t.TrainingSysID)">
+                                    @t.Title
+                                </option>
                             }
                         }
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate">
+                    <label class="form-label fw-semibold text-secondary">Start Date</label>
+                    <input type="date" class="form-control shadow-sm" name="startDate" value="@ViewBag.StartDate" />
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">End Date</label>
-                    <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate">
+                    <label class="form-label fw-semibold text-secondary">End Date</label>
+                    <input type="date" class="form-control shadow-sm" name="endDate" value="@ViewBag.EndDate" />
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" name="status">
+                    <label class="form-label fw-semibold text-secondary">Status</label>
+                    <select class="form-select shadow-sm" name="status">
                         <option value="">All</option>
                         <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
                         <option value="approved" selected="@(ViewBag.Status == "approved")">Approved</option>
                         <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
                     </select>
                 </div>
-                <div class="col-12 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    <a href="@Url.Action("Registrations", "Admin")" class="btn btn-outline-secondary">Reset</a>
-                    <a class="btn btn-outline-primary" href="@Url.Action("ExportRegistrationsCsv", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">Export CSV</a>
-                    <a class="btn btn-outline-dark" target="_blank" href="@Url.Action("PrintRegistrations", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">Print / PDF</a>
+
+                <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-funnel me-1"></i> Apply Filters
+                    </button>
+                    <a href="@Url.Action("Registrations", "Admin")" class="btn btn-outline-secondary shadow-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                    </a>
+                    <a class="btn btn-outline-primary shadow-sm"
+                       href="@Url.Action("ExportRegistrationsCsv", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">
+                        <i class="bi bi-filetype-csv me-1"></i> Export CSV
+                    </a>
+                    <a class="btn btn-outline-dark shadow-sm"
+                       target="_blank"
+                       href="@Url.Action("PrintRegistrations", "Admin", new { trainingId = ViewBag.TrainingId, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, status = ViewBag.Status })">
+                        <i class="bi bi-printer me-1"></i> Print / PDF
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card">
+    <!-- Registrations Table -->
+    <div class="card shadow-sm border-0">
         <div class="card-body">
             <div class="d-flex justify-content-end mb-3">
-                <button type="button" id="approveAllBtn" class="btn btn-primary btn-sm" onclick="approveAllPending()">
-                    <i class="bi bi-check2-all"></i> Approve All Pending
+                <button type="button" id="approveAllBtn" class="btn btn-success btn-sm shadow-sm" onclick="approveAllPending()">
+                    <i class="bi bi-check2-all me-1"></i> Approve All Pending
                 </button>
             </div>
+
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
-                    <thead>
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
                             <th>Sr.No.</th>
                             <th>Training</th>
@@ -81,12 +107,12 @@
                             var i = 1;
                             foreach (var r in Model)
                             {
-                                // Assume r.TrainingStatus is "Completed" if the training is completed
                                 bool isTrainingCompleted = (r.TrainingStatus != null && r.TrainingStatus.ToLower() == "completed");
                                 var statusText = r.Confirmation == null ? "pending" : (r.Confirmation == true ? "approved" : "rejected");
+
                                 <tr data-reg-id="@r.TrainingRegSysID" data-is-completed="@isTrainingCompleted.ToString().ToLower()" data-status="@statusText">
                                     <td>@i</td>
-                                    <td>@r.TrainingTitle</td>
+                                    <td class="fw-semibold">@r.TrainingTitle</td>
                                     <td>@r.EmployeeName</td>
                                     <td>@r.Department</td>
                                     <td>@r.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</td>
@@ -108,32 +134,24 @@
                                         <div class="d-inline-flex gap-2">
                                             <form asp-action="Approve" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'approve', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
-                                                <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
-                                                <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
-                                                <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
-                                                <input type="hidden" name="status" value="@ViewBag.Status" />
-                                                <button type="submit" class="btn btn-success btn-sm"
-                                                    @(r.Confirmation == true || isTrainingCompleted ? "disabled" : null)
-                                                    title="@(isTrainingCompleted ? "Training is completed. You cannot approve." : "")">
-                                                    <i class="bi bi-check-circle"></i> Approve
+                                                <button type="submit" class="btn btn-success btn-sm shadow-sm"
+                                                        @(r.Confirmation == true || isTrainingCompleted ? "disabled" : null)>
+                                                    <i class="bi bi-check-circle me-1"></i> Approve
                                                 </button>
                                             </form>
                                             <form asp-action="Reject" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'reject', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
-                                                <input type="hidden" name="trainingId" value="@ViewBag.TrainingId" />
-                                                <input type="hidden" name="startDate" value="@ViewBag.StartDate" />
-                                                <input type="hidden" name="endDate" value="@ViewBag.EndDate" />
-                                                <input type="hidden" name="status" value="@ViewBag.Status" />
-                                                <button type="submit" class="btn btn-danger btn-sm"
-                                                    @(r.Confirmation == false || isTrainingCompleted ? "disabled" : null)
-                                                    title="@(isTrainingCompleted ? "Training is completed. You cannot reject." : "")">
-                                                    <i class="bi bi-x-circle"></i> Reject
+                                                <button type="submit" class="btn btn-danger btn-sm shadow-sm"
+                                                        @(r.Confirmation == false || isTrainingCompleted ? "disabled" : null)>
+                                                    <i class="bi bi-x-circle me-1"></i> Reject
                                                 </button>
                                             </form>
                                         </div>
                                         @if (isTrainingCompleted)
                                         {
-                                            <div class="text-danger small mt-1">Training is completed. You cannot approve or reject.</div>
+                                            <div class="text-danger small mt-1">
+                                                <i class="bi bi-exclamation-triangle"></i> Training completed
+                                            </div>
                                         }
                                     </td>
                                 </tr>
@@ -143,7 +161,9 @@
                         else
                         {
                             <tr>
-                                <td colspan="7" class="text-center text-muted">No registrations found.</td>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-info-circle me-1"></i> No registrations found.
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -155,20 +175,16 @@
 
 @section Scripts {
     <script>
-        // Intercept Approve/Reject and call AJAX endpoint to avoid full page reload
         async function handleApprovalAjax(form, action, isCompleted) {
             if (isCompleted) {
-                alert(action === 'approve' ? 'Training is completed. You cannot approve.' : 'Training is completed. You cannot reject.');
+                alert(`Training is completed. You cannot ${action}.`);
                 return false;
             }
-
             try {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                }
+                const submitBtn = form.querySelector('button');
+                submitBtn.disabled = true;
 
-                const regId = parseInt(form.querySelector('input[name="id"]').value);
+                const regId = form.querySelector('input[name="id"]').value;
                 const response = await fetch('/TrainingRegistration/HandleApproval', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -177,75 +193,41 @@
                 const data = await response.json();
 
                 if (data && data.success) {
-                    // Update row UI: badge, dataset, and disable both buttons
-                    const row = form.closest('tr[data-reg-id]');
-                    if (row) {
-                        row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
-                        const statusCell = row.querySelector('td:nth-child(6)');
-                        if (statusCell) {
-                            statusCell.innerHTML = action === 'approve'
-                                ? '<span class="badge bg-success">Approved</span>'
-                                : '<span class="badge bg-danger">Rejected</span>';
-                        }
-                        row.querySelectorAll('button.btn-success, button.btn-danger').forEach(b => b.disabled = true);
-                    }
-                    alert(data.message || (action === 'approve' ? 'Registration approved.' : 'Registration rejected.'));
+                    const row = form.closest('tr');
+                    const statusCell = row.querySelector('td:nth-child(6)');
+                    statusCell.innerHTML = action === 'approve'
+                        ? '<span class="badge bg-success">Approved</span>'
+                        : '<span class="badge bg-danger">Rejected</span>';
+                    row.querySelectorAll('button').forEach(b => b.disabled = true);
                 } else {
-                    alert(data && data.message ? data.message : 'Action failed. Please try again.');
-                    if (submitBtn) submitBtn.disabled = false;
+                    alert(data.message || 'Action failed.');
+                    submitBtn.disabled = false;
                 }
-            } catch (err) {
-                alert('An unexpected error occurred. Please try again.');
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) submitBtn.disabled = false;
+            } catch {
+                alert('An unexpected error occurred.');
             }
-
-            return false; // always prevent default submit
+            return false;
         }
 
         async function approveAllPending() {
-            const btn = document.getElementById('approveAllBtn');
-            if (!btn) return;
-
-            // Collect all rows that are pending and not completed
-            const rows = Array.from(document.querySelectorAll('tr[data-reg-id]'));
-            const targets = rows.filter(r => r.getAttribute('data-is-completed') === 'false' && r.getAttribute('data-status') === 'pending');
-
-            if (targets.length === 0) {
+            const rows = [...document.querySelectorAll('tr[data-reg-id]')].filter(r =>
+                r.dataset.isCompleted === 'false' && r.dataset.status === 'pending');
+            if (rows.length === 0) {
                 alert('No pending registrations to approve.');
                 return;
             }
+            if (!confirm(`Approve all pending registrations (${rows.length})?`)) return;
 
-            if (!confirm(`Approve all pending registrations (${targets.length})?`)) {
-                return;
+            for (const row of rows) {
+                const regId = row.dataset.regId;
+                await fetch('/TrainingRegistration/HandleApproval', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registrationId: regId, action: 'approve' })
+                });
             }
-
-            btn.disabled = true;
-            btn.textContent = 'Approving...';
-
-            let successCount = 0;
-            let failedCount = 0;
-            for (const row of targets) {
-                const regId = parseInt(row.getAttribute('data-reg-id'));
-                try {
-                    const res = await fetch('/TrainingRegistration/HandleApproval', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ registrationId: regId, action: 'approve' })
-                    });
-                    const data = await res.json();
-                    if (data && data.success) {
-                        successCount++;
-                    } else {
-                        failedCount++;
-                    }
-                } catch (e) {
-                    failedCount++;
-                }
-            }
-
-            alert(`Approve All completed. Success: ${successCount}, Failed: ${failedCount}`);
-            window.location.reload();
+            alert('All pending registrations approved!');
+            location.reload();
         }
     </script>
 }

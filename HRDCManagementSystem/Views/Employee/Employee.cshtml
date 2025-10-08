@@ -1,164 +1,165 @@
-@model IEnumerable<HRDCManagementSystem.Models.Entities.Employee>
+﻿@model IEnumerable<HRDCManagementSystem.Models.Entities.Employee>
 @{
     ViewData["Title"] = "Employee Management";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-4">
-    <h2>Employee Management</h2>
-    
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-            @TempData["Success"]
-            
-            @if (TempData["EmailSent"] is bool emailSent)
-            {
-                <div class="mt-2">
-                    @if (emailSent)
-                    {
-                        <div class="alert alert-info">
-                            <i class="bi bi-envelope-check"></i> A welcome email with login details was sent to the employee.
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            <i class="bi bi-envelope-exclamation"></i> Failed to send welcome email: @TempData["EmailError"]
-                        </div>
-                    }
-                </div>
-            }
-            
-            @if (TempData["NewEmployeeEmail"] != null && TempData["NewEmployeePassword"] != null)
-            {
-                <div class="mt-2 p-3 bg-light border rounded">
-                    <h5>New Employee Login Details:</h5>
-                    <div class="row mt-2">
-                        <div class="col-md-6">
-                            <strong>Username/Email:</strong> @TempData["NewEmployeeEmail"]
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Password:</strong> @TempData["NewEmployeePassword"]
-                        </div>
-                    </div>
-                    <div class="mt-2 small text-muted">
-                        <i class="bi bi-info-circle"></i> Please share these login details with the employee if the email was not sent successfully.
-                    </div>
-                </div>
-            }
-        </div>
-    }
-
-    <div class="mb-3">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-person-plus me-2"></i>Add New Employee
-        </a>
-    </div>
-    
-    <table class="table table-bordered table-striped">
-        <thead class="table-light">
-            <tr>
-                <th>Photo</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Designation</th>
-                <th>Institute</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var emp in Model)
-        {
-            <tr>
-                <td>
-                    @if (!string.IsNullOrEmpty(emp.ProfilePhotoPath))
-                    {
-                        <img src="~/images/profilephoto/@emp.ProfilePhotoPath" alt="Profile" width="50" height="50" class="rounded-circle" />
-                    }
-                    else
-                    {
-                        <div class="bg-light rounded-circle text-center" style="width: 50px; height: 50px; line-height: 50px;">
-                            <i class="bi bi-person"></i>
-                        </div>
-                    }
-                </td>
-                <td>@emp.FirstName @emp.MiddleName @emp.LastName</td>
-                <td>@(emp.UserSys?.Email ?? "N/A")</td>
-                <td>@emp.Department</td>
-                <td>@emp.Designation</td>
-                <td>@emp.Institute</td>
-                <td>
-                        <!-- Edit -->
-                        <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-primary me-1" title="Edit">
-                            <i class="bi bi-pencil-square"></i>
-                        </a>
-                        @* <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID" title="Edit">
-                            <img src="~/images/training images/Edit.png" alt="Edit" width="18" height="18" />
-                        </a> *@
-
-                        <!-- Details -->
-                        <a asp-action="Details" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-info me-1" title="Details">
-                            <i class="bi bi-eye"></i>
-                        </a>
-
-                        @* <a asp-action="Details" asp-route-id="@emp.EmployeeSysID"
-                           class="btn btn-sm btn-outline-info me-1" title="Details">
-                            <img src="~/images/training images/Details.png" alt="Details" width="18" height="18" />
-                        </a> *@
-
-                        <!-- Delete -->
-                        <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID" class="btn btn-sm btn-outline-danger me-1"
-                           onclick="return confirm('Are you sure you want to delete this employee?');" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </a>
-
-                        @* <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID"
-                           class="btn btn-sm btn-outline-danger me-1"
-                           onclick="return confirm('Are you sure you want to delete this employee?');"
-                           title="Delete">
-                            <img src="~/images/training images/Delete.png" alt="Delete" width="18" height="18" />
-                        </a> *@
-
-                        <!-- Resend Mail -->
-                        <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Resend Mail"
-                                    onclick="return confirm('Resend credentials to this employee?');">
-                                <i class="bi bi-envelope"></i>
-                            </button>
-                        </form> 
-
-                        @* <a asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID"
-                           onclick="return confirm('Resend credentials to this employee?');"
-                           title="Resend Mail">
-                            <img src="~/images/Employee/ResendMail.png" alt="Resend Mail" width="18" height="18" />
-                        </a> *@
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+<div class="content-header mb-4">
+    <h2 class="fw-semibold text-primary">
+        <i class="bi bi-people-fill me-2"></i> Employee Management
+    </h2>
+    <p class="text-muted">Manage all employees, view details, and send login credentials.</p>
 </div>
 
-<!-- Modal for displaying credentials -->
+<!-- ✅ Success & Info Alerts -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+        @if (TempData["EmailSent"] is bool emailSent)
+        {
+            <div class="mt-2">
+                @if (emailSent)
+                {
+                    <div class="alert alert-info py-2 mb-0">
+                        <i class="bi bi-envelope-check me-1"></i> A welcome email with login details was sent successfully.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning py-2 mb-0">
+                        <i class="bi bi-envelope-exclamation me-1"></i> Failed to send email: @TempData["EmailError"]
+                    </div>
+                }
+            </div>
+        }
+
+        @if (TempData["NewEmployeeEmail"] != null && TempData["NewEmployeePassword"] != null)
+        {
+            <div class="mt-3 bg-light border rounded p-3">
+                <h6 class="fw-semibold mb-2 text-primary">
+                    <i class="bi bi-key me-1"></i> New Employee Login Credentials
+                </h6>
+                <div class="row small">
+                    <div class="col-md-6 mb-1">
+                        <strong>Email:</strong> @TempData["NewEmployeeEmail"]
+                    </div>
+                    <div class="col-md-6 mb-1">
+                        <strong>Password:</strong> @TempData["NewEmployeePassword"]
+                    </div>
+                </div>
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i> Share manually if email delivery failed.
+                </p>
+            </div>
+        }
+    </div>
+}
+
+<!-- ➕ Add Employee Button -->
+<div class="d-flex justify-content-end mb-3">
+    <a asp-action="Create" class="btn btn-primary shadow-sm">
+        <i class="bi bi-person-plus me-1"></i> Add New Employee
+    </a>
+</div>
+
+<!-- 📋 Employee Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Photo</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Designation</th>
+                        <th scope="col">Institute</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var emp in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(emp.ProfilePhotoPath))
+                                {
+                                    <img src="~/images/profilephoto/@emp.ProfilePhotoPath"
+                                         alt="Profile"
+                                         class="rounded-circle border shadow-sm"
+                                         style="width: 50px; height: 50px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center border"
+                                         style="width: 50px; height: 50px;">
+                                        <i class="bi bi-person text-secondary fs-5"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td class="fw-semibold">@emp.FirstName @emp.MiddleName @emp.LastName</td>
+                            <td>@(emp.UserSys?.Email ?? "N/A")</td>
+                            <td>@emp.Department</td>
+                            <td>@emp.Designation</td>
+                            <td>@emp.Institute</td>
+                            <td class="text-end">
+                                <!-- Edit -->
+                                <a asp-action="Edit" asp-route-id="@emp.EmployeeSysID" class="btn btn-outline-primary btn-sm me-1" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <!-- Details -->
+                                <a asp-action="Details" asp-route-id="@emp.EmployeeSysID" class="btn btn-outline-info btn-sm me-1" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <!-- Delete -->
+                                <a asp-action="Delete" asp-route-id="@emp.EmployeeSysID"
+                                   class="btn btn-outline-danger btn-sm me-1"
+                                   onclick="return confirm('Are you sure you want to delete this employee?');"
+                                   title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+
+                                <!-- Resend Mail -->
+                                <form asp-action="ResendCredentials" asp-route-id="@emp.EmployeeSysID" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm"
+                                            title="Resend Credentials"
+                                            onclick="return confirm('Resend credentials to this employee?');">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 📬 Modal for credentials -->
 @if (TempData["NewEmployeeEmail"] != null && TempData["NewEmployeePassword"] != null)
 {
     <div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="credentialsModalLabel">
-                        <i class="bi bi-check-circle me-2"></i>Employee Created Successfully
+                        <i class="bi bi-person-check me-1"></i> Employee Created Successfully
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <strong>Important!</strong> Please save these login credentials:
-                    </div>
+                    <p class="fw-semibold text-dark mb-3">
+                        Please save these credentials before closing:
+                    </p>
                     <div class="mb-3">
-                        <label class="form-label">Username/Email:</label>
+                        <label class="form-label">Email</label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="emailInput" value="@TempData["NewEmployeeEmail"]" readonly>
                             <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('emailInput')">
@@ -167,7 +168,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password:</label>
+                        <label class="form-label">Password</label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="passwordInput" value="@TempData["NewEmployeePassword"]" readonly>
                             <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('passwordInput')">
@@ -179,14 +180,14 @@
                     {
                         if (emailSent)
                         {
-                            <div class="alert alert-success">
-                                <i class="bi bi-envelope-check"></i> An email with these credentials has been sent to the employee.
+                            <div class="alert alert-success py-2">
+                                <i class="bi bi-envelope-check me-1"></i> Email sent successfully.
                             </div>
                         }
                         else
                         {
-                            <div class="alert alert-danger">
-                                <i class="bi bi-envelope-x"></i> Failed to send email. Please copy these credentials and provide them to the employee manually.
+                            <div class="alert alert-danger py-2">
+                                <i class="bi bi-envelope-x me-1"></i> Failed to send email. Share credentials manually.
                             </div>
                         }
                     }
@@ -199,27 +200,22 @@
     </div>
 
     <script>
-        // Show modal automatically when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            var credentialsModal = new bootstrap.Modal(document.getElementById('credentialsModal'));
-            credentialsModal.show();
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = new bootstrap.Modal(document.getElementById('credentialsModal'));
+            modal.show();
         });
-        
-        // Function to copy text to clipboard
-        function copyToClipboard(elementId) {
-            var copyText = document.getElementById(elementId);
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value);
-            
-            // Show feedback that text was copied
-            var button = copyText.nextElementSibling;
-            var originalHTML = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
-            button.classList.add('btn-success');
-            setTimeout(function() {
-                button.innerHTML = originalHTML;
-                button.classList.remove('btn-success');
+
+        function copyToClipboard(id) {
+            const input = document.getElementById(id);
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            const btn = input.nextElementSibling;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i> Copied';
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.classList.remove('btn-success');
             }, 2000);
         }
     </script>

@@ -1,112 +1,158 @@
 @model IEnumerable<HRDCManagementSystem.Models.ViewModels.TrainingViewModel>
 
 @{
-	ViewData["Title"] = "Trainings";
-	// Filter the trainings for employees: only show published
-	IEnumerable<HRDCManagementSystem.Models.ViewModels.TrainingViewModel> trainingsToShow;
-	var currentDate = DateOnly.FromDateTime(DateTime.Now);
-	if (User.IsInRole("Employee"))
-	{
-		trainingsToShow = Model.Where(t => t.Status != null && t.Status.ToLower() == "published" && t.EndDate > currentDate);
-	}
-	else
-	{
-		trainingsToShow = Model;
-	}
+    ViewData["Title"] = "Trainings";
+
+    var currentDate = DateOnly.FromDateTime(DateTime.Now);
+    IEnumerable<HRDCManagementSystem.Models.ViewModels.TrainingViewModel> trainingsToShow;
+
+    if (User.IsInRole("Employee"))
+    {
+        trainingsToShow = Model.Where(t => t.Status != null && t.Status.ToLower() == "published" && t.EndDate > currentDate);
+    }
+    else
+    {
+        trainingsToShow = Model;
+    }
 }
 
-<div class="container mt-4">
-	<h2 class="mb-3">Trainings</h2>
-	@if (User.IsInRole("Admin"))
-	{
-		<div class="mb-3">
-			<a asp-action="CreateTraining" asp-controller="Training" class="btn btn-primary">Create Training</a>
-		</div>
-	}
-    <table class="table table-striped table-bordered">
-		<thead>
-			<tr>
-				<th>Sr.No.</th>
-				<th>Title</th>
-				<th>Trainer</th>
-				<th>Start Date</th>
-				<th>End Date</th>
-				<th>Venue</th>
-				<th>Status</th>
-				<th>Mode</th>
-				<th style="width:180px;">Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@for (int i = 0; i < trainingsToShow.Count(); i++)
-			{
-				var t = trainingsToShow.ElementAt(i);
-				<tr>
-					<td>@(i + 1)</td>
-					<td>@t.Title</td>
-					<td>@t.TrainerName</td>
-					<td>@t.StartDate.ToShortDateString()</td>
-					<td>@t.EndDate.ToShortDateString()</td>
-					<td>@t.Venue</td>
-					<td>@t.Status</td>
-					<td>@t.Mode</td>
-					<td>
-						
-						<!-- Details -->
-						@* <a asp-action="Details" asp-route-id="@t.TrainingSysID"
-						   class="btn btn-sm btn-info" title="View Details">
-							<i class="bi bi-info-circle"></i>
-						</a> *@
+<div class="container mt-4 trainings-page">
 
-						<a asp-action="Details" asp-route-id="@t.TrainingSysID"
-						   class="btn btn-sm btn-info" title="View Details">
-							<img src="~/images/training images/Details.png" width="20" height="20" />
-						</a>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-1">
+                <i class="bi bi-mortarboard-fill me-2"></i> Trainings
+            </h2>
+            <p class="text-muted mb-0">Explore and manage all available training programs</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="CreateTraining" asp-controller="Training" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-circle me-2"></i> Create Training
+            </a>
+        }
+    </div>
 
-						@if (User.IsInRole("Admin"))
-						{
-							<!-- Edit Bootstrap classes -->
-							@* <a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
-							   class="btn btn-sm btn-warning" title="Edit Training">
-								<i class="bi bi-pencil-square"></i>
-							</a> *@
+    <!-- Alerts -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-							<a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
-							   class="btn btn-sm btn-warning" title="Edit Training">
-								<img src="~/images/training images/Edit.png" alt="Edit" width="20" height="20" />
-							</a>
+    <!-- Table Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            @if (!trainingsToShow.Any())
+            {
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-info-circle fs-2 d-block mb-2"></i>
+                    No trainings available at the moment.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small">
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Trainer</th>
+                                <th>Dates</th>
+                                <th>Venue</th>
+                                <th>Status</th>
+                                <th>Mode</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < trainingsToShow.Count(); i++)
+                            {
+                                var t = trainingsToShow.ElementAt(i);
+                                <tr class="table-row-hover">
+                                    <td class="fw-bold text-muted">@(i + 1)</td>
+                                    <td class="fw-semibold text-dark">@t.Title</td>
+                                    <td>@t.TrainerName</td>
+                                    <td>
+                                        <div class="small">
+                                            <i class="bi bi-calendar3 text-primary me-1"></i>
+                                            @t.StartDate.ToString("dd MMM") - @t.EndDate.ToString("dd MMM yyyy")
+                                        </div>
+                                    </td>
+                                    <td>@t.Venue</td>
+                                    <td>
+                                        @if (t.Status?.ToLower() == "published")
+                                        {
+                                            <span class="badge bg-success-subtle text-success fw-semibold px-3 py-2 rounded-pill">Published</span>
+                                        }
+                                        else if (t.Status?.ToLower() == "draft")
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary fw-semibold px-3 py-2 rounded-pill">Draft</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark">@t.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (t.Mode?.ToLower() == "online")
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                                                <i class="bi bi-wifi me-1"></i> Online
+                                            </span>
+                                        }
+                                        else if (t.Mode?.ToLower() == "offline")
+                                        {
+                                            <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill">
+                                                <i class="bi bi-building me-1"></i> Offline
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Details" asp-route-id="@t.TrainingSysID"
+                                           class="btn btn-sm btn-outline-info me-1 action-btn" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
 
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
+                                               class="btn btn-sm btn-outline-warning me-1 action-btn" title="Edit">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
 
-							<!-- Delete Bootstrap classes -->
-							@* <a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
-							   class="btn btn-sm btn-danger" title="Delete Training">
-								<i class="bi bi-trash"></i>
-							</a> *@
-							
-
-							<a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
-							   class="btn btn-sm btn-danger" title="Delete Training">
-								<img src="~/images/training images/Delete.png" width="20" height="20" />
-							</a>
-						}
-						else if (User.IsInRole("Employee"))
-						{
-							<form asp-action="Register" asp-controller="TrainingRegistration" method="post" class="d-inline">
-								@Html.AntiForgeryToken()
-								<input type="hidden" name="trainingId" value="@t.TrainingSysID" />
-								<button type="submit" class="btn btn-sm btn-primary">Register</button>
-							</form>
-						}
-					</td>
-				</tr>
-			}
-		</tbody>
-
-	</table>
+                                            <a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
+                                               class="btn btn-sm btn-outline-danger action-btn"
+                                               onclick="return confirm('Are you sure you want to delete this training?');" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                        else if (User.IsInRole("Employee"))
+                                        {
+                                            <form asp-action="Register" asp-controller="TrainingRegistration" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="trainingId" value="@t.TrainingSysID" />
+                                                <button type="submit" class="btn btn-sm btn-outline-primary action-btn"
+                                                        onclick="return confirm('Register for this training?');" title="Register">
+                                                    <i class="bi bi-journal-plus me-1"></i> Register
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
 </div>
-@if (TempData["SuccessMessage"] != null)
-{
-	<div class="alert alert-success">
-		@TempData["SuccessMessage"]
-	</div>
-}

@@ -15,127 +15,110 @@
 
 <link href="~/css/admin-sidebar.css" rel="stylesheet" />
 
-<div class="admin-sidebar">
-    <!-- Sidebar Header with Logo -->
-    <div class="logo-container d-flex justify-content-center align-items-center">
-        <div class="main-logo">
-            <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="sidebar-logo" />
+<div class="admin-sidebar d-flex flex-column justify-content-between h-100 shadow-sm bg-white">
+    <!-- 🔹 Logo Section -->
+    <div>
+        <div class="logo-container text-center py-4 border-bottom">
+            <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="sidebar-logo mb-2" style="height: 60px;" />
+            <h6 class="fw-semibold text-primary mb-0">HRDC Admin</h6>
         </div>
+
+        <!-- 🔹 Navigation Menu -->
+        <ul class="sidebar-nav list-unstyled px-2 mt-3">
+            <li class="nav-item mb-1">
+                <a href="/Admin/Dashboard" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Dashboard")">
+                    <i class="nav-icon bi bi-speedometer2 me-2"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/AdminReport/Reports" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("AdminReport", "Reports")">
+                    <i class="nav-icon bi bi-graph-up me-2"></i>
+                    <span class="nav-text">Training Reports</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Employees" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Employees")">
+                    <i class="nav-icon bi bi-people me-2"></i>
+                    <span class="nav-text">Employees</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Training/TrainingIndex" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Training", "TrainingIndex")">
+                    <i class="nav-icon bi bi-mortarboard me-2"></i>
+                    <span class="nav-text">Trainings</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Registrations" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Registrations")">
+                    <i class="nav-icon bi bi-clipboard-check me-2"></i>
+                    <span class="nav-text">Registrations</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Attendance" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Attendance")">
+                    <i class="nav-icon bi bi-calendar-check me-2"></i>
+                    <span class="nav-text">Attendance</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a asp-controller="Assessment" asp-action="Index" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Assessment", "Index")">
+                    <i class="nav-icon bi bi-clipboard-data me-2"></i>
+                    <span class="nav-text">Assessment</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Certificates" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Certificates")">
+                    <i class="nav-icon bi bi-award me-2"></i>
+                    <span class="nav-text">Certificates</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Notifications" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Notifications")">
+                    <i class="nav-icon bi bi-bell me-2"></i>
+                    <span class="nav-text">Notifications</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Feedback/Index" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Feedback")">
+                    <i class="nav-icon bi bi-chat-left-text me-2"></i>
+                    <span class="nav-text">Feedback</span>
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/Admin/Settings" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Settings")">
+                    <i class="nav-icon bi bi-gear me-2"></i>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </li>
+        </ul>
     </div>
 
-    <!-- Navigation -->
-    <ul class="sidebar-nav">
-        <li class="nav-item">
-            <a href="/Admin/Dashboard" class="nav-link @IsActive("Admin", "Dashboard")">
-                <i class="nav-icon bi bi-speedometer2"></i>
-                <span class="nav-text">Dashboard</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/AdminReport/Reports" class="nav-link @IsActive("AdminReport", "Reports")">
-                <i class="nav-icon bi bi-graph-up"></i>
-                <span class="nav-text">Training Reports</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Employees" class="nav-link @IsActive("Admin", "Employees")">
-                <i class="nav-icon bi bi-people"></i>
-                <span class="nav-text">Employees</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Training/TrainingIndex" class="nav-link @IsActive("Training", "TrainingIndex")">
-                <i class="nav-icon bi bi-mortarboard"></i>
-                <span class="nav-text">Trainings</span>
-               
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Registrations" class="nav-link @IsActive("Admin", "Registrations")">
-                <i class="nav-icon bi bi-clipboard-check"></i>
-                <span class="nav-text">Registrations</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Attendance" class="nav-link @IsActive("Admin", "Attendance")">
-                <i class="nav-icon bi bi-calendar-check"></i>
-                <span class="nav-text">Attendance</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a asp-controller="Assessment" asp-action="Index" class="nav-link @IsActive("Assessment", "Index")">
-            <i class="nav-icon bi bi-clipboard-data"></i>
-            <span class="nav-text">Assessment</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Certificates" class="nav-link @IsActive("Admin", "Certificates")">
-                <i class="nav-icon bi bi-award"></i>
-                <span class="nav-text">Certificates</span>
-                
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Notifications" class="nav-link @IsActive("Admin", "Notifications")">
-                <i class="nav-icon bi bi-bell"></i>
-                <span class="nav-text">Notifications</span>
-                
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Feedback/Index" class="nav-link @IsActive("Feedback")">
-                <i class="nav-icon bi bi-chat-left-text"></i>
-                <span class="nav-text">Feedback</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="/Admin/Settings" class="nav-link @IsActive("Admin", "Settings")">
-                <i class="nav-icon bi bi-gear"></i>
-                <span class="nav-text">Settings</span>
-            </a>
-        </li>
-    </ul>
-
-    <!-- Sidebar Footer with User Info + Logout -->
-    <div class="sidebar-footer p-3 border-top">
-        <div class="admin-user-info d-flex align-items-center gap-2">
-            <div class="admin-avatar">
-                <i class="bi bi-person-badge fs-4"></i>
+    <!-- 🔹 Footer / User Info -->
+    <div class="sidebar-footer border-top px-3 py-3">
+        <div class="d-flex align-items-center mb-3">
+            <div class="admin-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                <i class="bi bi-person-badge"></i>
             </div>
-            <div class="admin-details">
-                <div class="admin-name">@(User.Identity?.Name ?? "Admin User")</div>
-                <div class="admin-role small text-muted">System Administrator</div>
+            <div>
+                <div class="fw-semibold">@((User.Identity?.Name) ?? "Admin User")</div>
+                <small class="text-muted">System Administrator</small>
             </div>
         </div>
-        <div class="mt-3">
-            <form asp-controller="Account" asp-action="Logout" method="post" class="d-grid">
-                <button type="submit" class="btn btn-danger btn-sm">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                </button>
-            </form>
-        </div>
+        <form asp-controller="Account" asp-action="Logout" method="post" class="d-grid">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </button>
+        </form>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
-
-        navLinks.forEach(link => {
-            link.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(2px)';
-            });
-            link.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateX(0)';
-            });
-        });
-
-        // Click analytics
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                const linkText = this.querySelector('.nav-text').textContent;
-                console.log(`Admin clicked: ${linkText}`);
-            });
+        const links = document.querySelectorAll('.admin-sidebar .nav-link');
+        links.forEach(link => {
+            link.addEventListener('mouseenter', () => link.classList.add('hovered'));
+            link.addEventListener('mouseleave', () => link.classList.remove('hovered'));
         });
     });
 </script>
