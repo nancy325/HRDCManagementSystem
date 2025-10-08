@@ -1,0 +1,108 @@
+@model HRDCManagementSystem.Models.ViewModels.FeedbackQuestionViewModel
+
+@{
+    ViewData["Title"] = "Add Feedback Question";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Add Feedback Question</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Feedback" asp-action="AddQuestion" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="QuestionText" class="form-label">Question Text</label>
+                            <textarea asp-for="QuestionText" class="form-control" rows="3" required></textarea>
+                            <span asp-validation-for="QuestionText" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="QuestionType" class="form-label">Question Type</label>
+                            <div class="d-flex">
+                                <div class="form-check me-4">
+                                    <input class="form-check-input" type="radio" asp-for="QuestionType" id="rating" value="Rating" checked>
+                                    <label class="form-check-label" for="rating">
+                                        Rating (1-5 Stars)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="QuestionType" id="text" value="Text">
+                                    <label class="form-check-label" for="text">
+                                        Text Response
+                                    </label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="QuestionType" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsCommon" id="isCommon">
+                                <label class="form-check-label" for="isCommon">Common Question (applies to all trainings)</label>
+                            </div>
+                        </div>
+                        
+                        <div id="trainingSelection" class="mb-3">
+                            <label asp-for="TrainingSysID" class="form-label">Select Training (if not a common question)</label>
+                            <select asp-for="TrainingSysID" asp-items="Model.TrainingList" class="form-select">
+                                <option value="">-- Select Training --</option>
+                            </select>
+                            <span asp-validation-for="TrainingSysID" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                                <label class="form-check-label" for="IsActive">Active</label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex mt-4">
+                            <button type="submit" class="btn btn-primary me-2">Add Question</button>
+                            <a asp-action="ViewQuestions" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            function toggleTrainingDropdown() {
+                if ($("#isCommon").is(":checked")) {
+                    $("#trainingSelection").hide();
+                    $("#TrainingSysID").val('');
+                } else {
+                    $("#trainingSelection").show();
+                }
+            }
+            
+            // Initial state
+            toggleTrainingDropdown();
+            
+            // On change
+            $("#isCommon").on("change", toggleTrainingDropdown);
+            
+            // Form validation
+            $("form").on("submit", function(e) {
+                if ($("#isCommon").is(":checked")) {
+                    $("#TrainingSysID").val(''); // Clear the training selection if common
+                }
+                
+                return true;
+            });
+        });
+    </script>
+    
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

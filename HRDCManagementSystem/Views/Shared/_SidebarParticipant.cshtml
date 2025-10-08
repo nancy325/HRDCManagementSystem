@@ -53,6 +53,12 @@
                     </a>
                 </li>
                 <li class="participant-nav-item">
+                    <a asp-controller="Feedback" asp-action="Index"
+                       class="participant-nav-link @IsActive("Feedback", "Index")">
+                        <i class="bi bi-chat-dots"></i><span>Feedback</span>
+                    </a>
+                </li>
+                <li class="participant-nav-item">
                     <a asp-controller="Employee" asp-action="Profile"
                        class="participant-nav-link @IsActive("Employee", "Profile")">
                         <i class="bi bi-person-circle"></i><span>My Profile</span>

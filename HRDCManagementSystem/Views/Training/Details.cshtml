@@ -122,7 +122,9 @@
             <div class="col-md-6">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">Registered Employees</h5>
-                   
+                    <a asp-controller="Feedback" asp-action="ViewFeedback" asp-route-trainingSysId="@Model.TrainingSysID" class="btn btn-info btn-sm">
+                        <i class="bi bi-chat-dots"></i> View Feedback
+                    </a>
                 </div>
                 @{
                     var regs = ViewBag.RegisteredEmployees as IEnumerable<dynamic>;

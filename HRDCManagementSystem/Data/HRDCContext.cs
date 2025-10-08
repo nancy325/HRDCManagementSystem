@@ -152,7 +152,7 @@ public partial class HRDCContext : DbContext
             entity.HasKey(e => e.FeedbackID).HasName("PK__Feedback__6A4BEDF6DF0D6D1B");
             entity.Property(e => e.FeedbackID).ValueGeneratedOnAdd().UseIdentityColumn();
             entity.ToTable("Feedback");
-            entity.Property(e => e.Comment).HasColumnType("text");
+            entity.Property(e => e.ResponseText).HasColumnType("nvarchar(max)");
             entity.Property(e => e.CreateDateTime).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDateTime).HasColumnType("datetime");
             entity.Property(e => e.RecStatus)
@@ -172,13 +172,23 @@ public partial class HRDCContext : DbContext
         modelBuilder.Entity<FeedbackQuestion>(entity =>
         {
             entity.HasKey(e => e.QuestionID).HasName("PK__Feedback__0DC06F8C4E48D008");
-            entity.Property(e => e.QuestionID).ValueGeneratedOnAdd().UseIdentityColumn();
+
+            // Explicitly set identity configuration
+            entity.Property(e => e.QuestionID)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+
             entity.ToTable("FeedbackQuestion");
             entity.Property(e => e.CreateDateTime).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDateTime).HasColumnType("datetime");
             entity.Property(e => e.QuestionText)
                 .HasMaxLength(255)
-                .IsUnicode(false);
+                .IsUnicode(false)
+                .HasDefaultValue("");
+            entity.Property(e => e.QuestionType)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("Rating");
             entity.Property(e => e.RecStatus)
                 .HasMaxLength(10)
                 .IsUnicode(false)
