@@ -1,0 +1,61 @@
+﻿@model HRDCManagementSystem.Models.ViewModels.AssessmentMarksEntryViewModel
+
+<div class="container mt-4">
+    <div class="mb-3">
+        <label for="trainingSelect" class="form-label">Select Training:</label>
+        <select id="trainingSelect" class="form-select" onchange="window.location.href='/Admin/Assessment/ManageMarks?id=' + this.value;">
+            @if (ViewBag.Trainings != null)
+            {
+                foreach (var t in ViewBag.Trainings)
+                {
+                    <option value="@t.TrainingSysID" selected="@(t.TrainingSysID == Model.TrainingId ? "selected" : null)">@t.Title</option>
+                }
+            }
+        </select>
+    </div>
+    <h3>Marks Entry for @Model.TrainingTitle (Out of @Model.MarksOutOf)</h3>
+
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Filter by Employee Name or Department..." />
+    </div>
+
+    <form asp-action="ManageMarks" method="post">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Marks Obtained</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.EmployeeMarks.Count; i++)
+                {
+                    <tr>
+                        <td>@Model.EmployeeMarks[i].EmployeeName</td>
+                        <td>@Model.EmployeeMarks[i].Department</td>
+                        <td>
+                            <input type="hidden" asp-for="@Model.EmployeeMarks[i].RegistrationId" />
+                            <input type="number" asp-for="@Model.EmployeeMarks[i].MarksObtained"
+                                   class="form-control"
+                                   min="0" max="@Model.MarksOutOf" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-success">Save Marks</button>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#searchInput').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>

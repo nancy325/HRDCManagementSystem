@@ -19,7 +19,8 @@ public partial class TrainingRegistration : BaseEntity
 
     public bool Confirmation { get; set; }
 
-    public int? Marks { get; set; }
+    public int? MarksObtained { get; set; }
+
 
 
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

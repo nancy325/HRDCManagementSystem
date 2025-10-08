@@ -63,10 +63,9 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="/Admin/Assessments" class="nav-link @IsActive("Admin", "Assessments")">
-                <i class="nav-icon bi bi-clipboard-data"></i>
-                <span class="nav-text">Assessments</span>
-                
+            <a asp-controller="Assessment" asp-action="Index" class="nav-link @IsActive("Assessment", "Index")">
+            <i class="nav-icon bi bi-clipboard-data"></i>
+            <span class="nav-text">Assessment</span>
             </a>
         </li>
         <li class="nav-item">

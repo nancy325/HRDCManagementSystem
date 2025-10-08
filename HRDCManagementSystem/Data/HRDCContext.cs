@@ -215,6 +215,12 @@ public partial class HRDCContext : DbContext
             entity.Property(e => e.Venue)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.GoogleFormTestLink)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.TestInstructions)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<TrainingRegistration>(entity =>

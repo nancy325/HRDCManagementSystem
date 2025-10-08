@@ -7,6 +7,7 @@
         public List<TrainingViewModel> UpcomingTrainings { get; set; } = new List<TrainingViewModel>();
         public List<TrainingViewModel> CompletedTrainings { get; set; } = new List<TrainingViewModel>();
         public List<TrainingViewModel> InProgressTrainings { get; set; } = new List<TrainingViewModel>();
+        public List<TrainingViewModel> AvailableTests { get; set; } = new List<TrainingViewModel>();
         public int CertificatesCount { get; set; } = 0;
     }
 }

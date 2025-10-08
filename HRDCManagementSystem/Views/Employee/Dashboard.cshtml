@@ -83,8 +83,9 @@
     </div>
 
     <div class="row">
-        <!-- Upcoming Trainings -->
+        <!-- Left Column -->
         <div class="col-lg-8">
+            <!-- Upcoming Trainings -->
             <div class="card mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Upcoming Trainings</h6>
@@ -126,13 +127,100 @@
                                 <h6 class="font-weight-bold">@training.Title</h6>
                                 <div class="mb-1"><i class="far fa-calendar-alt me-2"></i>@training.StartDate.ToString("dd/MM/yyyy") - @training.FromTime.ToString("HH:mm") - @training.ToTime.ToString("HH:mm")</div>
                                 <div class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>@training.Venue</div>
-                                <div><i class="fas fa-user me-2"></i>@training.TrainerName</div>
+                                <div class="mb-2"><i class="fas fa-user me-2"></i>@training.TrainerName</div>
+
+                                @if (!string.IsNullOrEmpty(training.GoogleFormTestLink))
+                                {
+                                    <div class="mt-2">
+                                        @if (training.TestStatus == "Completed")
+                                        {
+                                            <span class="badge bg-success me-2">Test Completed: @training.MarksObtained / @training.MarksOutOf</span>
+                                        }
+                                        else if (training.TestStatus == "Available")
+                                        {
+                                            <a href="@training.GoogleFormTestLink" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                                                <i class="fas fa-file-alt me-1"></i> Take Test
+                                            </a>
+                                            @if (!string.IsNullOrEmpty(training.TestInstructions))
+                                            {
+                                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="@training.TestInstructions">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Test Not Available</span>
+                                        }
+                                    </div>
+                                }
                             </div>
                         }
                     }
                     else
                     {
                         <p>No trainings in progress.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Available Tests -->
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-warning">Available Tests</h6>
+                    <span class="badge bg-warning rounded-pill">@Model.AvailableTests.Count</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableTests.Any())
+                    {
+                        @foreach (var test in Model.AvailableTests)
+                        {
+                            <div class="training-item mb-3">
+                                <h6 class="font-weight-bold">@test.Title</h6>
+                                <div class="mb-1"><i class="fas fa-user me-2"></i>@test.TrainerName</div>
+                                @if (test.TestAvailableFrom.HasValue || test.TestAvailableUntil.HasValue)
+                                {
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            @if (test.TestAvailableFrom.HasValue)
+                                            {
+                                                <span>Available from: @test.TestAvailableFrom.Value.ToString("dd/MM/yyyy")</span>
+                                            }
+                                            @if (test.TestAvailableFrom.HasValue && test.TestAvailableUntil.HasValue)
+                                            {
+                                                <br />
+                                            }
+                                            @if (test.TestAvailableUntil.HasValue)
+                                            {
+                                                <span>Available until: @test.TestAvailableUntil.Value.ToString("dd/MM/yyyy")</span>
+                                            }
+                                        </small>
+                                    </div>
+                                }
+                                <div class="mt-2">
+                                    @if (test.TestStatus == "Completed")
+                                    {
+                                        <span class="badge bg-success">Marks: @test.MarksObtained / @test.MarksOutOf</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="@test.GoogleFormTestLink" target="_blank" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-file-alt me-1"></i> Take Test
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(test.TestInstructions))
+                                        {
+                                            <button type="button" class="btn btn-outline-info btn-sm ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="@test.TestInstructions">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No tests available at the moment.</p>
                     }
                 </div>
             </div>
@@ -157,7 +245,6 @@
                                 <div><i class="fas fa-user me-2"></i>@training.TrainerName</div>
                             </div>
                         }
-                        
                         @if (Model.CompletedTrainings.Count > 3)
                         {
                             <div class="text-center mt-3">

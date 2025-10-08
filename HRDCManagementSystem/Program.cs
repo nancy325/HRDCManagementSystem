@@ -1,5 +1,6 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Services;
+using Mapster;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -55,6 +56,10 @@ cultureInfo.DateTimeFormat.LongTimePattern = "HH:mm:ss";
 
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+// Configure Mapster mappings
+TypeAdapterConfig<DateOnly?, DateTime?>.NewConfig()
+    .MapWith(src => src.HasValue ? src.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null);
 
 var app = builder.Build();
 
