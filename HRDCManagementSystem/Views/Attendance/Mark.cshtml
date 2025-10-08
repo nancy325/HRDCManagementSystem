@@ -26,7 +26,7 @@
 
     <div class="mb-3">
         <label asp-for="AttendanceDate" class="form-label"></label>
-        <input asp-for="AttendanceDate" class="form-control" type="date" (Model.IsAlreadyTaken ? "disabled" : "") />
+        <input asp-for="AttendanceDate" class="form-control" type="date" disabled="@(Model.IsAlreadyTaken ? "disabled" : null)" />
         <span asp-validation-for="AttendanceDate" class="text-danger"></span>
     </div>
 
@@ -48,8 +48,8 @@
                         <input type="hidden" name="Items[@i].EmployeeName" value="@Model.Items[i].EmployeeName" />
                     </td>
                     <td>
-                        <input class="form-check-input" name="Items[@i].IsPresent" type="checkbox" value="true" @(Model.Items[i].IsPresent ? "checked" : "") @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "") />
                         <input type="hidden" name="Items[@i].IsPresent" value="false" />
+                        <input class="form-check-input" name="Items[@i].IsPresent" type="checkbox" value="true" @(Model.Items[i].IsPresent ? "checked" : "") @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "") />
                     </td>
                 </tr>
             }
