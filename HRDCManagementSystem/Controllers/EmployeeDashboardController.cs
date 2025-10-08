@@ -66,6 +66,7 @@ namespace HRDCManagementSystem.Controllers
                 var upcomingTrainings = await GetUpcomingTrainings(currentDate);
                 var inProgressTrainings = await GetInProgressTrainings(employee.EmployeeSysID, currentDate);
                 var completedTrainings = await GetCompletedTrainings(employee.EmployeeSysID, currentDate);
+                var availableTests = await GetAvailableTests(employee.EmployeeSysID, currentDate);
                 var certificatesCount = await GetCertificatesCount(employee.EmployeeSysID);
 
                 // Create the dashboard view model
@@ -75,6 +76,7 @@ namespace HRDCManagementSystem.Controllers
                     UpcomingTrainings = upcomingTrainings,
                     InProgressTrainings = inProgressTrainings,
                     CompletedTrainings = completedTrainings,
+                    AvailableTests = availableTests,
                     CertificatesCount = certificatesCount
                 };
 
@@ -112,7 +114,11 @@ namespace HRDCManagementSystem.Controllers
                 ValidTill = tp.Validtill ?? tp.EndDate,
                 MarksOutOf = tp.MarksOutOf,
                 IsMarksEntry = tp.IsMarksEntry,
-                ExistingPath = tp.FilePath
+                ExistingPath = tp.FilePath,
+                GoogleFormTestLink = tp.GoogleFormTestLink,
+                TestInstructions = tp.TestInstructions,
+                TestAvailableFrom = tp.TestAvailableFrom,
+                TestAvailableUntil = tp.TestAvailableUntil
             }).ToList();
         }
 
@@ -147,7 +153,13 @@ namespace HRDCManagementSystem.Controllers
                 ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
                 MarksOutOf = tr.TrainingSys.MarksOutOf,
                 IsMarksEntry = tr.TrainingSys.IsMarksEntry,
-                ExistingPath = tr.TrainingSys.FilePath
+                ExistingPath = tr.TrainingSys.FilePath,
+                GoogleFormTestLink = tr.TrainingSys.GoogleFormTestLink,
+                TestInstructions = tr.TrainingSys.TestInstructions,
+                TestAvailableFrom = tr.TrainingSys.TestAvailableFrom,
+                TestAvailableUntil = tr.TrainingSys.TestAvailableUntil,
+                MarksObtained = tr.MarksObtained,
+                TestStatus = tr.MarksObtained.HasValue ? "Completed" : (!string.IsNullOrEmpty(tr.TrainingSys.GoogleFormTestLink) ? "Available" : "Not Available")
             }).ToList();
         }
 
@@ -181,7 +193,52 @@ namespace HRDCManagementSystem.Controllers
                 ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
                 MarksOutOf = tr.TrainingSys.MarksOutOf,
                 IsMarksEntry = tr.TrainingSys.IsMarksEntry,
-                ExistingPath = tr.TrainingSys.FilePath
+                ExistingPath = tr.TrainingSys.FilePath,
+                GoogleFormTestLink = tr.TrainingSys.GoogleFormTestLink,
+                TestInstructions = tr.TrainingSys.TestInstructions,
+                TestAvailableFrom = tr.TrainingSys.TestAvailableFrom,
+                TestAvailableUntil = tr.TrainingSys.TestAvailableUntil
+            }).ToList();
+        }
+
+        private async Task<List<TrainingViewModel>> GetAvailableTests(int employeeId, DateOnly currentDate)
+        {
+            var trainingData = await _context.TrainingRegistrations
+                .Include(tr => tr.TrainingSys)
+                .Where(tr => tr.EmployeeSysID == employeeId &&
+                            !string.IsNullOrEmpty(tr.TrainingSys.GoogleFormTestLink) &&
+                            tr.RecStatus == "active" &&
+                            tr.TrainingSys.RecStatus == "active" &&
+                            (tr.TrainingSys.TestAvailableFrom == null || tr.TrainingSys.TestAvailableFrom <= currentDate) &&
+                            (tr.TrainingSys.TestAvailableUntil == null || tr.TrainingSys.TestAvailableUntil >= currentDate))
+                .OrderBy(tr => tr.TrainingSys.TestAvailableFrom)
+                .Take(5)
+                .ToListAsync();
+
+            return trainingData.Select(tr => new TrainingViewModel
+            {
+                TrainingSysID = tr.TrainingSys.TrainingSysID,
+                Title = tr.TrainingSys.Title,
+                TrainerName = tr.TrainingSys.TrainerName,
+                StartDate = tr.TrainingSys.StartDate,
+                EndDate = tr.TrainingSys.EndDate,
+                FromTime = tr.TrainingSys.fromTime,
+                ToTime = tr.TrainingSys.toTime,
+                Venue = tr.TrainingSys.Venue,
+                Capacity = tr.TrainingSys.Capacity,
+                Status = tr.TrainingSys.Status,
+                Mode = tr.TrainingSys.Mode,
+                EligibilityType = tr.TrainingSys.EligibilityType,
+                ValidTill = tr.TrainingSys.Validtill ?? tr.TrainingSys.EndDate,
+                MarksOutOf = tr.TrainingSys.MarksOutOf,
+                IsMarksEntry = tr.TrainingSys.IsMarksEntry,
+                ExistingPath = tr.TrainingSys.FilePath,
+                GoogleFormTestLink = tr.TrainingSys.GoogleFormTestLink,
+                TestInstructions = tr.TrainingSys.TestInstructions,
+                TestAvailableFrom = tr.TrainingSys.TestAvailableFrom,
+                TestAvailableUntil = tr.TrainingSys.TestAvailableUntil,
+                MarksObtained = tr.MarksObtained,
+                TestStatus = tr.MarksObtained.HasValue ? "Completed" : "Available"
             }).ToList();
         }
 

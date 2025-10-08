@@ -72,6 +72,44 @@
                         <span>No file uploaded.</span>
                     }
                 </dd>
+
+                @if (!string.IsNullOrEmpty(Model.GoogleFormTestLink))
+                {
+                    <dt class="col-sm-4">Google Form Test</dt>
+                    <dd class="col-sm-8">
+                        <a href="@Model.GoogleFormTestLink" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Take Test
+                        </a>
+                        @if (!string.IsNullOrEmpty(Model.TestInstructions))
+                        {
+                            <div class="mt-2">
+                                <small class="text-muted">Instructions:</small>
+                                <div class="alert alert-info mt-1">
+                                    @Model.TestInstructions
+                                </div>
+                            </div>
+                        }
+                        @if (Model.TestAvailableFrom.HasValue || Model.TestAvailableUntil.HasValue)
+                        {
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    @if (Model.TestAvailableFrom.HasValue)
+                                    {
+                                        <span>Available from: @Model.TestAvailableFrom.Value.ToString("dd/MM/yyyy")</span>
+                                    }
+                                    @if (Model.TestAvailableFrom.HasValue && Model.TestAvailableUntil.HasValue)
+                                    {
+                                        <br />
+                                    }
+                                    @if (Model.TestAvailableUntil.HasValue)
+                                    {
+                                        <span>Available until: @Model.TestAvailableUntil.Value.ToString("dd/MM/yyyy")</span>
+                                    }
+                                </small>
+                            </div>
+                        }
+                    </dd>
+                }
             </dl>
 
             <div class="mt-3">

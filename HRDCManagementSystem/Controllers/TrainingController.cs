@@ -297,7 +297,11 @@ namespace HRDCManagementSystem.Controllers
                 Mode = tp.Mode,
                 Status = tp.Status,
                 MarksOutOf = tp.MarksOutOf,
-                IsMarksEntry = tp.IsMarksEntry
+                IsMarksEntry = tp.IsMarksEntry,
+                GoogleFormTestLink = tp.GoogleFormTestLink,
+                TestInstructions = tp.TestInstructions,
+                TestAvailableFrom = tp.TestAvailableFrom,
+                TestAvailableUntil = tp.TestAvailableUntil
             };
         }
 
@@ -319,7 +323,11 @@ namespace HRDCManagementSystem.Controllers
                 Mode = vm.Mode,
                 Status = vm.Status,
                 MarksOutOf = vm.MarksOutOf,
-                IsMarksEntry = vm.IsMarksEntry
+                IsMarksEntry = vm.IsMarksEntry,
+                GoogleFormTestLink = vm.GoogleFormTestLink,
+                TestInstructions = vm.TestInstructions,
+                TestAvailableFrom = vm.TestAvailableFrom,
+                TestAvailableUntil = vm.TestAvailableUntil
             };
         }
 
@@ -340,6 +348,10 @@ namespace HRDCManagementSystem.Controllers
             entity.Status = vm.Status;
             entity.MarksOutOf = vm.MarksOutOf;
             entity.IsMarksEntry = vm.IsMarksEntry;
+            entity.GoogleFormTestLink = vm.GoogleFormTestLink;
+            entity.TestInstructions = vm.TestInstructions;
+            entity.TestAvailableFrom = vm.TestAvailableFrom;
+            entity.TestAvailableUntil = vm.TestAvailableUntil;
         }
     }
 }

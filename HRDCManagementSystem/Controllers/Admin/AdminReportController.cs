@@ -1,12 +1,12 @@
 using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using System.Text;
-using Mapster;
 
 namespace HRDCManagementSystem.Controllers.Admin
 {
@@ -124,7 +124,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                         FromTime = r.TrainingSys.fromTime,
                         ToTime = r.TrainingSys.toTime,
                         MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.Marks,
+                        Marks = r.MarksObtained,
                         TrainingRegSysId = r.TrainingRegSysID
                     })
                     .ToListAsync();
@@ -204,7 +204,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                         FromTime = r.TrainingSys.fromTime,
                         ToTime = r.TrainingSys.toTime,
                         MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.Marks
+                        Marks = r.MarksObtained
                     })
                     .ToListAsync();
 
@@ -294,7 +294,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                         FromTime = r.TrainingSys.fromTime,
                         ToTime = r.TrainingSys.toTime,
                         MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.Marks
+                        Marks = r.MarksObtained
                     })
                     .OrderBy(x => x.EmployeeName)
                     .ToListAsync();
