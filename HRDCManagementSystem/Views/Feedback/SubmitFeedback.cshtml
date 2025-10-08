@@ -12,7 +12,14 @@
                     <h5 class="mb-0">Submit Feedback: @Model.TrainingTitle</h5>
                 </div>
                 <div class="card-body">
-                    <form asp-action="SaveFeedback" method="post">
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+                        </div>
+                    }
+
+                    <form asp-action="SaveFeedback" method="post" id="feedbackForm">
                         <input type="hidden" asp-for="TrainingSysID" />
                         <input type="hidden" asp-for="TrainingRegSysID" />
                         <input type="hidden" asp-for="TrainingTitle" />
@@ -20,6 +27,8 @@
                         <div class="alert alert-info mb-4">
                             <i class="bi bi-info-circle"></i> Your feedback is valuable! Please take a moment to share your thoughts about the training.
                         </div>
+                        
+                        <div class="validation-summary text-danger mb-3" asp-validation-summary="ModelOnly"></div>
                         
                         @for (var i = 0; i < Model.Responses.Count; i++)
                         {
@@ -29,22 +38,29 @@
                                     <input type="hidden" asp-for="Responses[i].QuestionText" />
                                     <input type="hidden" asp-for="Responses[i].QuestionType" />
                                     
-                                    <h6 class="card-title mb-3">@(i + 1). @Model.Responses[i].QuestionText</h6>
+                                    <h6 class="card-title mb-3">
+                                        @(i + 1). @Model.Responses[i].QuestionText
+                                        @if (Model.Responses[i].QuestionType == "Rating")
+                                        {
+                                            <span class="text-danger">*</span>
+                                        }
+                                    </h6>
                                     
                                     @if (Model.Responses[i].QuestionType == "Rating")
                                     {
                                         <div class="rating-input mb-2">
                                             <div class="form-group">
-                                                <div class="rating">
+                                                <div class="rating" data-index="@i">
                                                     @for (int star = 5; star >= 1; star--)
                                                     {
-                                                        <input type="radio" asp-for="Responses[i].RatingValue" value="@star" id="star-@i-@star" />
-                                                        <label for="star-@i-@star">
+                                                        <input type="radio" asp-for="Responses[i].RatingValue" value="@star" id="star-@i-@star" class="rating-input" required />
+                                                        <label for="star-@i-@star" title="@star stars">
                                                             <i class="bi bi-star-fill"></i>
                                                         </label>
                                                     }
                                                 </div>
-                                                <span class="rating-value ms-2">(Select a rating)</span>
+                                                <span class="rating-value ms-2" id="rating-value-@i">(Select a rating)</span>
+                                                <span class="text-danger validation-message" asp-validation-for="Responses[i].RatingValue"></span>
                                             </div>
                                         </div>
                                     }
@@ -52,6 +68,7 @@
                                     {
                                         <div class="form-group">
                                             <textarea class="form-control" asp-for="Responses[i].ResponseText" rows="3" placeholder="Enter your response here..."></textarea>
+                                            <span class="text-danger validation-message" asp-validation-for="Responses[i].ResponseText"></span>
                                         </div>
                                     }
                                 </div>
@@ -60,7 +77,7 @@
                         
                         <div class="d-flex justify-content-between mt-4">
                             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">Submit Feedback</button>
                         </div>
                     </form>
                 </div>
@@ -88,6 +105,7 @@
         padding: 5px;
         font-size: 25px;
         color: #ddd;
+        transition: all 0.2s;
     }
     
     .rating label:hover,
@@ -95,14 +113,54 @@
     .rating input:checked ~ label {
         color: #ffb400;
     }
+    
+    .validation-message {
+        display: block;
+        margin-top: 5px;
+    }
 </style>
 
 @section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Handle star rating selection and display
             $('.rating input').change(function() {
                 var value = $(this).val();
-                $(this).closest('.form-group').find('.rating-value').text(value + ' stars');
+                var ratingIndex = $(this).closest('.rating').data('index');
+                $('#rating-value-' + ratingIndex).text(value + ' stars');
+            });
+            
+            // Initial check for preselected values
+            $('.rating input:checked').each(function() {
+                var value = $(this).val();
+                var ratingIndex = $(this).closest('.rating').data('index');
+                $('#rating-value-' + ratingIndex).text(value + ' stars');
+            });
+            
+            // Custom form validation for ratings
+            $('#feedbackForm').submit(function(e) {
+                let isValid = true;
+                
+                $('.rating').each(function() {
+                    const index = $(this).data('index');
+                    const hasSelection = $(this).find('input:checked').length > 0;
+                    
+                    if (!hasSelection) {
+                        const errorMsg = 'Please select a rating';
+                        const errorElement = $(this).parent().find('.validation-message');
+                        errorElement.text(errorMsg);
+                        isValid = false;
+                    }
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    $('html, body').animate({
+                        scrollTop: $('.validation-message:not(:empty)').first().offset().top - 100
+                    }, 200);
+                }
             });
         });
     </script>

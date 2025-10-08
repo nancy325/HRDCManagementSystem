@@ -604,12 +604,39 @@ namespace HRDCManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveFeedback(FeedbackSubmissionViewModel model)
         {
+            var currentUserId = _currentUserService.GetCurrentUserId();
+            
+            if (currentUserId == null)
+            {
+                TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
+                return RedirectToAction("Index");
+            }
+
+            // Check if any validation errors exist
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Invalid model state when submitting feedback: {@ModelErrors}", 
+                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                
                 return View("SubmitFeedback", model);
             }
             
-            var currentUserId = _currentUserService.GetCurrentUserId();
+            // Manually validate rating questions have values
+            bool hasValidationErrors = false;
+            for (int i = 0; i < model.Responses.Count; i++)
+            {
+                var response = model.Responses[i];
+                if (response.QuestionType == "Rating" && (!response.RatingValue.HasValue || response.RatingValue < 1))
+                {
+                    ModelState.AddModelError($"Responses[{i}].RatingValue", "Please provide a rating");
+                    hasValidationErrors = true;
+                }
+            }
+            
+            if (hasValidationErrors)
+            {
+                return View("SubmitFeedback", model);
+            }
 
             // Check if feedback already exists for this registration
             var existingFeedback = await _context.Feedbacks
@@ -622,65 +649,81 @@ namespace HRDCManagementSystem.Controllers
                 return RedirectToAction("Index");
             }
 
-            try
+            // Use a separate DbContext instance to avoid potential state tracking issues
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                _context.Database.BeginTransaction();
-                
-                // Process each response
-                foreach (var response in model.Responses)
+                try
                 {
-                    // For default questions that don't exist in the database
-                    if (response.QuestionID == 0)
+                    _logger.LogInformation("Processing feedback submission with {ResponseCount} responses", model.Responses.Count);
+                    
+                    // Process each response
+                    foreach (var response in model.Responses)
                     {
-                        // Create the question first
-                        var newQuestion = new FeedbackQuestion
+                        _logger.LogInformation("Processing response: QuestionID={QuestionID}, QuestionType={QuestionType}", 
+                            response.QuestionID, response.QuestionType);
+                    
+                        // For default questions that don't exist in the database
+                        if (response.QuestionID == 0)
                         {
-                            QuestionText = response.QuestionText,
-                            IsActive = true,
-                            QuestionType = response.QuestionType,
-                            IsCommon = true,
-                            // Set audit fields explicitly
+                            // Create the question first with minimal properties
+                            var newQuestion = new FeedbackQuestion
+                            {
+                                QuestionText = response.QuestionText,
+                                IsActive = true,
+                                QuestionType = response.QuestionType,
+                                IsCommon = true,
+                                CreateDateTime = DateTime.Now,
+                                CreateUserId = currentUserId
+                            };
+                            
+                            _context.FeedbackQuestions.Add(newQuestion);
+                            await _context.SaveChangesAsync();
+                            
+                            response.QuestionID = newQuestion.QuestionID;
+                            _logger.LogInformation("Created new question with ID: {QuestionID}", newQuestion.QuestionID);
+                        }
+                        
+                        // Create feedback with minimal properties
+                        var feedback = new Feedback
+                        {
+                            TrainingRegSysID = model.TrainingRegSysID,
+                            QuestionID = response.QuestionID,
+                            RatingValue = response.QuestionType == "Rating" ? response.RatingValue : null,
+                            ResponseText = response.QuestionType == "Text" ? response.ResponseText : null,
                             CreateDateTime = DateTime.Now,
-                            CreateUserId = currentUserId,
-                            RecStatus = "active"
+                            CreateUserId = currentUserId
                         };
-                        
-                        _context.FeedbackQuestions.Add(newQuestion);
-                        await _context.SaveChangesAsync();
-                        
-                        response.QuestionID = newQuestion.QuestionID;
+
+                        _context.Feedbacks.Add(feedback);
+                        _logger.LogInformation("Added feedback for QuestionID={QuestionID}", response.QuestionID);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    
+                    _logger.LogInformation("Feedback submitted successfully for TrainingRegSysID={TrainingRegSysID}", 
+                        model.TrainingRegSysID);
+                    
+                    TempData["SuccessMessage"] = "Thank you for your feedback!";
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    
+                    _logger.LogError(ex, "Error saving feedback: {ErrorMessage}, TrainingRegSysID={TrainingRegSysID}", 
+                        ex.Message, model.TrainingRegSysID);
+                    
+                    var innerException = ex;
+                    while (innerException.InnerException != null)
+                    {
+                        innerException = innerException.InnerException;
+                        _logger.LogError("Inner exception: {ErrorMessage}", innerException.Message);
                     }
                     
-                    var feedback = new Feedback
-                    {
-                        TrainingRegSysID = model.TrainingRegSysID,
-                        QuestionID = response.QuestionID,
-                        RatingValue = response.QuestionType == "Rating" ? response.RatingValue : null,
-                        ResponseText = response.QuestionType == "Text" ? response.ResponseText : null,
-                        // Set audit fields explicitly
-                        CreateDateTime = DateTime.Now,
-                        CreateUserId = currentUserId,
-                        RecStatus = "active"
-                    };
-
-                    _context.Feedbacks.Add(feedback);
+                    TempData["ErrorMessage"] = $"Error saving feedback: {innerException.Message}. Please try again.";
+                    return View("SubmitFeedback", model);
                 }
-
-                await _context.SaveChangesAsync();
-                _context.Database.CommitTransaction();
-                
-                TempData["SuccessMessage"] = "Thank you for your feedback!";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                _context.Database.RollbackTransaction();
-                
-                // Log the error
-                _logger.LogError(ex, "Error saving feedback: {ErrorMessage}", ex.Message);
-                
-                TempData["ErrorMessage"] = "Error saving feedback. Please try again.";
-                return View("SubmitFeedback", model);
             }
         }
 
