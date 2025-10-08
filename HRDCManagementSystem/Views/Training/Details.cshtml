@@ -5,7 +5,7 @@
 }
 
 <!-- 🌟 Hero Banner -->
-<section class="training-banner text-white p-4 p-md-5 rounded-4 shadow-lg mb-4">
+<section class="training-banner text-white p-4 p-md-5 rounded-4 shadow-lg mb-4" style="background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
         <div>
             <h1 class="fw-bold display-5 mb-2 text-white">
@@ -33,11 +33,11 @@
 
     <!-- 📅 Date Badges -->
     <div class="mt-4 d-flex flex-wrap gap-2">
-        <span class="badge bg-light text-dark px-4 py-2 fs-6 shadow-sm">
+        <span class="badge bg-white text-dark px-4 py-2 fs-6 shadow-sm">
             <i class="bi bi-calendar-event me-1"></i>
             @Model.StartDate.ToString("dd MMM") – @Model.EndDate.ToString("dd MMM yyyy")
         </span>
-        <span class="badge bg-info text-dark px-4 py-2 fs-6 shadow-sm">
+        <span class="badge bg-info text-white px-4 py-2 fs-6 shadow-sm">
             <i class="bi bi-clock-history me-1"></i>@Model.FromTime – @Model.ToTime
         </span>
         <span class="badge bg-success px-4 py-2 fs-6 shadow-sm">
@@ -66,7 +66,7 @@
 
     <!-- 🧾 Training Info -->
     <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
-        <div class="card-header bg-gradient-primary text-white fw-semibold py-3">
+        <div class="card-header text-white fw-semibold py-3" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
             <i class="bi bi-info-circle me-2"></i> Training Information
         </div>
         <div class="card-body p-4">
@@ -91,7 +91,7 @@
                     </div>
                     <div class="info-box">
                         <div class="small text-muted">Capacity</div>
-                        <span class="badge bg-info text-dark px-3 py-2">
+                        <span class="badge bg-info text-white px-3 py-2">
                             @ViewBag.CurrentRegistrations / @Model.Capacity
                         </span>
                     </div>
@@ -172,8 +172,8 @@
     @if (User.IsInRole("Admin"))
     {
         <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-gradient-secondary text-white fw-semibold d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people-fill me-2"></i> Registered Employees</span>
+        <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+            <span><i class="bi bi-people-fill me-2"></i> Registered Employees</span>
                 <a asp-controller="Feedback" asp-action="ViewFeedback" asp-route-trainingSysId="@Model.TrainingSysID"
                    class="btn btn-outline-light btn-sm">
                     <i class="bi bi-chat-dots me-1"></i> Feedback

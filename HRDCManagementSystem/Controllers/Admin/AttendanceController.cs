@@ -137,10 +137,10 @@ public class AttendanceController : Controller
         }
     }
 
-    // POST: Admin/Attendance/Mark
-    [HttpPost("Mark")]
+    // POST: Admin/Attendance/Mark/{trainingId}
+    [HttpPost("Mark/{trainingId}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Mark(AttendanceMarkViewModel model)
+    public async Task<IActionResult> Mark(int trainingId, AttendanceMarkViewModel model)
     {
         try
         {

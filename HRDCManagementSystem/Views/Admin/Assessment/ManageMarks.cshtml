@@ -1,55 +1,215 @@
 ﻿@model HRDCManagementSystem.Models.ViewModels.AssessmentMarksEntryViewModel
 
+<style>
+    .info-box {
+        margin-bottom: 1rem;
+    }
+    
+    .info-box .small {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-box .fw-semibold {
+        font-size: 1rem;
+        color: #212529;
+    }
+    
+    .badge {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+    }
+    
+    .input-group-text {
+        background-color: #e9ecef;
+        border-color: #ced4da;
+        font-size: 0.875rem;
+    }
+</style>
+
 <div class="container mt-4">
-    <div class="mb-3">
-        <label for="trainingSelect" class="form-label">Select Training:</label>
-        <select id="trainingSelect" class="form-select" onchange="window.location.href='/Admin/Assessment/ManageMarks?id=' + this.value;">
-            @if (ViewBag.Trainings != null)
-            {
-                foreach (var t in ViewBag.Trainings)
-                {
-                    <option value="@t.TrainingSysID" selected="@(t.TrainingSysID == Model.TrainingId ? "selected" : null)">@t.Title</option>
-                }
-            }
-        </select>
-    </div>
-    <h3>Marks Entry for @Model.TrainingTitle (Out of @Model.MarksOutOf)</h3>
-
-    <div class="mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Filter by Employee Name or Department..." />
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-clipboard-data me-2"></i> Assessment Marks Entry
+            </h2>
+            <p class="text-muted mb-0">Enter marks for confirmed participants</p>
+        </div>
     </div>
 
-    <form asp-action="ManageMarks" method="post">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Employee</th>
-                    <th>Department</th>
-                    <th>Marks Obtained</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.EmployeeMarks.Count; i++)
-                {
-                    <tr>
-                        <td>@Model.EmployeeMarks[i].EmployeeName</td>
-                        <td>@Model.EmployeeMarks[i].Department</td>
-                        <td>
-                            <input type="hidden" asp-for="@Model.EmployeeMarks[i].RegistrationId" />
-                            <input type="number" asp-for="@Model.EmployeeMarks[i].MarksObtained"
-                                   class="form-control"
-                                   min="0" max="@Model.MarksOutOf" />
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <!-- Training Selection -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="trainingSelect" class="form-label fw-semibold">Select Training:</label>
+                <select id="trainingSelect" class="form-select" onchange="selectTraining(this.value);">
+                    <option value="">-- Select a Training --</option>
+                    @if (ViewBag.Trainings != null)
+                    {
+                        foreach (var t in ViewBag.Trainings)
+                        {
+                            <option value="@t.TrainingSysID" selected="@(t.TrainingSysID == Model.TrainingId ? "selected" : null)">@t.Title</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
 
-        <button type="submit" class="btn btn-success">Save Marks</button>
-    </form>
+    @if (Model.TrainingId > 0)
+    {
+        <!-- Training Info -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header text-white fw-semibold" style="background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);">
+                <i class="bi bi-mortarboard me-2"></i> @Model.TrainingTitle
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <span class="text-muted small">Total Marks</span>
+                            <div class="fw-semibold fs-5 text-primary">@Model.MarksOutOf</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <span class="text-muted small">Confirmed Participants</span>
+                            <div class="fw-semibold fs-5 text-success">@Model.EmployeeMarks.Count</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.EmployeeMarks != null && Model.EmployeeMarks.Any())
+        {
+            <!-- Search and Form -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header text-white fw-semibold" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+                    <i class="bi bi-people-fill me-2"></i> Participants List
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Filter by Employee Name or Department..." />
+                    </div>
+
+                    <form asp-action="ManageMarks" asp-route-id="@Model.TrainingId" method="post">
+                        <input type="hidden" asp-for="TrainingId" />
+                        <input type="hidden" asp-for="TrainingTitle" />
+                        <input type="hidden" asp-for="MarksOutOf" />
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>Department</th>
+                                        <th>Marks Obtained</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.EmployeeMarks.Count; i++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-semibold">@Model.EmployeeMarks[i].EmployeeName</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info text-white">@Model.EmployeeMarks[i].Department</span>
+                                            </td>
+                                            <td>
+                                                <input type="hidden" asp-for="@Model.EmployeeMarks[i].RegistrationId" />
+                                                <input type="hidden" asp-for="@Model.EmployeeMarks[i].EmployeeName" />
+                                                <input type="hidden" asp-for="@Model.EmployeeMarks[i].Department" />
+                                                <div class="input-group" style="max-width: 150px;">
+                                                    <input type="number" asp-for="@Model.EmployeeMarks[i].MarksObtained"
+                                                           class="form-control text-center"
+                                                           min="0" max="@Model.MarksOutOf" 
+                                                           placeholder="0" />
+                                                    <span class="input-group-text">/@Model.MarksOutOf</span>
+                                                </div>
+                                                <span asp-validation-for="@Model.EmployeeMarks[i].MarksObtained" class="text-danger small"></span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Total participants: <strong>@Model.EmployeeMarks.Count</strong>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                                <i class="bi bi-check-circle me-1"></i> Save All Marks
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- No Participants Message -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="bi bi-people fs-1"></i>
+                    </div>
+                    <h4 class="text-muted">No Confirmed Participants Found</h4>
+                    <p class="text-muted mb-4">
+                        There are no confirmed participants for this training yet.<br>
+                        Participants need to be registered and confirmed before marks can be entered.
+                    </p>
+                    <a asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Assessment List
+                    </a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- No Training Selected -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center py-5">
+                <div class="text-muted mb-3">
+                    <i class="bi bi-mortarboard fs-1"></i>
+                </div>
+                <h4 class="text-muted">Select a Training</h4>
+                <p class="text-muted">Please select a training from the dropdown above to enter marks for participants.</p>
+            </div>
+        </div>
+    }
 </div>
 
 <script>
+    function selectTraining(trainingId) {
+        if (trainingId && trainingId !== '') {
+            console.log('Selected training ID:', trainingId);
+            var fullUrl = '/Admin/Assessment/ManageMarks/' + trainingId;
+            console.log('Navigating to:', fullUrl);
+            window.location.href = fullUrl;
+        }
+    }
+
     $(document).ready(function() {
         $('#searchInput').on('keyup', function() {
             var value = $(this).val().toLowerCase();

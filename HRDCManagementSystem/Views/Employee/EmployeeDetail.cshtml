@@ -4,6 +4,64 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    .employee-detail-page {
+        background-color: #f8f9fa;
+    }
+    
+    .employee-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .employee-photo {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
+    
+    .employee-name {
+        color: #212529;
+        font-size: 1.5rem;
+    }
+    
+    .employee-role {
+        color: #6c757d;
+        font-size: 1rem;
+    }
+    
+    .info-box {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-box .small {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-box .fw-semibold {
+        font-size: 1rem;
+        color: #212529;
+    }
+    
+    .badge {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .back-btn {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+</style>
+
 <div class="container mt-4 employee-detail-page">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -27,11 +85,13 @@
                 {
                     <img src="~/images/profilephoto/@Model.ProfilePhotoPath"
                          alt="Profile Photo"
-                         class="rounded-circle shadow-sm border mb-3 employee-photo" />
+                         class="rounded-circle shadow-sm border mb-3 employee-photo" 
+                         style="width: 120px; height: 120px; object-fit: cover;" />
                 }
                 else
                 {
-                    <div class="bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm mb-3 employee-photo">
+                    <div class="text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm mb-3 employee-photo"
+                         style="width: 120px; height: 120px; background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);">
                         <i class="bi bi-person fs-1"></i>
                     </div>
                 }
@@ -46,7 +106,7 @@
                     }
                     @if (!string.IsNullOrEmpty(Model.Type))
                     {
-                        <span class="badge bg-light text-dark border">@Model.Type</span>
+                        <span class="badge bg-secondary text-white">@Model.Type</span>
                     }
                 </div>
             </div>
@@ -79,7 +139,7 @@
                         <div class="info-box">
                             <span class="text-muted small">Status</span>
                             <div class="fw-semibold">
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success text-white">Active</span>
                             </div>
                         </div>
                     </div>

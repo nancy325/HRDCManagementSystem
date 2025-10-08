@@ -20,7 +20,7 @@
     <div class="alert alert-warning">Attendance is already taken for this training/date. You can export below.</div>
 }
 
-<form asp-action="Mark" method="post" onsubmit="return confirmSave()">
+<form asp-action="Mark" asp-route-trainingId="@Model.TrainingSysID" method="post" onsubmit="return confirmSave()">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="TrainingSysID" />
 
