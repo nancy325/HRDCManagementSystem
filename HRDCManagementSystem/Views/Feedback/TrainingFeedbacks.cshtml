@@ -1,0 +1,128 @@
+@model List<HRDCManagementSystem.Models.ViewModels.TrainingFeedbackSummaryViewModel>
+
+@{
+    ViewData["Title"] = "Training Feedbacks";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i> Training Feedback Analysis
+                    </h5>
+                    <a asp-action="ViewQuestions" class="btn btn-light btn-sm">
+                        <i class="bi bi-question-circle me-1"></i> Manage Questions
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" id="trainingSearch" class="form-control" placeholder="Search for trainings...">
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Training Title</th>
+                                        <th>End Date</th>
+                                        <th>Response Count</th>
+                                        <th>Average Rating</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var training in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@training.TrainingTitle</div>
+                                            </td>
+                                            <td>@training.EndDate.ToString("dd MMM yyyy")</td>
+                                            <td>
+                                                <span class="badge bg-info text-white">
+                                                    <i class="bi bi-chat-dots me-1"></i> @training.ResponseCount
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            if (i <= Math.Round(Convert.ToDouble(training.AverageRating)))
+                                                            {
+                                                                <i class="bi bi-star-fill text-warning"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="bi bi-star text-warning"></i>
+                                                            }
+                                                        }
+                                                    </div>
+                                                    <span>(@training.AverageRating.ToString("F1"))</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a asp-action="ViewFeedback" asp-route-trainingSysId="@training.TrainingSysID" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i> View Feedback
+                                                </a>
+                                                <a asp-controller="Training" asp-action="Details" asp-route-id="@training.TrainingSysID" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-info-circle me-1"></i> Training Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No feedback has been submitted for any trainings yet.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#trainingSearch').on('keyup', function() {
+                var value = $(this).val().toLowerCase();
+                $('tbody tr').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+}

@@ -27,6 +27,7 @@ builder.Services.AddDbContext<HRDCContext>(options =>
 // Register other services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);

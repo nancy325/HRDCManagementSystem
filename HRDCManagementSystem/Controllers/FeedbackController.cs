@@ -27,7 +27,7 @@ namespace HRDCManagementSystem.Controllers
             // Handle different roles with different views
             if (User.IsInRole("Admin"))
             {
-                return RedirectToAction(nameof(ViewQuestions));
+                return RedirectToAction(nameof(TrainingFeedbacks));
             }
             else if (User.IsInRole("Employee"))
             {
@@ -41,24 +41,24 @@ namespace HRDCManagementSystem.Controllers
                 {
                     return NotFound("Employee record not found");
                 }
-
-                // Get completed trainings
+                
+                // Get completed trainings that are confirmed by admin
                 var completedTrainings = await _context.TrainingRegistrations
                     .Include(r => r.TrainingSys)
-                    .Where(r => r.EmployeeSysID == employee.EmployeeSysID &&
+                    .Where(r => r.EmployeeSysID == employee.EmployeeSysID && 
                                 r.TrainingSys.EndDate < DateOnly.FromDateTime(DateTime.Today))
                     .ToListAsync();
-
+                    
                 var feedbacks = await _context.Feedbacks
                     .Where(f => f.CreateUserId == currentUserId)
-                    .Select(f => f.TrainingRegSysID)
-                    .Distinct()
+                    .GroupBy(f => f.TrainingRegSysID)
+                    .Select(g => g.Key)
                     .ToListAsync();
 
                 var viewModel = new FeedbackHistoryViewModel
                 {
                     CompletedFeedbacks = completedTrainings
-                        .Where(t => feedbacks.Contains(t.TrainingRegSysID))
+                        .Where(t => feedbackRegIds.Contains(t.TrainingRegSysID))
                         .Select(t => new FeedbackTrainingItem
                         {
                             TrainingRegSysID = t.TrainingRegSysID,
@@ -69,7 +69,7 @@ namespace HRDCManagementSystem.Controllers
                         }).ToList(),
 
                     PendingFeedbacks = completedTrainings
-                        .Where(t => !feedbacks.Contains(t.TrainingRegSysID))
+                        .Where(t => !feedbackRegIds.Contains(t.TrainingRegSysID))
                         .Select(t => new FeedbackTrainingItem
                         {
                             TrainingRegSysID = t.TrainingRegSysID,
@@ -85,6 +85,77 @@ namespace HRDCManagementSystem.Controllers
 
             // If user is neither Admin nor Employee, return access denied
             return Forbid();
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> TrainingFeedbacks()
+        {
+            try
+            {
+                // Get all trainings that have feedback responses
+                var trainings = await _context.TrainingPrograms
+                    .Where(t => _context.Feedbacks
+                        .Include(f => f.RegSys)
+                        .Any(f => f.RegSys.TrainingSysID == t.TrainingSysID))
+                    .ToListAsync();
+                
+                var trainingsWithFeedback = new List<TrainingFeedbackSummaryViewModel>();
+                
+                foreach(var training in trainings)
+                {
+                    // Get all registration IDs for this training
+                    var registrationIds = await _context.TrainingRegistrations
+                        .Where(r => r.TrainingSysID == training.TrainingSysID)
+                        .Select(r => r.TrainingRegSysID)
+                        .ToListAsync();
+                        
+                    // Get all feedback for this training
+                    var feedbacks = await _context.Feedbacks
+                        .Include(f => f.RegSys)
+                        .Include(f => f.Question)
+                        .Where(f => registrationIds.Contains(f.TrainingRegSysID))
+                        .ToListAsync();
+                        
+                    // First de-duplicate any duplicate feedback entries by grouping
+                    var dedupedFeedbacks = feedbacks
+                        .GroupBy(f => new { f.QuestionID, f.CreateUserId })
+                        .Select(g => g.First())
+                        .ToList();
+                    
+                    // Count unique responses (count by unique user)
+                    var responseCount = dedupedFeedbacks
+                        .Select(f => f.CreateUserId)
+                        .Distinct()
+                        .Count();
+                        
+                    // Calculate average rating - only consider rating questions
+                    decimal averageRating = 0;
+                    var ratingFeedbacks = dedupedFeedbacks
+                        .Where(f => f.Question?.QuestionType == "Rating" && f.RatingValue.HasValue);
+                        
+                    if(ratingFeedbacks.Any())
+                    {
+                        averageRating = ratingFeedbacks.Average(f => f.RatingValue ?? 0);
+                    }
+                    
+                    trainingsWithFeedback.Add(new TrainingFeedbackSummaryViewModel
+                    {
+                        TrainingSysID = training.TrainingSysID,
+                        TrainingTitle = training.Title ?? "Unknown Training",
+                        EndDate = training.EndDate,
+                        ResponseCount = responseCount,
+                        AverageRating = averageRating
+                    });
+                }
+
+                return View(trainingsWithFeedback.OrderByDescending(t => t.EndDate).ToList());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading training feedbacks");
+                TempData["ErrorMessage"] = "Error loading training feedbacks. Please try again.";
+                return View(new List<TrainingFeedbackSummaryViewModel>());
+            }
         }
 
         [Authorize(Roles = "Admin")]
@@ -446,18 +517,26 @@ namespace HRDCManagementSystem.Controllers
             // Get feedback from these registrations
             var feedbacks = await _context.Feedbacks
                 .Include(f => f.Question)
+                .Include(f => f.RegSys)
+                .ThenInclude(r => r.EmployeeSys)
                 .Where(f => registrationIds.Contains(f.TrainingRegSysID))
                 .ToListAsync();
+
+            // Group feedbacks by question and user to remove duplicates
+            var dedupedFeedbacks = feedbacks
+                .Where(f => f.Question != null) // Ensure question is not null
+                .GroupBy(f => new { f.QuestionID, f.CreateUserId })
+                .Select(g => g.First())
+                .ToList();
 
             // Group feedbacks by question
             var questionSummaries = new List<FeedbackQuestionSummaryViewModel>();
 
             var questionGroups = feedbacks
                 .Where(f => f.Question != null) // Ensure question is not null
-                .GroupBy(f => new
-                {
-                    f.QuestionID,
-                    QuestionText = f.Question?.QuestionText ?? "Unknown Question",
+                .GroupBy(f => new { 
+                    f.QuestionID, 
+                    QuestionText = f.Question?.QuestionText ?? "Unknown Question", 
                     QuestionType = f.Question?.QuestionType ?? "Unknown"
                 });
 
@@ -519,7 +598,7 @@ namespace HRDCManagementSystem.Controllers
             {
                 return NotFound("Training registration not found");
             }
-
+            
             // Check if feedback already submitted
             var existingFeedback = await _context.Feedbacks
                 .AnyAsync(f => f.TrainingRegSysID == trainingRegSysId &&
@@ -612,6 +691,32 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
                 return RedirectToAction("Index");
             }
+            
+            // Verify the user is still confirmed for this registration
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserSysID == currentUserId);
+                
+            if (employee == null)
+            {
+                return NotFound("Employee record not found");
+            }
+            
+            var registration = await _context.TrainingRegistrations
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == model.TrainingRegSysID && 
+                                      r.EmployeeSysID == employee.EmployeeSysID);
+                                      
+            if (registration == null)
+            {
+                TempData["ErrorMessage"] = "Training registration not found.";
+                return RedirectToAction("Index");
+            }
+            
+            // Check if the employee is confirmed by admin for this training
+            if (!registration.Confirmation)
+            {
+                TempData["ErrorMessage"] = "Your registration has not been confirmed by the administrator yet. Feedback submission is only available for confirmed participants.";
+                return RedirectToAction("Index");
+            }
 
             // Check if any validation errors exist
             if (!ModelState.IsValid)
@@ -641,22 +746,22 @@ namespace HRDCManagementSystem.Controllers
 
             // Check if feedback already exists for this registration
             var existingFeedback = await _context.Feedbacks
-                .AnyAsync(f => f.TrainingRegSysID == model.TrainingRegSysID &&
+                .AnyAsync(f => f.TrainingRegSysID == model.TrainingRegSysID && 
                                f.CreateUserId == currentUserId);
-
+                               
             if (existingFeedback)
             {
                 TempData["ErrorMessage"] = "You have already submitted feedback for this training.";
                 return RedirectToAction("Index");
             }
 
-            // Use a separate DbContext instance to avoid potential state tracking issues
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            // Use a separate transaction to avoid potential state tracking issues
+            using (var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable))
             {
                 try
                 {
                     _logger.LogInformation("Processing feedback submission with {ResponseCount} responses", model.Responses.Count);
-
+                    
                     // Process each response
                     foreach (var response in model.Responses)
                     {
@@ -732,16 +837,24 @@ namespace HRDCManagementSystem.Controllers
         public async Task<IActionResult> ViewMyFeedback(int trainingRegSysId)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
-
+            
             var registration = await _context.TrainingRegistrations
                 .Include(r => r.TrainingSys)
                 .FirstOrDefaultAsync(r => r.TrainingRegSysID == trainingRegSysId);
-
+                
             if (registration == null)
             {
-                return NotFound();
+                return NotFound("Training registration not found");
+            }
+            
+            // Check if the registration is confirmed
+            if (!registration.Confirmation)
+            {
+                TempData["ErrorMessage"] = "You can only view feedback for confirmed training registrations.";
+                return RedirectToAction("Index");
             }
 
+            // Get feedback entries, group by question to avoid duplicates
             var feedbacks = await _context.Feedbacks
                 .Include(f => f.Question)
                 .Where(f => f.TrainingRegSysID == trainingRegSysId &&
@@ -753,9 +866,13 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "No feedback found for this training.";
                 return RedirectToAction("Index");
             }
-
+            
             var responses = feedbacks
                 .Where(f => f.Question != null)
+                .GroupBy(f => f.QuestionID)
+                .Select(g => g.First()); // Take the first entry for each question
+            
+            var responses = groupedResponses
                 .Select(f => new FeedbackResponseViewModel
                 {
                     QuestionID = f.QuestionID,

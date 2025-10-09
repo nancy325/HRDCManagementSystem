@@ -38,7 +38,7 @@
                                                 <div class="stars me-2">
                                                     @for (int i = 1; i <= 5; i++)
                                                     {
-                                                        if (i <= Math.Round(question.AverageRating))
+                                                        if (i <= Math.Round(Convert.ToDouble(question.AverageRating)))
                                                         {
                                                             <i class="bi bi-star-fill text-warning"></i>
                                                         }
@@ -48,12 +48,12 @@
                                                         }
                                                     }
                                                 </div>
-                                                <span>(@question.AverageRating.ToString("F1"))</span>
+                                                <span>(@question.AverageRating.ToString("F1") out of 5)</span>
                                             </div>
                                             
                                             <div class="progress mt-3" style="height: 10px;">
                                                 <div class="progress-bar bg-success" role="progressbar" 
-                                                     style="width: @((question.AverageRating/5)*100)%;" 
+                                                     style="width: @((Convert.ToDouble(question.AverageRating)/5)*100)%;" 
                                                      aria-valuenow="@question.AverageRating" aria-valuemin="0" aria-valuemax="5">
                                                 </div>
                                             </div>

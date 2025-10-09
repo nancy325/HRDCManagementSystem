@@ -1,16 +1,21 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.Net.Mail;
+using MimeKit.Utils;
+using MimeKit.IO;
 
 namespace HRDCManagementSystem.Services
 {
     public class SmtpEmailService : IEmailService
     {
         private readonly EmailSettings _emailSettings;
+        private readonly ILogger<SmtpEmailService> _logger;
 
-        public SmtpEmailService(EmailSettings emailSettings)
+        public SmtpEmailService(EmailSettings emailSettings, ILogger<SmtpEmailService> logger)
         {
             _emailSettings = emailSettings;
+            _logger = logger;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
@@ -63,7 +68,7 @@ namespace HRDCManagementSystem.Services
 
                 message.Body = bodyBuilder.ToMessageBody();
 
-                using (var client = new SmtpClient())
+                using (var client = new MailKit.Net.Smtp.SmtpClient())
                 {
                     // Configure SSL certificate validation
                     client.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
@@ -102,9 +107,94 @@ namespace HRDCManagementSystem.Services
             }
             catch (Exception ex)
             {
-                // Log the exception (you might want to inject ILogger here for better logging)
+                _logger.LogError(ex, "Failed to send email");
                 throw new InvalidOperationException($"Failed to send email: {ex.Message}", ex);
             }
+        }
+        
+        // New method to handle System.Net.Mail.Attachment type
+        public async Task<bool> SendEmailWithAttachmentAsync(string to, string subject, string body, System.Net.Mail.Attachment attachment)
+        {
+            try
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
+                message.To.Add(new MailboxAddress("", to));
+                message.Subject = subject;
+
+                var multipart = new Multipart("mixed");
+                
+                // Add HTML body
+                var textPart = new TextPart("html")
+                {
+                    Text = body
+                };
+                multipart.Add(textPart);
+
+                // Convert System.Net.Mail.Attachment to MimePart
+                if (attachment != null)
+                {
+                    var mimeAttachment = ConvertToMimePart(attachment);
+                    multipart.Add(mimeAttachment);
+                }
+
+                message.Body = multipart;
+
+                using (var client = new MailKit.Net.Smtp.SmtpClient())
+                {
+                    // Configure SSL certificate validation
+                    client.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+
+                    // Determine the SecureSocketOptions based on UseSsl setting and port
+                    SecureSocketOptions secureSocketOptions;
+                    if (_emailSettings.UseSsl)
+                    {
+                        secureSocketOptions = _emailSettings.Port == 465
+                            ? SecureSocketOptions.SslOnConnect
+                            : SecureSocketOptions.StartTls;
+                    }
+                    else
+                    {
+                        secureSocketOptions = SecureSocketOptions.None;
+                    }
+
+                    await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.Port, secureSocketOptions);
+
+                    if (!string.IsNullOrEmpty(_emailSettings.Username) && !string.IsNullOrEmpty(_emailSettings.Password))
+                    {
+                        await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+                    }
+
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                    
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email with attachment to {Email}", to);
+                return false;
+            }
+            finally
+            {
+                // Dispose the attachment if provided
+                attachment?.Dispose();
+            }
+        }
+
+        private MimePart ConvertToMimePart(System.Net.Mail.Attachment attachment)
+        {
+            // Create a MIME part with the appropriate content type
+            var mimePart = new MimePart(attachment.ContentType.MediaType)
+            {
+                Content = new MimeContent(attachment.ContentStream),
+                ContentDisposition = new MimeKit.ContentDisposition(MimeKit.ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = attachment.Name
+            };
+
+            return mimePart;
         }
     }
 }

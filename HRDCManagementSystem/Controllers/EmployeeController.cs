@@ -643,24 +643,8 @@ namespace HRDCManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Get all certificates for this employee
-            var certificates = await _context.Certificates
-                .Include(c => c.RegSys)
-                .ThenInclude(r => r.TrainingSys)
-                .Where(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID &&
-                            c.IsGenerated == true &&
-                            c.RecStatus == "active")
-                .Select(c => new CertificateViewModel
-                {
-                    CertificateSysID = c.CertificateSysID,
-                    TrainingTitle = c.RegSys.TrainingSys.Title,
-                    IssueDate = c.IssueDate,
-                    CertificatePath = c.CertificatePath
-                })
-                .OrderByDescending(c => c.IssueDate)
-                .ToListAsync();
-
-            return View(certificates);
+            // Redirect to the Certificate controller's MyCertificates action
+            return RedirectToAction("MyCertificates", "Certificate");
         }
 
         // Helper for photo validation and saving
