@@ -174,11 +174,25 @@
         <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
             <span><i class="bi bi-people-fill me-2"></i> Registered Employees</span>
+            <div>
+                @{
+                    var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                    var isTrainingCompleted = Model.EndDate < currentDate;
+                    
+                    if (isTrainingCompleted)
+                    {
+                        <a asp-controller="Certificate" asp-action="TrainingCertificates" asp-route-trainingId="@Model.TrainingSysID"
+                           class="btn btn-success btn-sm me-2">
+                            <i class="bi bi-award me-1"></i> Certificates
+                        </a>
+                    }
+                }
                 <a asp-controller="Feedback" asp-action="ViewFeedback" asp-route-trainingSysId="@Model.TrainingSysID"
                    class="btn btn-outline-light btn-sm">
                     <i class="bi bi-chat-dots me-1"></i> Feedback
                 </a>
             </div>
+        </div>
             <div class="card-body">
                 @{
                     var regs = ViewBag.RegisteredEmployees as IEnumerable<dynamic>;
