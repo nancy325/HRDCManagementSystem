@@ -58,7 +58,7 @@ namespace HRDCManagementSystem.Services
 
                 // Prepare file paths
                 string templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "template.jpg");
-                string signaturePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "signature", "sign.png");
+                string signaturePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "sign.jpg");
                 
                 // Create default template if it doesn't exist
                 if (!File.Exists(templatePath))
