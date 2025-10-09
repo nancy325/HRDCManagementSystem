@@ -43,27 +43,43 @@
                 </div>
             </form>
 
-            <hr />
 
-            <div class="d-flex gap-2 mb-3">
-                <button type="button" class="btn btn-outline-primary" onclick="exportReport('csv')">
-                    <i class="bi bi-filetype-csv"></i> Export CSV
-                </button>
-            </div>
 
             <!-- Loader -->
             <div id="loader" class="text-center my-4 d-none">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2 text-muted">Fetching training data...</p>
+                <p class="mt-2 text-muted">Fetching overall statistics...</p>
             </div>
 
-            <!-- Result Container -->
-            <div id="reportContainer">
-                <div class="text-center text-muted py-5">
-                    <i class="bi bi-bar-chart-line fs-1"></i>
-                    <p class="mt-2">Please select a training and apply filter to view report.</p>
+            <!-- Overall Statistics -->
+            <div id="overallStatistics" class="mb-4 d-none">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-box p-3 border rounded">
+                            <h5>Total Participants</h5>
+                            <p id="totalParticipants" class="fs-4 mb-0">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box p-3 border rounded">
+                            <h5>Average Attendance %</h5>
+                            <p id="averageAttendance" class="fs-4 mb-0">0.00%</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box p-3 border rounded">
+                            <h5>Average Marks</h5>
+                            <p id="averageMarks" class="fs-4 mb-0">0.00</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box p-3 border rounded">
+                            <h5>Pass Rate %</h5>
+                            <p id="passRate" class="fs-4 mb-0">0.00%</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,62 +90,57 @@
     <script>
         const form = document.getElementById('filterForm');
         const loader = document.getElementById('loader');
-        const reportContainer = document.getElementById('reportContainer');
+        const overallStatistics = document.getElementById('overallStatistics');
         const currentTrainingId = document.getElementById('currentTrainingId');
         const fromDateInput = document.getElementById('fromDate');
         const toDateInput = document.getElementById('toDate');
 
-        form?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const trainingId = document.getElementById('trainingSelect').value;
-            const fromDate = fromDateInput.value;
-            const toDate = toDateInput.value;
+        // Function to load statistics
+        async function loadStatistics(trainingId = '', fromDate = '', toDate = '') {
+            loader.classList.remove('d-none');
+            overallStatistics.classList.add('d-none');
+
             let params = new URLSearchParams();
-            if (trainingId) {
-                params.set('trainingId', trainingId);
-                currentTrainingId.value = trainingId;
-            }
+            if (trainingId) params.set('trainingId', trainingId);
             if (fromDate) params.set('fromDate', fromDate);
             if (toDate) params.set('toDate', toDate);
 
-            loader.classList.remove('d-none');
-            reportContainer.innerHTML = '';
-
             try {
-                const url = `/AdminReport/GetReports?${params.toString()}`;
+                const url = `/AdminReport/GetOverallStatistics?${params.toString()}`;
                 const response = await fetch(url, { method: 'GET' });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const html = await response.text();
-                reportContainer.innerHTML = html;
+                const data = await response.json();
+                document.getElementById('totalParticipants').textContent = data.totalParticipants;
+                document.getElementById('averageAttendance').textContent = data.averageAttendancePercent + '%';
+                document.getElementById('averageMarks').textContent = data.averageMarks;
+                document.getElementById('passRate').textContent = data.passRatePercent + '%';
+                overallStatistics.classList.remove('d-none');
             } catch (error) {
-                console.error('Error loading report:', error);
-                reportContainer.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> Failed to load report data. Please try again.
-                    </div>`;
+                console.error('Error loading statistics:', error);
+                alert('Failed to load overall statistics. Please try again.');
             } finally {
                 loader.classList.add('d-none');
             }
+        }
+
+        // Load default statistics on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatistics();
         });
 
-        function exportReport(kind) {
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const trainingId = document.getElementById('trainingSelect').value;
             const fromDate = fromDateInput.value;
             const toDate = toDateInput.value;
 
-            const base = kind === 'excel' ? '/AdminReport/ExportToExcel' : '/AdminReport/ExportToCsv';
-            let params = new URLSearchParams();
+            if (trainingId) currentTrainingId.value = trainingId;
 
-            if (trainingId) params.set('trainingId', trainingId);
-            if (fromDate) params.set('fromDate', fromDate);
-            if (toDate) params.set('toDate', toDate);
-
-            const url = `${base}?${params.toString()}`;
-            window.location.href = url;
-        }
+            loadStatistics(trainingId, fromDate, toDate);
+        });
     </script>
 }

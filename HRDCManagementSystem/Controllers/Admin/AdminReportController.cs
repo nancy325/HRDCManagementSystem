@@ -76,17 +76,16 @@ namespace HRDCManagementSystem.Controllers.Admin
         }
 
         // =========================
-        // MAIN REPORT DATA (SPECIFIC TRAINING)
+        // MAIN REPORT DATA (SPECIFIC TRAINING) - REPLACED WITH OVERALL STATISTICS
         // =========================
         [HttpGet]
-        public async Task<IActionResult> GetReports(
+        public async Task<IActionResult> GetOverallStatistics(
             int? trainingId,
             DateOnly? fromDate,
             DateOnly? toDate)
         {
             try
             {
-                // Build as IQueryable first
                 IQueryable<TrainingRegistration> query = _context.TrainingRegistrations.AsQueryable();
 
                 if (trainingId.HasValue && trainingId > 0)
@@ -104,256 +103,52 @@ namespace HRDCManagementSystem.Controllers.Admin
                     query = query.Where(r => r.TrainingSys.EndDate <= toDate.Value);
                 }
 
-                // Include navigation properties after filters
-                var queryWithIncludes = query
+                var registrations = await query
+                    .Include(r => r.TrainingSys)
                     .Include(r => r.EmployeeSys)
-                        .ThenInclude(e => e.UserSys)
-                    .Include(r => r.TrainingSys);
-
-                var baseData = await queryWithIncludes
-                    .Select(r => new
-                    {
-                        TrainingId = r.TrainingSysID,
-                        TrainingName = r.TrainingSys.Title,
-                        EmployeeId = r.EmployeeSysID,
-                        EmployeeName = r.EmployeeSys.FirstName + " " + r.EmployeeSys.LastName,
-                        Department = r.EmployeeSys.Department,
-                        Email = r.EmployeeSys.UserSys.Email,
-                        StartDate = r.TrainingSys.StartDate,
-                        EndDate = r.TrainingSys.EndDate,
-                        FromTime = r.TrainingSys.fromTime,
-                        ToTime = r.TrainingSys.toTime,
-                        MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.MarksObtained,
-                        TrainingRegSysId = r.TrainingRegSysID
-                    })
                     .ToListAsync();
 
-                if (!baseData.Any())
-                    return NotFound("No registrations found for this training.");
+                if (!registrations.Any())
+                    return NotFound("No registrations found for the selected criteria.");
 
-                // Batch calculate attendance percentages once
-                var registrationIds = baseData.Select(x => x.TrainingRegSysId).ToList();
+                var totalParticipants = registrations.Count;
+
+                var registrationIds = registrations.Select(r => r.TrainingRegSysID).ToList();
                 var attendancePercentages = await CalculateAttendancePercentBatch(registrationIds);
 
-                // Mapster mapping per item, then enrich computed fields
-                var reportList = baseData
-                    .Select(b =>
-                    {
-                        var vm = b.Adapt<TrainingReportViewModel>();
-                        vm.AttendancePercent = attendancePercentages.GetValueOrDefault(b.TrainingRegSysId, 0);
-                        vm.ResultStatus = CalculateResultStatus(b.Marks, b.MarksOutOf);
-                        return vm;
-                    })
-                    .OrderBy(x => x.EmployeeName)
+                var averageAttendance = attendancePercentages.Any() ? (decimal)attendancePercentages.Values.Average() : 0m;
+
+                var marksList = registrations
+                    .Where(r => r.MarksObtained.HasValue)
+                    .Select(r => r.MarksObtained!.Value)
                     .ToList();
 
-                return PartialView("~/Views/Admin/Partials/_TrainingReportTable.cshtml", reportList);
+                var averageMarks = marksList.Any() ? (decimal)marksList.Average() : 0m;
+
+                var passCount = registrations.Count(r =>
+                    r.MarksObtained.HasValue &&
+                    CalculateResultStatus(r.MarksObtained, r.TrainingSys.MarksOutOf) == "Pass");
+
+                var passRate = totalParticipants > 0 ? (decimal)passCount * 100 / totalParticipants : 0m;
+
+                var statistics = new
+                {
+                    TotalParticipants = totalParticipants,
+                    AverageAttendancePercent = Math.Round(averageAttendance, 2),
+                    AverageMarks = Math.Round(averageMarks, 2),
+                    PassRatePercent = Math.Round(passRate, 2)
+                };
+
+                return Json(statistics);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating reports");
-                return StatusCode(500, "Internal server error while generating report");
+                _logger.LogError(ex, "Error generating overall statistics");
+                return StatusCode(500, "Internal server error while generating overall statistics");
             }
         }
 
-        // =========================
-        // EXPORT TO CSV
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> ExportToCsv(
-            int? trainingId,
-            DateOnly? fromDate,
-            DateOnly? toDate)
-        {
-            try
-            {
-                // Build as IQueryable first, apply filters, then Includes
-                IQueryable<TrainingRegistration> query = _context.TrainingRegistrations.AsQueryable();
 
-                if (trainingId.HasValue && trainingId > 0)
-                {
-                    query = query.Where(r => r.TrainingSysID == trainingId);
-                }
-
-                if (fromDate.HasValue)
-                {
-                    query = query.Where(r => r.TrainingSys.StartDate >= fromDate.Value);
-                }
-
-                if (toDate.HasValue)
-                {
-                    query = query.Where(r => r.TrainingSys.EndDate <= toDate.Value);
-                }
-
-                var queryWithIncludes = query
-                    .Include(r => r.EmployeeSys)
-                        .ThenInclude(e => e.UserSys)
-                    .Include(r => r.TrainingSys);
-
-                var baseData = await queryWithIncludes
-                    .Select(r => new
-                    {
-                        TrainingRegSysId = r.TrainingRegSysID,
-                        EmployeeName = r.EmployeeSys.FirstName + " " + r.EmployeeSys.LastName,
-                        Department = r.EmployeeSys.Department,
-                        Email = r.EmployeeSys.UserSys.Email,
-                        TrainingName = r.TrainingSys.Title,
-                        StartDate = r.TrainingSys.StartDate,
-                        EndDate = r.TrainingSys.EndDate,
-                        FromTime = r.TrainingSys.fromTime,
-                        ToTime = r.TrainingSys.toTime,
-                        MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.MarksObtained
-                    })
-                    .ToListAsync();
-
-                if (!baseData.Any())
-                    return NotFound("No data found to export.");
-
-                // Attendance calculated once
-                var registrationIds = baseData.Select(x => x.TrainingRegSysId).ToList();
-                var attendancePercentages = await CalculateAttendancePercentBatch(registrationIds);
-
-                var csvData = baseData
-                    .Select(r => new
-                    {
-                        r.EmployeeName,
-                        r.Department,
-                        r.Email,
-                        r.TrainingName,
-                        StartDate = r.StartDate.ToString("dd/MM/yyyy"),
-                        EndDate = r.EndDate.ToString("dd/MM/yyyy"),
-                        FromTime = r.FromTime.ToString("HH:mm"),
-                        ToTime = r.ToTime.ToString("HH:mm"),
-                        AttendancePercent = attendancePercentages.GetValueOrDefault(r.TrainingRegSysId, 0).ToString("0.##"),
-                        Marks = r.Marks?.ToString() ?? string.Empty,
-                        ResultStatus = CalculateResultStatus(r.Marks, r.MarksOutOf)
-                    })
-                    .OrderBy(x => x.EmployeeName)
-                    .ToList();
-
-                var csvContent = GenerateCsvContent(csvData);
-                var bytes = Encoding.UTF8.GetBytes(csvContent);
-
-                var reportName = baseData.First().TrainingName;
-                var fileName = $"{SanitizeFileName(reportName)}-report-{DateTime.Now:yyyyMMdd}.csv";
-
-                return File(bytes, "text/csv", fileName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting CSV for training {TrainingId}", trainingId);
-                return StatusCode(500, "Internal server error while exporting data");
-            }
-        }
-
-        // =========================
-        // EXPORT REPORT TO EXCEL (EPPlus)
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> ExportToExcel(
-            int? trainingId,
-            DateOnly? fromDate,
-            DateOnly? toDate)
-        {
-            try
-            {
-                IQueryable<TrainingRegistration> query = _context.TrainingRegistrations.AsQueryable();
-
-                if (trainingId.HasValue && trainingId > 0)
-                {
-                    query = query.Where(r => r.TrainingSysID == trainingId);
-                }
-
-                if (fromDate.HasValue)
-                {
-                    query = query.Where(r => r.TrainingSys.StartDate >= fromDate.Value);
-                }
-
-                if (toDate.HasValue)
-                {
-                    query = query.Where(r => r.TrainingSys.EndDate <= toDate.Value);
-                }
-
-                var queryWithIncludes = query
-                    .Include(r => r.EmployeeSys)
-                        .ThenInclude(e => e.UserSys)
-                    .Include(r => r.TrainingSys);
-
-                var trainingData = await queryWithIncludes
-                    .Select(r => new
-                    {
-                        TrainingRegSysId = r.TrainingRegSysID,
-                        EmployeeName = $"{r.EmployeeSys.FirstName} {r.EmployeeSys.LastName}",
-                        Department = r.EmployeeSys.Department,
-                        Email = r.EmployeeSys.UserSys.Email,
-                        TrainingName = r.TrainingSys.Title,
-                        StartDate = r.TrainingSys.StartDate,
-                        EndDate = r.TrainingSys.EndDate,
-                        FromTime = r.TrainingSys.fromTime,
-                        ToTime = r.TrainingSys.toTime,
-                        MarksOutOf = r.TrainingSys.MarksOutOf,
-                        Marks = r.MarksObtained
-                    })
-                    .OrderBy(x => x.EmployeeName)
-                    .ToListAsync();
-
-                if (!trainingData.Any())
-                    return NotFound("No registrations found for this training.");
-
-                var registrationIds = trainingData.Select(x => x.TrainingRegSysId).ToList();
-                var attendancePercentages = await CalculateAttendancePercentBatch(registrationIds);
-
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var package = new ExcelPackage();
-                var ws = package.Workbook.Worksheets.Add("Report");
-
-                // Headers
-                ws.Cells[1, 1].Value = "Employee Name";
-                ws.Cells[1, 2].Value = "Department";
-                ws.Cells[1, 3].Value = "Email";
-                ws.Cells[1, 4].Value = "Training";
-                ws.Cells[1, 5].Value = "Start Date";
-                ws.Cells[1, 6].Value = "End Date";
-                ws.Cells[1, 7].Value = "From Time";
-                ws.Cells[1, 8].Value = "To Time";
-                ws.Cells[1, 9].Value = "Attendance %";
-                ws.Cells[1, 10].Value = "Marks";
-                ws.Cells[1, 11].Value = "Result";
-
-                var row = 2;
-                foreach (var r in trainingData)
-                {
-                    var attendancePercent = attendancePercentages.GetValueOrDefault(r.TrainingRegSysId, 0);
-                    var result = CalculateResultStatus(r.Marks, r.MarksOutOf);
-
-                    ws.Cells[row, 1].Value = r.EmployeeName;
-                    ws.Cells[row, 2].Value = r.Department;
-                    ws.Cells[row, 3].Value = r.Email;
-                    ws.Cells[row, 4].Value = r.TrainingName;
-                    ws.Cells[row, 5].Value = r.StartDate.ToString("dd/MM/yyyy");
-                    ws.Cells[row, 6].Value = r.EndDate.ToString("dd/MM/yyyy");
-                    ws.Cells[row, 7].Value = r.FromTime.ToString("HH:mm");
-                    ws.Cells[row, 8].Value = r.ToTime.ToString("HH:mm");
-                    ws.Cells[row, 9].Value = attendancePercent;
-                    ws.Cells[row, 10].Value = r.Marks?.ToString() ?? string.Empty;
-                    ws.Cells[row, 11].Value = result;
-                    row++;
-                }
-
-                ws.Cells.AutoFitColumns();
-                var bytes = package.GetAsByteArray();
-                var reportName = trainingData.First().TrainingName;
-                var fileName = $"{SanitizeFileName(reportName)}-report-{DateTime.Now:yyyyMMdd}.xlsx";
-                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting Excel for training {TrainingId}", trainingId);
-                return StatusCode(500, "Internal server error while exporting Excel");
-            }
-        }
 
         // =========================
         // HELPER METHODS
@@ -374,6 +169,11 @@ namespace HRDCManagementSystem.Controllers.Admin
 
             foreach (var item in data)
             {
+                if (item == null)
+                {
+                    continue;
+                }
+
                 var properties = item.GetType().GetProperties();
                 var values = properties.Select(p =>
                 {
