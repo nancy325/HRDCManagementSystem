@@ -1,4 +1,6 @@
-﻿using HRDCManagementSystem.Data;
+﻿using HRDCManagementSystem.BackgroundServices;
+using HRDCManagementSystem.Data;
+using HRDCManagementSystem.Hubs;
 using HRDCManagementSystem.Services;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -28,12 +30,16 @@ builder.Services.AddDbContext<HRDCContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Register background services
+builder.Services.AddHostedService<TrainingReminderService>();
 
 // Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -89,6 +95,9 @@ app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map SignalR hub
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Register all routes - both attribute routing and conventional routing
 app.MapControllerRoute(

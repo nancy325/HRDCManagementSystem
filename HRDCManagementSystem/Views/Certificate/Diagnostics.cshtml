@@ -1,0 +1,155 @@
+@model Dictionary<string, string>
+@{
+    ViewData["Title"] = "Certificate System Diagnostics";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Certificate System Diagnostics</h2>
+
+    <div class="alert alert-info">
+        <p>This page displays diagnostic information about the certificate generation system to help troubleshoot any issues.</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">System Information</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th>Operating System</th>
+                        <td>@Model["OS"]</td>
+                    </tr>
+                    <tr>
+                        <th>.NET Framework</th>
+                        <td>@Model["Framework"]</td>
+                    </tr>
+                    <tr>
+                        <th>Is Windows</th>
+                        <td>@Model["IsWindows"]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Directory Information</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th>Web Root Path</th>
+                        <td>@Model["WebRootPath"]</td>
+                    </tr>
+                    <tr>
+                        <th>Content Root Path</th>
+                        <td>@Model["ContentRootPath"]</td>
+                    </tr>
+                    <tr>
+                        <th>Certificates Directory</th>
+                        <td>@Model["CertificatesDir"]</td>
+                    </tr>
+                    <tr>
+                        <th>Certificates Directory Exists</th>
+                        <td class="@(Model["CertificatesDirExists"] == "True" ? "text-success" : "text-danger")">
+                            @Model["CertificatesDirExists"]
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Signature Directory</th>
+                        <td>@Model["SignatureDir"]</td>
+                    </tr>
+                    <tr>
+                        <th>Signature Directory Exists</th>
+                        <td class="@(Model["SignatureDirExists"] == "True" ? "text-success" : "text-danger")">
+                            @Model["SignatureDirExists"]
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Template Files</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th>Template File Path</th>
+                        <td>@Model["TemplateFilePath"]</td>
+                    </tr>
+                    <tr>
+                        <th>Template File Exists</th>
+                        <td class="@(Model["TemplateFileExists"] == "True" ? "text-success" : "text-danger")">
+                            @Model["TemplateFileExists"]
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Signature File Path</th>
+                        <td>@Model["SignatureFilePath"]</td>
+                    </tr>
+                    <tr>
+                        <th>Signature File Exists</th>
+                        <td class="@(Model["SignatureFileExists"] == "True" ? "text-success" : "text-danger")">
+                            @Model["SignatureFileExists"]
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Permissions and Libraries</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th>Write Permissions</th>
+                        <td class="@(Model["WritePermissions"] == "OK" ? "text-success" : "text-danger")">
+                            @Model["WritePermissions"]
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>iText7 Library</th>
+                        <td class="@(Model.ContainsKey("iText7Assembly") && !Model["iText7Assembly"].Contains("error") ? "text-success" : "text-danger")">
+                            @(Model.ContainsKey("iText7Assembly") ? Model["iText7Assembly"] : "Not detected")
+                        </td>
+                    </tr>
+                    @if (Model.ContainsKey("SystemDrawingAssembly"))
+                    {
+                        <tr>
+                            <th>System.Drawing Library</th>
+                            <td class="@(!Model["SystemDrawingAssembly"].Contains("error") ? "text-success" : "text-danger")">
+                                @Model["SystemDrawingAssembly"]
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Existing Certificates</h5>
+        </div>
+        <div class="card-body">
+            <p>@Model["ExistingCertificates"]</p>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="@Url.Action("TestImageGeneration")" class="btn btn-primary" target="_blank">Test Image Generation</a>
+        <a href="@Url.Action("TrainingCertificates", new { trainingId = 1 })" class="btn btn-secondary">Back to Certificates</a>
+    </div>
+</div>

@@ -1,10 +1,13 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
+using HRDCManagementSystem.Services;
+using HRDCManagementSystem.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 
 
 namespace HRDCManagementSystem.Controllers
@@ -12,10 +15,17 @@ namespace HRDCManagementSystem.Controllers
     public class TrainingController : Controller
     {
         private readonly HRDCContext _context;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<TrainingController> _logger;
 
-        public TrainingController(HRDCContext context)
+        public TrainingController(
+            HRDCContext context, 
+            INotificationService notificationService,
+            ILogger<TrainingController> logger)
         {
             _context = context;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -166,6 +176,16 @@ namespace HRDCManagementSystem.Controllers
 
             _context.TrainingPrograms.Add(entity);
             await _context.SaveChangesAsync();
+            
+            // Send notifications about the new training
+            try
+            {
+                await NotificationUtility.NotifyNewTraining(_notificationService, entity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending notification for new training {TrainingTitle}", entity.Title);
+            }
 
             return RedirectToAction(nameof(TrainingIndex));
         }
@@ -243,6 +263,7 @@ namespace HRDCManagementSystem.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating training with ID {TrainingId}", id);
                 ModelState.AddModelError("", $"Unable to update training. Error: {ex.Message}");
                 return View("EditTraining", model);
             }

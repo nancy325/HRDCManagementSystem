@@ -1,13 +1,13 @@
 ﻿@* Views/Shared/_SidebarAdmin.cshtml *@
 @functions {
-    string IsActive(string controller, string action = null)
+    string IsActive(string controller, string? action = "")
     {
         var routeData = ViewContext.RouteData;
         var currentController = routeData.Values["controller"]?.ToString();
         var currentAction = routeData.Values["action"]?.ToString();
 
         bool controllerMatches = string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase);
-        bool actionMatches = action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase);
+        bool actionMatches = string.IsNullOrEmpty(action) || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase);
 
         return controllerMatches && actionMatches ? "active" : "";
     }
@@ -74,7 +74,7 @@
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a href="/Admin/Notifications" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Notifications")">
+                <a href="/Notification/Index" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Notification", "Index")">
                     <i class="nav-icon bi bi-bell me-2"></i>
                     <span class="nav-text">Notifications</span>
                 </a>
@@ -86,7 +86,7 @@
                 </a>
             </li>
             <li class="nav-item mb-1">
-                <a href="/Admin/Settings" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Admin", "Settings")">
+                <a asp-controller="Account" asp-action="Settings" class="nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Account", "Settings")">
                     <i class="nav-icon bi bi-gear me-2"></i>
                     <span class="nav-text">Settings</span>
                 </a>

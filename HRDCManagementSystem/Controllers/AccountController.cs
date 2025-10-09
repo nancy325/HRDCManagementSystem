@@ -5,6 +5,7 @@ using HRDCManagementSystem.Models.ViewModels;
 using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -459,6 +460,109 @@ namespace HRDCManagementSystem.Controllers
             }
 
             return View(profile);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Settings()
+        {
+            var userSysId = HttpContext.Session.GetInt32("UserSysID");
+            if (userSysId == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var user = await _context.UserMasters
+                .FirstOrDefaultAsync(u => u.UserSysID == userSysId && u.RecStatus == "active");
+
+            if (user == null)
+            {
+                await Logout();
+                return RedirectToAction(nameof(Login));
+            }
+
+            var viewModel = new UserSettingsViewModel
+            {
+                NotificationSettings = new NotificationSettingsViewModel
+                {
+                    IsWebNotificationEnabled = user.IsWebNotificationEnabled
+                },
+                ChangePassword = new ChangePasswordViewModel()
+            };
+
+            return View(viewModel);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateWebNotification(bool enabled)
+        {
+            var userSysId = HttpContext.Session.GetInt32("UserSysID");
+            if (userSysId == null)
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            try
+            {
+                var user = await _context.UserMasters
+                    .FirstOrDefaultAsync(u => u.UserSysID == userSysId && u.RecStatus == "active");
+
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found" });
+                }
+
+                user.IsWebNotificationEnabled = enabled;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = $"Web notifications have been {(enabled ? "enabled" : "disabled")}" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating web notification setting");
+                return Json(new { success = false, message = "An error occurred while updating notification settings" });
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePassword(ChangePasswordViewModel model)
+        {
+            var userSysId = HttpContext.Session.GetInt32("UserSysID");
+            if (userSysId == null)
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Invalid password format" });
+            }
+
+            try
+            {
+                var user = await _context.UserMasters
+                    .FirstOrDefaultAsync(u => u.UserSysID == userSysId && u.RecStatus == "active");
+
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found" });
+                }
+
+                var passwordHasher = new PasswordHasher<UserMaster>();
+                user.Password = passwordHasher.HashPassword(user, model.NewPassword);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Password changed successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating password");
+                return Json(new { success = false, message = "An error occurred while changing password" });
+            }
         }
     }
 }

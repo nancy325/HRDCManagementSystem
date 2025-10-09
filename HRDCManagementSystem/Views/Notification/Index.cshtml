@@ -1,0 +1,236 @@
+@model List<HRDCManagementSystem.Models.ViewModels.NotificationViewModel>
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">@ViewData["Title"]</h2>
+                    <p class="text-muted">View and manage your notifications</p>
+                </div>
+                
+                @if (Model.Any())
+                {
+                    <form asp-action="MarkAllAsRead" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-check-all me-1"></i> Mark All as Read
+                        </button>
+                    </form>
+                }
+            </div>
+            
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div id="notification-container" class="notification-container">
+                @if (Model.Any())
+                {
+                    @foreach (var notification in Model)
+                    {
+                        <div id="notification-@notification.NotificationID" class="card mb-3 @(notification.IsRead ? "bg-light" : "bg-white border-primary shadow-sm")">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title @(notification.IsRead ? "" : "fw-bold")">@notification.Title</h5>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(notification.UserType))
+                                        {
+                                            <span class="badge bg-info me-2">@notification.UserType</span>
+                                        }
+                                        <small class="text-muted">@notification.CreatedDateTime.ToString("MMM dd, yyyy HH:mm")</small>
+                                    </div>
+                                </div>
+                                <p class="card-text @(notification.IsRead ? "" : "fw-bold")">@notification.Message</p>
+                                
+                                <div class="d-flex align-items-center">
+                                    @if (!notification.IsRead)
+                                    {
+                                        <form asp-action="MarkAsRead" method="post" class="d-inline mark-as-read-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="notificationId" value="@notification.NotificationID" />
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-check2 me-1"></i> Mark as Read
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check2-all me-1"></i> Read
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div id="no-notifications" class="alert alert-info">
+                        <div class="text-center py-5">
+                            <i class="bi bi-bell-slash fs-1 mb-3 text-muted"></i>
+                            <h5>No notifications</h5>
+                            <p class="text-muted mb-0">You don't have any notifications at this time.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle mark as read form submission via AJAX
+            $(document).on('submit', '.mark-as-read-form', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const notificationId = form.find('input[name="notificationId"]').val();
+                const token = $('input[name="__RequestVerificationToken"]', form).val();
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: { 
+                        notificationId: notificationId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function() {
+                        // Mark notification as read in UI
+                        const notificationCard = $(`#notification-${notificationId}`);
+                        notificationCard.removeClass('border-primary shadow-sm').addClass('bg-light');
+                        notificationCard.find('.card-title, .card-text').removeClass('fw-bold');
+                        form.replaceWith('<span class="badge bg-success"><i class="bi bi-check2-all me-1"></i> Read</span>');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error marking notification as read:", error);
+                        
+                        // Show error message
+                        const errorToast = `
+                            <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> Unable to mark notification as read. Please try again.
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            </div>`;
+                            
+                        // Check if toast container exists, if not create it
+                        let toastsContainer = document.getElementById('toasts-container');
+                        if (!toastsContainer) {
+                            toastsContainer = document.createElement('div');
+                            toastsContainer.id = 'toasts-container';
+                            toastsContainer.className = 'position-fixed top-0 end-0 p-3';
+                            toastsContainer.style.zIndex = '1050';
+                            document.body.appendChild(toastsContainer);
+                        }
+                        
+                        // Add error toast
+                        $(toastsContainer).append(errorToast);
+                        const errorToastElement = $(toastsContainer).find('.toast').last()[0];
+                        const toast = new bootstrap.Toast(errorToastElement);
+                        toast.show();
+                    }
+                });
+            });
+            
+            // Set up SignalR connection
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .withAutomaticReconnect()
+                .build();
+                
+            // Start connection
+            connection.start()
+                .then(() => {
+                    console.log("SignalR connection established");
+                })
+                .catch(err => {
+                    console.error("SignalR connection error: " + err);
+                });
+                
+            // Handle incoming notifications
+            connection.on("ReceiveNotification", (notification) => {
+                // Add new notification to the top of the list
+                const newNotificationHtml = `
+                    <div id="notification-${notification.id}" class="card mb-3 bg-white border-primary shadow-sm animate__animated animate__fadeIn">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title fw-bold">${escapeHtml(notification.title)}</h5>
+                                <small class="text-muted">Just now</small>
+                            </div>
+                            <p class="card-text fw-bold">${escapeHtml(notification.message)}</p>
+                            <div class="d-flex align-items-center">
+                                <form asp-action="MarkAsRead" method="post" class="d-inline mark-as-read-form">
+                                    <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').first().val()}" />
+                                    <input type="hidden" name="notificationId" value="${notification.id}" />
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-check2 me-1"></i> Mark as Read
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Check if we need to remove the "no notifications" message
+                if ($('#no-notifications').length > 0) {
+                    $('#no-notifications').remove();
+                }
+                
+                // Add the new notification to the top
+                $('#notification-container').prepend(newNotificationHtml);
+            });
+            
+            // Handle notification read status updates
+            connection.on("NotificationRead", (notificationId) => {
+                // Update the notification in the UI
+                const notificationCard = $(`#notification-${notificationId}`);
+                notificationCard.removeClass('border-primary shadow-sm').addClass('bg-light');
+                notificationCard.find('.card-title, .card-text').removeClass('fw-bold');
+                notificationCard.find('.mark-as-read-form').replaceWith('<span class="badge bg-success"><i class="bi bi-check2-all me-1"></i> Read</span>');
+            });
+            
+            // Handle all notifications read
+            connection.on("AllNotificationsRead", () => {
+                // Update all notifications in the UI
+                $('.card').removeClass('border-primary shadow-sm').addClass('bg-light');
+                $('.card-title, .card-text').removeClass('fw-bold');
+                $('.mark-as-read-form').each(function() {
+                    $(this).replaceWith('<span class="badge bg-success"><i class="bi bi-check2-all me-1"></i> Read</span>');
+                });
+            });
+        });
+        
+        // Helper function to escape HTML to prevent XSS
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    </script>
+}

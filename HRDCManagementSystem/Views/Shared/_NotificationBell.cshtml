@@ -1,0 +1,56 @@
+@{
+    var unreadCount = 0;
+}
+
+<div class="notification-bell">
+    <a href="/Notification/Index" class="text-decoration-none position-relative">
+        <i class="bi bi-bell-fill fs-5 text-white"></i>
+        <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: @(unreadCount > 0 ? "block" : "none")">
+            <span id="notification-count">@unreadCount</span>
+            <span class="visually-hidden">unread notifications</span>
+        </span>
+    </a>
+</div>
+
+<!-- Add CSRF token for AJAX requests -->
+@if (User.Identity?.IsAuthenticated == true)
+{
+    @Html.AntiForgeryToken()
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial load of notification count
+        updateNotificationCount();
+    });
+    
+    // Function to update notification count via AJAX
+    function updateNotificationCount() {
+        fetch('/Notification/GetUnreadCount', {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const count = data.count || 0;
+            const badge = document.getElementById('notificationBadge');
+            const countElement = document.getElementById('notification-count');
+            
+            if (badge && countElement) {
+                countElement.textContent = count;
+                badge.style.display = count > 0 ? 'block' : 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching notification count:', error);
+        });
+    }
+</script>

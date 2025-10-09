@@ -1,6 +1,7 @@
 using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Services;
+using HRDCManagementSystem.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,372 +9,254 @@ using System.Security.Claims;
 
 namespace HRDCManagementSystem.Controllers
 {
+    [Authorize]
     public class TrainingRegistrationController : Controller
     {
         private readonly HRDCContext _context;
-        private readonly ICurrentUserService _currentUserService;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<TrainingRegistrationController> _logger;
 
-        public TrainingRegistrationController(HRDCContext context, ICurrentUserService currentUserService)
+        public TrainingRegistrationController(
+            HRDCContext context, 
+            INotificationService notificationService,
+            ILogger<TrainingRegistrationController> logger)
         {
             _context = context;
-            _currentUserService = currentUserService;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Employee,Admin")]
-        [ActionName("Register")]
-        public async Task<IActionResult> RegisterForTraining(int trainingId)
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> Register(int trainingId)
         {
+            // Get current user
+            var currentUserEmail = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserEmail))
+            {
+                TempData["ErrorMessage"] = "You must be logged in to register for trainings.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Get the employee
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
+
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Your employee record could not be found.";
+                return RedirectToAction("Index", "EmployeeDashboard");
+            }
+
+            // Get the training
+            var training = await _context.TrainingPrograms
+                .FirstOrDefaultAsync(t => t.TrainingSysID == trainingId && t.RecStatus == "active");
+
+            if (training == null)
+            {
+                TempData["ErrorMessage"] = "The requested training could not be found.";
+                return RedirectToAction("Index", "EmployeeDashboard");
+            }
+
+            // Check if training is past its registration date
+            var currentDate = DateOnly.FromDateTime(DateTime.Now);
+            if (training.Validtill < currentDate)
+            {
+                TempData["ErrorMessage"] = "Registration for this training has closed.";
+                return RedirectToAction("Details", "Training", new { id = trainingId });
+            }
+
+            // Check if employee is already registered
+            var existingRegistration = await _context.TrainingRegistrations
+                .AnyAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
+                              tr.TrainingSysID == trainingId &&
+                              tr.RecStatus == "active");
+
+            if (existingRegistration)
+            {
+                TempData["ErrorMessage"] = "You are already registered for this training.";
+                return RedirectToAction("Details", "Training", new { id = trainingId });
+            }
+
+            // Check if training capacity is reached
+            var currentRegistrations = await _context.TrainingRegistrations
+                .CountAsync(tr => tr.TrainingSysID == trainingId && tr.RecStatus == "active");
+
+            if (currentRegistrations >= training.Capacity)
+            {
+                TempData["ErrorMessage"] = "This training has reached its maximum capacity.";
+                return RedirectToAction("Details", "Training", new { id = trainingId });
+            }
+
+            // Create the registration
+            var registration = new TrainingRegistration
+            {
+                EmployeeSysID = employee.EmployeeSysID,
+                TrainingSysID = trainingId,
+                Registration = true,
+                // Set to false initially, will be approved by admin
+                Confirmation = false
+            };
+
+            _context.TrainingRegistrations.Add(registration);
+            await _context.SaveChangesAsync();
+
+            // Send notification to admin
             try
             {
-                // Get current user ID
-                var currentUserId = _currentUserService.GetCurrentUserId();
-                if (!currentUserId.HasValue)
-                {
-                    TempData["ErrorMessage"] = "User not found. Please log in again.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Get current user email for employee lookup
-                var currentUserEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(currentUserEmail))
-                {
-                    TempData["ErrorMessage"] = "User email not found. Please log in again.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Find the employee record
-                var employee = await _context.Employees
-                    .Include(e => e.UserSys)
-                    .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
-
-                if (employee == null)
-                {
-                    TempData["ErrorMessage"] = "Employee record not found. Please contact administrator.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Check if training exists and is active
-                var training = await _context.TrainingPrograms
-                    .FirstOrDefaultAsync(t => t.TrainingSysID == trainingId && t.RecStatus == "active");
-
-                if (training == null)
-                {
-                    TempData["ErrorMessage"] = "Training not found or no longer available.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Check if training is already completed
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                if (training.EndDate < currentDate || training.Status == "Completed")
-                {
-                    TempData["ErrorMessage"] = "This training has already been completed. Registration is closed.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Check if employee is already registered for this training
-                var existingRegistration = await _context.TrainingRegistrations
-                    .FirstOrDefaultAsync(tr => tr.EmployeeSysID == employee.EmployeeSysID &&
-                                             tr.TrainingSysID == trainingId &&
-                                             tr.RecStatus == "active");
-
-                if (existingRegistration != null)
-                {
-                    TempData["ErrorMessage"] = "You are already registered for this training.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Check if registration is still valid (before ValidTill date)
-                if (training.Validtill.HasValue && training.Validtill.Value < currentDate)
-                {
-                    TempData["ErrorMessage"] = "Registration period has expired for this training.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Check if training has capacity
-                var currentRegistrations = await _context.TrainingRegistrations
-                    .CountAsync(tr => tr.TrainingSysID == trainingId && tr.RecStatus == "active");
-
-                if (currentRegistrations >= training.Capacity)
-                {
-                    TempData["ErrorMessage"] = "This training is full. No more registrations are accepted.";
-                    return RedirectToAction("Details", "Training", new { id = trainingId });
-                }
-
-                // Create new registration with the specified default values
-                var registration = new TrainingRegistration
-                {
-                    EmployeeSysID = employee.EmployeeSysID,
-                    TrainingSysID = trainingId,
-                    Registration = true,
-                    // Pending by default => admin needs to approve/reject
-                    Confirmation = false,
-                    RecStatus = "active",
-                    CreateUserId = employee.EmployeeSysID,
-                    CreateDateTime = DateTime.Now
-                };
-
-                _context.TrainingRegistrations.Add(registration);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Successfully registered for the training!";
-                return RedirectToAction("Details", "Training", new { id = trainingId });
+                await _notificationService.CreateNotificationAsync(
+                    null,
+                    "Admin",
+                    "New Training Registration",
+                    $"Employee {employee.FirstName} {employee.LastName} has registered for training '{training.Title}'");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"An error occurred while registering: {ex.Message}";
-                return RedirectToAction("Details", "Training", new { id = trainingId });
+                _logger.LogError(ex, "Failed to send admin notification for registration from employee {EmployeeId} for training {TrainingId}",
+                    employee.EmployeeSysID, trainingId);
+                // Continue anyway, this shouldn't block the registration
             }
-        }
 
-        // Helper method to check if training is completed
-        private bool IsTrainingCompleted(TrainingProgram training)
-        {
-            if (training == null) return true;
-
-            var currentDate = DateOnly.FromDateTime(DateTime.Now);
-            return training.EndDate < currentDate || training.Status == "Completed";
-        }
-
-        // Admin: Approve/Reject via AJAX (unified endpoint)
-        public class ApprovalRequest
-        {
-            public int RegistrationId { get; set; }
-            public string Action { get; set; } = string.Empty; // approve or reject
+            TempData["SuccessMessage"] = "You have successfully registered for this training. Your registration is pending approval.";
+            return RedirectToAction("Details", "Training", new { id = trainingId });
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        [Route("TrainingRegistration/HandleApproval")]
         public async Task<IActionResult> HandleApproval([FromBody] ApprovalRequest request)
         {
-            if (request == null || request.RegistrationId <= 0)
+            if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "Invalid request." });
+                return Json(new { success = false, message = "Invalid request format." });
             }
 
-            var reg = await _context.TrainingRegistrations
-                .Include(r => r.TrainingSys)
-                .FirstOrDefaultAsync(r => r.TrainingRegSysID == request.RegistrationId && r.RecStatus == "active");
-
-            if (reg == null)
-            {
-                return Json(new { success = false, message = "Registration not found." });
-            }
-
-            // Prevent approval/rejection if training is completed
-            if (IsTrainingCompleted(reg.TrainingSys))
-            {
-                return Json(new { success = false, message = "Training is completed/over." });
-            }
-
-            var action = (request.Action ?? string.Empty).ToLowerInvariant();
-            if (action == "approve")
-            {
-                reg.Confirmation = true;
-                reg.ModifiedDateTime = DateTime.Now;
-            }
-            else if (action == "reject")
-            {
-                reg.Confirmation = false;
-                reg.ModifiedDateTime = DateTime.Now;
-            }
-            else
-            {
-                return Json(new { success = false, message = "Unknown action." });
-            }
-
-            await _context.SaveChangesAsync();
-            return Json(new { success = true, message = $"Registration {action}d successfully." });
-        }
-
-        // Admin: Approve (unified, with completion guard)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Approve(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations
-                .Include(r => r.TrainingSys)
-                .FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                // Prevent approval if training is completed
-                if (IsTrainingCompleted(reg.TrainingSys))
-                {
-                    TempData["InfoMessage"] = "Training is completed/over.";
-                }
-                else
-                {
-                    reg.Confirmation = true;
-                    reg.ModifiedDateTime = DateTime.Now;
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Registration approved.";
-                }
-            }
-
-            return RedirectToAction("Registrations", "Admin", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
-
-        // Admin: Reject (unified, with completion guard)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Reject(int id, int? trainingId, DateTime? startDate, DateTime? endDate, string? status)
-        {
-            var reg = await _context.TrainingRegistrations
-                .Include(r => r.TrainingSys)
-                .FirstOrDefaultAsync(r => r.TrainingRegSysID == id && r.RecStatus == "active");
-
-            if (reg == null)
-            {
-                TempData["ErrorMessage"] = "Registration not found.";
-            }
-            else
-            {
-                // Prevent rejection if training is completed
-                if (IsTrainingCompleted(reg.TrainingSys))
-                {
-                    TempData["InfoMessage"] = "Training is completed/over.";
-                }
-                else
-                {
-                    reg.Confirmation = false;
-                    reg.ModifiedDateTime = DateTime.Now;
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Registration rejected.";
-                }
-            }
-
-            return RedirectToAction("Registrations", "Admin", new
-            {
-                trainingId,
-                startDate = startDate?.ToString("yyyy-MM-dd"),
-                endDate = endDate?.ToString("yyyy-MM-dd"),
-                status
-            });
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Employee,Admin")]
-        public async Task<IActionResult> MyRegistrations()
-        {
             try
             {
-                // Get current user email for employee lookup
-                var currentUserEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(currentUserEmail))
-                {
-                    TempData["ErrorMessage"] = "User email not found. Please log in again.";
-                    return RedirectToAction("Login", "Account");
-                }
-
-                // Find the employee record
-                var employee = await _context.Employees
-                    .Include(e => e.UserSys)
-                    .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
-
-                if (employee == null)
-                {
-                    TempData["ErrorMessage"] = "Employee record not found. Please contact administrator.";
-                    return RedirectToAction("Login", "Account");
-                }
-
-                // Get all registrations for this employee
-                var registrations = await _context.TrainingRegistrations
-                    .Include(tr => tr.TrainingSys)
-                    .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID && tr.RecStatus == "active")
-                    .OrderByDescending(tr => tr.CreateDateTime)
-                    .ToListAsync();
-
-                return View(registrations);
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = $"An error occurred while retrieving registrations: {ex.Message}";
-                return RedirectToAction("Dashboard", "Employee");
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Employee,Admin")]
-        [ActionName("Cancel")]
-        public async Task<IActionResult> CancelRegistration(int registrationId)
-        {
-            try
-            {
-                // Get current user email for employee lookup
-                var currentUserEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(currentUserEmail))
-                {
-                    TempData["ErrorMessage"] = "User email not found. Please log in again.";
-                    return RedirectToAction("MyRegistrations");
-                }
-
-                // Find the employee record
-                var employee = await _context.Employees
-                    .Include(e => e.UserSys)
-                    .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
-
-                if (employee == null)
-                {
-                    TempData["ErrorMessage"] = "Employee record not found. Please contact administrator.";
-                    return RedirectToAction("MyRegistrations");
-                }
-
-                // Find the registration
                 var registration = await _context.TrainingRegistrations
+                    .Include(tr => tr.EmployeeSys)
                     .Include(tr => tr.TrainingSys)
-                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == registrationId &&
-                                             tr.EmployeeSysID == employee.EmployeeSysID &&
-                                             tr.RecStatus == "active");
+                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == request.RegistrationId);
 
                 if (registration == null)
                 {
-                    TempData["ErrorMessage"] = "Registration not found or you don't have permission to cancel it.";
-                    return RedirectToAction("MyRegistrations");
+                    return Json(new { success = false, message = "Registration not found." });
                 }
 
-                // Check if training has already started or completed
-                if (registration.TrainingSys != null)
+                string status;
+                if (request.Action == "approve")
                 {
-                    var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                    if (registration.TrainingSys.StartDate <= currentDate || IsTrainingCompleted(registration.TrainingSys))
-                    {
-                        TempData["ErrorMessage"] = "Cannot cancel registration as the training has already started or been completed.";
-                        return RedirectToAction("MyRegistrations");
-                    }
+                    registration.Confirmation = true;
+                    status = "Approved";
+                }
+                else if (request.Action == "reject")
+                {
+                    registration.Confirmation = false;
+                    status = "Rejected";
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Invalid action. Use 'approve' or 'reject'." });
                 }
 
-                // Soft delete the registration
-                registration.RecStatus = "inactive";
-                registration.ModifiedDateTime = DateTime.Now;
-                registration.ModifiedUserId = employee.EmployeeSysID;
-
-                _context.Update(registration);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Registration cancelled successfully.";
-                return RedirectToAction("MyRegistrations");
+                // Send notification to employee
+                try
+                {
+                    await NotificationUtility.NotifyRegistrationStatusChange(
+                        _notificationService,
+                        registration,
+                        status);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send notification for registration status change. Registration ID: {RegistrationId}, Status: {Status}",
+                        registration.TrainingRegSysID, status);
+                    // Continue anyway, this shouldn't block the approval process
+                }
+
+                return Json(new { success = true, message = $"Registration has been {status.ToLower()}." });
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"An error occurred while cancelling registration: {ex.Message}";
-                return RedirectToAction("MyRegistrations");
+                _logger.LogError(ex, "Error handling registration approval for request: {RequestId}", request.RegistrationId);
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
             }
         }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BulkApprove([FromBody] BulkApprovalRequest request)
+        {
+            if (!ModelState.IsValid || request.RegistrationIds == null || !request.RegistrationIds.Any())
+            {
+                return Json(new { success = false, message = "Invalid request format or no registrations selected." });
+            }
+
+            try
+            {
+                var registrations = await _context.TrainingRegistrations
+                    .Include(tr => tr.EmployeeSys)
+                    .Include(tr => tr.TrainingSys)
+                    .Where(tr => request.RegistrationIds.Contains(tr.TrainingRegSysID))
+                    .ToListAsync();
+
+                if (!registrations.Any())
+                {
+                    return Json(new { success = false, message = "No registrations found." });
+                }
+
+                string status = request.Action == "approve" ? "Approved" : "Rejected";
+                bool confirmationValue = request.Action == "approve";
+
+                foreach (var registration in registrations)
+                {
+                    registration.Confirmation = confirmationValue;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Send notifications
+                try
+                {
+                    foreach (var registration in registrations)
+                    {
+                        await NotificationUtility.NotifyRegistrationStatusChange(
+                            _notificationService,
+                            registration,
+                            status);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send some notifications for bulk registration status change");
+                    // Continue anyway
+                }
+
+                return Json(new 
+                { 
+                    success = true, 
+                    message = $"{registrations.Count} registrations have been {request.Action}d.",
+                    count = registrations.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in bulk approval: {Message}", ex.Message);
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+    }
+
+    public class ApprovalRequest
+    {
+        public int RegistrationId { get; set; }
+        public string Action { get; set; } = string.Empty;
+    }
+
+    public class BulkApprovalRequest
+    {
+        public List<int> RegistrationIds { get; set; } = new();
+        public string Action { get; set; } = string.Empty;
     }
 }

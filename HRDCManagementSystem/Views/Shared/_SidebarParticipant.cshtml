@@ -68,6 +68,13 @@
                         <span>My Profile</span>
                     </a>
                 </li>
+                <li class="participant-nav-item mb-1">
+                    <a asp-controller="Account" asp-action="Settings"
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Account", "Settings")">
+                        <i class="bi bi-gear me-2"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
             </ul>
         </nav>
 

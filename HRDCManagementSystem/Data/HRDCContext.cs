@@ -61,6 +61,7 @@ public partial class HRDCContext : DbContext
     public virtual DbSet<TrainingRegistration> TrainingRegistrations { get; set; }
     public virtual DbSet<UserMaster> UserMasters { get; set; }
     public virtual DbSet<HelpQuery> HelpQueries { get; set; }
+    public virtual DbSet<Notification> Notifications { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -281,6 +282,8 @@ public partial class HRDCContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.IsWebNotificationEnabled)
+                .HasDefaultValue(true);
         });
 
         // Configuration for HelpQuery entity
@@ -319,6 +322,31 @@ public partial class HRDCContext : DbContext
             entity.HasOne(d => d.EmployeeSys).WithMany()
                 .HasForeignKey(d => d.EmployeeSysID)
                 .HasConstraintName("FK__HelpQueri__Emplo__NEWCONSTRAINT");
+        });
+
+        // Configuration for Notification entity
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.NotificationID);
+            entity.ToTable("Notification");
+            
+            entity.Property(e => e.NotificationID).ValueGeneratedOnAdd().UseIdentityColumn();
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Message).IsRequired();
+            entity.Property(e => e.UserType).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.IsRead).HasDefaultValue(false);
+            entity.Property(e => e.CreatedDateTime).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.CreateDateTime).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.RecStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasDefaultValue("active");
+
+            entity.HasOne(d => d.UserMaster)
+                .WithMany()
+                .HasForeignKey(d => d.UserSysID)
+                .HasConstraintName("FK_Notification_User");
         });
 
         OnModelCreatingPartial(modelBuilder);

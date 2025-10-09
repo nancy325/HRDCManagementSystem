@@ -2,9 +2,13 @@ using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
 using HRDCManagementSystem.Services;
+using HRDCManagementSystem.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
+using iText.IO.Exceptions;
+using iText.Kernel.Exceptions;
 
 namespace HRDCManagementSystem.Controllers
 {
@@ -13,6 +17,7 @@ namespace HRDCManagementSystem.Controllers
         private readonly HRDCContext _context;
         private readonly ICertificateService _certificateService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<CertificateController> _logger;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
@@ -20,16 +25,19 @@ namespace HRDCManagementSystem.Controllers
             HRDCContext context,
             ICertificateService certificateService,
             ICurrentUserService currentUserService,
+            INotificationService notificationService,
             ILogger<CertificateController> logger,
             IWebHostEnvironment hostingEnvironment)
         {
             _context = context;
             _certificateService = certificateService;
             _currentUserService = currentUserService;
+            _notificationService = notificationService;
             _logger = logger;
             _hostingEnvironment = hostingEnvironment;
         }
 
+        [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
@@ -117,6 +125,7 @@ namespace HRDCManagementSystem.Controllers
             }
         }
 
+        [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> TrainingCertificates(int trainingId)
         {
@@ -132,6 +141,7 @@ namespace HRDCManagementSystem.Controllers
             // Get all registrations that are confirmed for this training
             var registrations = await _context.TrainingRegistrations
                 .Include(r => r.EmployeeSys)
+                .ThenInclude(e => e.UserSys)
                 .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && r.Confirmation)
                 .ToListAsync();
 
@@ -172,10 +182,13 @@ namespace HRDCManagementSystem.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GenerateCertificate(int trainingRegId)
         {
             try
             {
+                _logger.LogInformation("GenerateCertificate: Starting certificate generation for registration ID {RegId}", trainingRegId);
+                
                 // Get the registration with all required data
                 var registration = await _context.TrainingRegistrations
                     .Include(r => r.EmployeeSys)
@@ -185,6 +198,7 @@ namespace HRDCManagementSystem.Controllers
 
                 if (registration == null)
                 {
+                    _logger.LogWarning("Registration {RegId} not found or not active", trainingRegId);
                     TempData["ErrorMessage"] = "Registration not found.";
                     return RedirectToAction("Index", "Training");
                 }
@@ -192,7 +206,23 @@ namespace HRDCManagementSystem.Controllers
                 // Check if this is a confirmed registration
                 if (!registration.Confirmation)
                 {
+                    _logger.LogWarning("Registration {RegId} is not confirmed", trainingRegId);
                     TempData["ErrorMessage"] = "Cannot generate certificate for unconfirmed registration.";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+
+                // Validate registration has required related entities
+                if (registration.EmployeeSys == null)
+                {
+                    _logger.LogError("Registration {RegId} is missing employee data", trainingRegId);
+                    TempData["ErrorMessage"] = "Registration is missing employee details. Please ensure the employee record exists.";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+
+                if (registration.TrainingSys == null)
+                {
+                    _logger.LogError("Registration {RegId} is missing training data", trainingRegId);
+                    TempData["ErrorMessage"] = "Registration is missing training details. Please ensure the training record exists.";
                     return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
                 }
 
@@ -200,15 +230,57 @@ namespace HRDCManagementSystem.Controllers
                 var existingCertificate = await _context.Certificates
                     .FirstOrDefaultAsync(c => c.TrainingRegSysID == trainingRegId && c.RecStatus == "active");
 
-                // Generate the certificate
-                string certificatePath = await _certificateService.GenerateCertificateAsync(registration);
+                Certificate certificate;
+                string certificatePath = string.Empty;
+
+                try
+                {
+                    // Generate the certificate using the updated service
+                    _logger.LogInformation("Calling certificate service to generate PDF");
+                    certificatePath = await _certificateService.GenerateCertificateAsync(registration);
+                    _logger.LogInformation("Certificate generated successfully at {Path}", certificatePath);
+                }
+                catch (PdfException pdfEx)
+                {
+                    _logger.LogError(pdfEx, "PDF Exception during certificate generation: {Message}", pdfEx.Message);
+                    TempData["ErrorMessage"] = $"Failed to generate PDF certificate: {pdfEx.Message}";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+                catch (System.IO.IOException ioEx)
+                {
+                    _logger.LogError(ioEx, "IO Exception during certificate generation: {Message}", ioEx.Message);
+                    TempData["ErrorMessage"] = $"File access error during certificate generation: {ioEx.Message}";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+                catch (iText.IO.Exceptions.IOException ioEx)
+                {
+                    _logger.LogError(ioEx, "iText IO Exception during certificate generation: {Message}", ioEx.Message);
+                    TempData["ErrorMessage"] = $"PDF file access error during certificate generation: {ioEx.Message}";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calling certificate service to generate PDF");
+                    TempData["ErrorMessage"] = $"Failed to generate certificate: {ex.GetType().Name} - {ex.Message}";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
 
                 // Get current date
                 DateOnly issueDate = DateOnly.FromDateTime(DateTime.Today);
 
+                // Verify the certificate file was created
+                string fullPath = Path.Combine(_hostingEnvironment.WebRootPath, certificatePath.TrimStart('/'));
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    _logger.LogError("Certificate file not found at {Path} after generation", fullPath);
+                    TempData["ErrorMessage"] = "Certificate file was not created successfully.";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
+
                 if (existingCertificate != null)
                 {
                     // Update existing certificate
+                    _logger.LogInformation("Updating existing certificate record");
                     existingCertificate.IssueDate = issueDate;
                     existingCertificate.IsGenerated = true;
                     existingCertificate.CertificatePath = certificatePath;
@@ -216,11 +288,13 @@ namespace HRDCManagementSystem.Controllers
                     existingCertificate.ModifiedUserId = _currentUserService.GetCurrentUserId();
                     
                     _context.Certificates.Update(existingCertificate);
+                    certificate = existingCertificate;
                 }
                 else
                 {
                     // Create new certificate entry
-                    var certificate = new Certificate
+                    _logger.LogInformation("Creating new certificate record");
+                    certificate = new Certificate
                     {
                         TrainingRegSysID = trainingRegId,
                         IssueDate = issueDate,
@@ -228,22 +302,59 @@ namespace HRDCManagementSystem.Controllers
                         CreatedDate = DateOnly.FromDateTime(DateTime.Today),
                         CreatedTime = TimeOnly.FromDateTime(DateTime.Now),
                         CertificatePath = certificatePath,
+                        RecStatus = "active", // Ensure record status is set to active
                     };
 
                     _context.Certificates.Add(certificate);
                 }
 
-                await _context.SaveChangesAsync();
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Certificate record saved to database successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving certificate to database");
+                    TempData["ErrorMessage"] = "Certificate was generated but could not be saved to database.";
+                    return RedirectToAction("TrainingCertificates", new { trainingId = registration.TrainingSysID });
+                }
 
                 // Send email with certificate to employee if email is available
                 if (registration.EmployeeSys?.UserSys?.Email != null)
                 {
-                    string employeeName = $"{registration.EmployeeSys.FirstName} {registration.EmployeeSys.LastName}";
-                    await _certificateService.SendCertificateEmailAsync(
-                        registration.EmployeeSys.UserSys.Email,
-                        employeeName,
-                        registration.TrainingSys.Title,
-                        certificatePath);
+                    try
+                    {
+                        string employeeName = $"{registration.EmployeeSys.FirstName} {registration.EmployeeSys.LastName}";
+                        _logger.LogInformation("Sending certificate email to {Email}", registration.EmployeeSys.UserSys.Email);
+                        
+                        bool emailSent = await _certificateService.SendCertificateEmailAsync(
+                            registration.EmployeeSys.UserSys.Email,
+                            employeeName,
+                            registration.TrainingSys.Title,
+                            certificatePath);
+                        
+                        if (!emailSent)
+                        {
+                            _logger.LogWarning("Failed to send certificate email to {Email}", registration.EmployeeSys.UserSys.Email);
+                        }
+                        
+                        // Send notification to employee about certificate generation
+                        await NotificationUtility.NotifyCertificateGenerated(
+                            _notificationService,
+                            certificate
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error sending certificate email");
+                        // Continue anyway since the certificate was generated
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Employee {EmployeeId} has no email address for sending certificate", 
+                        registration.EmployeeSysID);
                 }
 
                 TempData["SuccessMessage"] = "Certificate generated successfully.";
@@ -251,14 +362,15 @@ namespace HRDCManagementSystem.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating certificate for registration {RegId}", trainingRegId);
-                TempData["ErrorMessage"] = $"Error generating certificate: {ex.Message}";
+                _logger.LogError(ex, "Unhandled error generating certificate for registration {RegId}", trainingRegId);
+                TempData["ErrorMessage"] = $"Error generating certificate: {ex.GetType().Name} - {ex.Message}";
                 return RedirectToAction("Index", "Training");
             }
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GenerateAllCertificates(int trainingId)
         {
             try
@@ -277,7 +389,7 @@ namespace HRDCManagementSystem.Controllers
                     .Include(r => r.EmployeeSys)
                     .ThenInclude(e => e.UserSys)
                     .Include(r => r.TrainingSys)
-                    .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && r.Confirmation)
+                    .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && r.Confirmation == true)
                     .ToListAsync();
 
                 if (!registrations.Any())
@@ -293,7 +405,7 @@ namespace HRDCManagementSystem.Controllers
                 {
                     try
                     {
-                        // Generate the certificate
+                        // Generate the certificate using the updated service
                         string certificatePath = await _certificateService.GenerateCertificateAsync(registration);
 
                         // Get current date
@@ -303,6 +415,8 @@ namespace HRDCManagementSystem.Controllers
                         var existingCertificate = await _context.Certificates
                             .FirstOrDefaultAsync(c => c.TrainingRegSysID == registration.TrainingRegSysID && c.RecStatus == "active");
 
+                        Certificate certificate;
+                        
                         if (existingCertificate != null)
                         {
                             // Update existing certificate
@@ -313,18 +427,20 @@ namespace HRDCManagementSystem.Controllers
                             existingCertificate.ModifiedUserId = _currentUserService.GetCurrentUserId();
                             
                             _context.Certificates.Update(existingCertificate);
+                            certificate = existingCertificate;
                         }
                         else
                         {
                             // Create new certificate entry
-                            var certificate = new Certificate
+                            certificate = new Certificate
                             {
                                 TrainingRegSysID = registration.TrainingRegSysID,
                                 IssueDate = issueDate,
                                 IsGenerated = true,
                                 CreatedDate = DateOnly.FromDateTime(DateTime.Today),
                                 CreatedTime = TimeOnly.FromDateTime(DateTime.Now),
-                                CertificatePath = certificatePath
+                                CertificatePath = certificatePath,
+                                RecStatus = "active", // Ensure record status is set to active
                             };
 
                             _context.Certificates.Add(certificate);
@@ -335,12 +451,25 @@ namespace HRDCManagementSystem.Controllers
                         // Send email with certificate to employee if email is available
                         if (registration.EmployeeSys?.UserSys?.Email != null)
                         {
-                            string employeeName = $"{registration.EmployeeSys.FirstName} {registration.EmployeeSys.LastName}";
-                            await _certificateService.SendCertificateEmailAsync(
-                                registration.EmployeeSys.UserSys.Email,
-                                employeeName,
-                                registration.TrainingSys.Title,
-                                certificatePath);
+                            try
+                            {
+                                string employeeName = $"{registration.EmployeeSys.FirstName} {registration.EmployeeSys.LastName}";
+                                await _certificateService.SendCertificateEmailAsync(
+                                    registration.EmployeeSys.UserSys.Email,
+                                    employeeName,
+                                    registration.TrainingSys.Title,
+                                    certificatePath);
+                                    
+                                // Send notification to employee about certificate generation
+                                await NotificationUtility.NotifyCertificateGenerated(
+                                    _notificationService,
+                                    certificate
+                                );
+                            }
+                            catch (Exception)
+                            {
+                                // Continue to next certificate even if email fails
+                            }
                         }
 
                         successCount++;
@@ -371,6 +500,7 @@ namespace HRDCManagementSystem.Controllers
             }
         }
 
+        [HttpGet]
         [Authorize(Roles = "Employee")]
         public async Task<IActionResult> MyCertificates()
         {
@@ -407,6 +537,7 @@ namespace HRDCManagementSystem.Controllers
             return View(viewModel);
         }
 
+        [HttpGet]
         [Authorize(Roles = "Admin,Employee")]
         public async Task<IActionResult> Download(int id)
         {
@@ -457,6 +588,159 @@ namespace HRDCManagementSystem.Controllers
 
             // Return the file
             return PhysicalFile(filePath, "application/pdf", fileName);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Diagnostics()
+        {
+            try
+            {
+                // Create a diagnostic report on the certificate generation environment
+                var diagnosticInfo = new Dictionary<string, string>();
+                
+                // System info
+                diagnosticInfo["OS"] = RuntimeInformation.OSDescription;
+                diagnosticInfo["Framework"] = RuntimeInformation.FrameworkDescription;
+                diagnosticInfo["IsWindows"] = RuntimeInformation.IsOSPlatform(OSPlatform.Windows).ToString();
+                
+                // Directory paths
+                diagnosticInfo["WebRootPath"] = _hostingEnvironment.WebRootPath;
+                diagnosticInfo["ContentRootPath"] = _hostingEnvironment.ContentRootPath;
+                
+                string certificatesDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
+                string signatureDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "signature");
+                
+                diagnosticInfo["CertificatesDir"] = certificatesDir;
+                diagnosticInfo["SignatureDir"] = signatureDir;
+                
+                diagnosticInfo["CertificatesDirExists"] = Directory.Exists(certificatesDir).ToString();
+                diagnosticInfo["SignatureDirExists"] = Directory.Exists(signatureDir).ToString();
+                
+                // Check template files
+                string templatePath = Path.Combine(certificatesDir, "template.jpg");
+                string signaturePath = Path.Combine(certificatesDir, "sign.jpg");
+                
+                diagnosticInfo["TemplateFilePath"] = templatePath;
+                diagnosticInfo["SignatureFilePath"] = signaturePath;
+                
+                diagnosticInfo["TemplateFileExists"] = System.IO.File.Exists(templatePath).ToString();
+                diagnosticInfo["SignatureFileExists"] = System.IO.File.Exists(signaturePath).ToString();
+                
+                // Check permissions
+                try
+                {
+                    // Try to create and delete a test file
+                    var testFilePath = Path.Combine(certificatesDir, "test_permissions.txt");
+                    System.IO.File.WriteAllText(testFilePath, "Test content");
+                    System.IO.File.Delete(testFilePath);
+                    diagnosticInfo["WritePermissions"] = "OK";
+                }
+                catch (Exception ex)
+                {
+                    diagnosticInfo["WritePermissions"] = $"Error: {ex.Message}";
+                }
+                
+                // Check for iText7 assemblies
+                try 
+                {
+                    var iText7Assembly = typeof(iText.Kernel.Pdf.PdfDocument).Assembly;
+                    diagnosticInfo["iText7Assembly"] = iText7Assembly.FullName;
+                }
+                catch
+                {
+                    diagnosticInfo["iText7Assembly"] = "Not found or error loading";
+                }
+                
+                // Check for System.Drawing.Common if on Windows
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    try
+                    {
+                        var drawingAssembly = typeof(System.Drawing.Bitmap).Assembly;
+                        diagnosticInfo["SystemDrawingAssembly"] = drawingAssembly.FullName;
+                    }
+                    catch
+                    {
+                        diagnosticInfo["SystemDrawingAssembly"] = "Not found or error loading";
+                    }
+                }
+                
+                // List any existing certificates
+                try
+                {
+                    var certFiles = Directory.GetFiles(certificatesDir, "*.pdf").Take(5).ToArray();
+                    diagnosticInfo["ExistingCertificates"] = certFiles.Length > 0 
+                        ? string.Join(", ", certFiles.Select(Path.GetFileName)) 
+                        : "None found";
+                }
+                catch
+                {
+                    diagnosticInfo["ExistingCertificates"] = "Error listing certificate files";
+                }
+                
+                return View(diagnosticInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Diagnostics action");
+                return Content($"Error in diagnostics: {ex.Message}");
+            }
+        }
+
+        // For immediate debugging, accessible only in development
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> TestImageGeneration()
+        {
+            if (!_hostingEnvironment.IsDevelopment())
+            {
+                return NotFound();
+            }
+            
+            try
+            {
+                _logger.LogInformation("Testing image generation");
+                
+                // Define paths
+                string certificatesDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
+                if (!Directory.Exists(certificatesDir))
+                {
+                    Directory.CreateDirectory(certificatesDir);
+                }
+                
+                string templatePath = Path.Combine(certificatesDir, "template_test.jpg");
+                string signaturePath = Path.Combine(certificatesDir, "signature_test.jpg");
+                
+                // Generate test images
+                bool templateResult = await ImageUtility.CreateDefaultCertificateTemplateAsync(templatePath, _logger);
+                bool signatureResult = await ImageUtility.CreateDefaultSignatureAsync(signaturePath, _logger);
+                
+                var results = new Dictionary<string, string>
+                {
+                    ["TemplateGeneration"] = templateResult ? "Success" : "Failed",
+                    ["SignatureGeneration"] = signatureResult ? "Success" : "Failed",
+                    ["TemplateExists"] = System.IO.File.Exists(templatePath).ToString(),
+                    ["SignatureExists"] = System.IO.File.Exists(signaturePath).ToString()
+                };
+                
+                if (System.IO.File.Exists(templatePath))
+                {
+                    results["TemplateFileSize"] = new FileInfo(templatePath).Length.ToString() + " bytes";
+                }
+                
+                if (System.IO.File.Exists(signaturePath))
+                {
+                    results["SignatureFileSize"] = new FileInfo(signaturePath).Length.ToString() + " bytes";
+                }
+                
+                return Json(results);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error testing image generation");
+                return Json(new { Error = ex.Message, StackTrace = ex.StackTrace });
+            }
         }
     }
 }
