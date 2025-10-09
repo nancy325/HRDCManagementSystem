@@ -53,7 +53,7 @@
                                                 <div class="rating" data-index="@i">
                                                     @for (int star = 5; star >= 1; star--)
                                                     {
-                                                        <input type="radio" asp-for="Responses[i].RatingValue" value="@star" id="star-@i-@star" class="rating-input" required />
+                                                        <input type="radio" asp-for="Responses[i].RatingValue" value="@star.ToString()" id="star-@i-@star" class="rating-input" required />
                                                         <label for="star-@i-@star" title="@star stars">
                                                             <i class="bi bi-star-fill"></i>
                                                         </label>

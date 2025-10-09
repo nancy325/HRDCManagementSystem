@@ -15,7 +15,7 @@ public partial class Feedback : BaseEntity
     [ForeignKey("QuestionID")]
     public int QuestionID { get; set; }
 
-    public int? RatingValue { get; set; }
+    public decimal? RatingValue { get; set; }
 
     public string? ResponseText { get; set; }
     

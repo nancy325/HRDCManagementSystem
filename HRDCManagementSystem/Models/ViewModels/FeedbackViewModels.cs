@@ -46,7 +46,7 @@ namespace HRDCManagementSystem.Models.ViewModels
         
         public string QuestionType { get; set; } = "Rating";
         
-        public int? RatingValue { get; set; }
+        public decimal? RatingValue { get; set; }
         
         public string? ResponseText { get; set; }
     }
@@ -74,7 +74,7 @@ namespace HRDCManagementSystem.Models.ViewModels
         public int QuestionID { get; set; }
         public string QuestionText { get; set; } = string.Empty;
         public string QuestionType { get; set; } = string.Empty;
-        public double AverageRating { get; set; }
+        public decimal AverageRating { get; set; }
         public List<string> TextResponses { get; set; } = new();
         public int ResponseCount { get; set; }
     }
