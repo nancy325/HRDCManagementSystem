@@ -58,6 +58,15 @@
             .btn-primary:hover {
                 background-color: #0b5ed7;
             }
+            
+        .forgot-password {
+            font-size: 0.9rem;
+            color: #0d6efd;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline !important;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +81,12 @@
             </div>
             <hr class="mb-4" />
 
+            <!-- Success message -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+            
             <!-- Error message -->
             @if (ViewBag.Error != null)
             {
@@ -102,9 +117,10 @@
                 </div>
                 
                 <!-- Forgot password -->
-                <div class="text-end mb-3">
-                    <a asp-action="ForgotPassword" class="text-decoration-none">Recover Password</a>
-                
+                <div class="text-end mb-4">
+                    <a asp-action="ForgotPassword" class="text-decoration-none forgot-password">
+                        <i class="bi bi-question-circle"></i> Forgot Password?
+                    </a>
                 </div>
 
                 <!-- Login button -->

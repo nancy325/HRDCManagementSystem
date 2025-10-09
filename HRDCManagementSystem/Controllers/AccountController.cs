@@ -2,6 +2,7 @@
 using HRDCManagementSystem.Models;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
+using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -14,10 +15,18 @@ namespace HRDCManagementSystem.Controllers
     public class AccountController : Controller
     {
         private readonly HRDCContext _context;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(HRDCContext context)
+        // Dictionary to store OTPs with email and expiry time
+        // Static so it persists across requests
+        private static Dictionary<string, (string Otp, DateTime Expiry)> _otpStore = new();
+
+        public AccountController(HRDCContext context, IEmailService emailService, ILogger<AccountController> logger)
         {
             _context = context;
+            _emailService = emailService;
+            _logger = logger;
         }
 
         //[HttpGet]
@@ -163,35 +172,201 @@ namespace HRDCManagementSystem.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            return View(new ForgotPasswordViewModel());
+            return View(new ForgotPasswordEmailViewModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel vm)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordEmailViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                return View(model);
             }
 
             var user = await _context.UserMasters
-                .FirstOrDefaultAsync(u => u.Email == vm.Email && u.RecStatus == "active");
+                .Include(u => u.Employees)
+                .FirstOrDefaultAsync(u => u.Email == model.Email && u.RecStatus == "active");
 
             if (user == null)
             {
-                ModelState.AddModelError("Email", "No active account found with this email.");
-                return View(vm);
+                // Don't reveal that the user does not exist
+                TempData["SuccessMessage"] = "If your email is registered, you will receive an OTP shortly.";
+                return RedirectToAction(nameof(VerifyOTP));
             }
 
+            // Generate random 6-digit OTP
+            var random = new Random();
+            string otp = random.Next(100000, 999999).ToString();
+            
+            // Store OTP in the dictionary with 5-minute expiry
+            _otpStore[model.Email] = (otp, DateTime.UtcNow.AddMinutes(5));
+
+            // Get user name if available
+            string userName = user.Email;
+            if (user.Employees?.Any() == true)
+            {
+                userName = $"{user.Employees.First().FirstName} {user.Employees.First().LastName}";
+            }
+
+            // Send email with OTP
+            string subject = "HRDC Password Recovery OTP";
+            string body = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;'>
+                        <h2 style='color: #003366;'>HRDC Password Recovery</h2>
+                        <p>Dear {userName},</p>
+                        <p>Your OTP for password recovery is: <strong style='font-size: 18px; background: #f0f0f0; padding: 5px 10px; border-radius: 3px;'>{otp}</strong></p>
+                        <p>It will expire in 5 minutes.</p>
+                        <p>If you did not request a password reset, please ignore this email or contact support.</p>
+                        <p>Regards,<br>Human Resource Development Centre (HRDC)<br>CHARUSAT</p>
+                    </div>
+                </body>
+                </html>";
+
+            await _emailService.SendEmailAsync(model.Email, subject, body);
+            
+            // Store email in TempData to pre-fill the next form
+            TempData["RecoveryEmail"] = model.Email;
+            TempData["SuccessMessage"] = "OTP has been sent to your email address. Please check your inbox.";
+            
+            return RedirectToAction(nameof(VerifyOTP));
+        }
+
+        [HttpGet]
+        public IActionResult VerifyOTP()
+        {
+            var model = new VerifyOTPViewModel();
+            
+            // Pre-fill email if available in TempData
+            if (TempData["RecoveryEmail"] != null)
+            {
+                model.Email = TempData["RecoveryEmail"].ToString();
+                // Keep the value for the POST action
+                TempData.Keep("RecoveryEmail");
+            }
+            
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult VerifyOTP(VerifyOTPViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Check if OTP exists for this email
+            if (!_otpStore.TryGetValue(model.Email, out var otpInfo))
+            {
+                ModelState.AddModelError("", "Invalid or expired OTP. Please request a new one.");
+                return View(model);
+            }
+
+            // Check if OTP is correct and not expired
+            if (otpInfo.Otp != model.OTP)
+            {
+                ModelState.AddModelError("", "Invalid OTP. Please try again.");
+                return View(model);
+            }
+
+            if (DateTime.UtcNow > otpInfo.Expiry)
+            {
+                // Remove expired OTP
+                _otpStore.Remove(model.Email);
+                ModelState.AddModelError("", "OTP has expired. Please request a new one.");
+                return View(model);
+            }
+
+            // OTP is valid, redirect to reset password
+            TempData["ResetPasswordEmail"] = model.Email;
+            
+            return RedirectToAction(nameof(ResetPassword));
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var model = new ResetPasswordViewModel();
+            
+            // Pre-fill email if available in TempData
+            if (TempData["ResetPasswordEmail"] != null)
+            {
+                model.Email = TempData["ResetPasswordEmail"].ToString();
+                
+                // Verify this email has a valid OTP entry
+                if (!_otpStore.ContainsKey(model.Email))
+                {
+                    TempData["ErrorMessage"] = "Your session has expired. Please start the password recovery process again.";
+                    return RedirectToAction(nameof(ForgotPassword));
+                }
+            }
+            else
+            {
+                // No email in TempData, redirect back to forgot password
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+            
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Check if the email exists and has a valid OTP entry
+            if (!_otpStore.ContainsKey(model.Email))
+            {
+                TempData["ErrorMessage"] = "Your session has expired. Please restart the password recovery process.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            var user = await _context.UserMasters
+                .FirstOrDefaultAsync(u => u.Email == model.Email && u.RecStatus == "active");
+
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                _otpStore.Remove(model.Email); // Clean up
+                TempData["SuccessMessage"] = "Password has been reset successfully.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Reset the password
             var passwordHasher = new PasswordHasher<UserMaster>();
-            user.Password = passwordHasher.HashPassword(user, vm.NewPassword);
+            user.Password = passwordHasher.HashPassword(user, model.NewPassword);
 
             _context.UserMasters.Update(user);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Password has been reset. Please login with your new password.";
+            // Remove the OTP from the store as it's been used
+            _otpStore.Remove(model.Email);
+
+            TempData["SuccessMessage"] = "Your password has been reset successfully. Please login with your new password.";
             return RedirectToAction(nameof(Login));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ResendOTP(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                TempData["ErrorMessage"] = "Email is required.";
+                return RedirectToAction(nameof(VerifyOTP));
+            }
+
+            // Redirect to ForgotPassword with the email pre-filled
+            TempData["RecoveryEmail"] = email;
+            return RedirectToAction(nameof(ForgotPassword));
         }
 
         [HttpGet]

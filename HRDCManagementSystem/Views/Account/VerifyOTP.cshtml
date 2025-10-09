@@ -1,7 +1,7 @@
-@model HRDCManagementSystem.Models.ViewModels.ForgotPasswordEmailViewModel
+@model HRDCManagementSystem.Models.ViewModels.VerifyOTPViewModel
 @{
     Layout = null;
-    ViewData["Title"] = "Recover Password - HRDC";
+    ViewData["Title"] = "Verify OTP - HRDC";
 }
 
 <!DOCTYPE html>
@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
         body { background: linear-gradient(120deg, #5c9ded, #003366); height: 100vh; }
-        .reset-card { width: 420px; border-radius: 15px; }
+        .otp-card { width: 420px; border-radius: 15px; }
         .logo-img { max-width: 120px; margin-bottom: 10px; }
         .form-control { height: 45px; }
         .input-group-text { background: #fff; border-right: 0; }
@@ -25,14 +25,19 @@
 </head>
 <body>
     <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="card shadow-lg p-4 reset-card">
+        <div class="card shadow-lg p-4 otp-card">
 
             <div class="text-center mb-3">
                 <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="logo-img" />
-                <h5 class="fw-bold text-primary">Recover Your Password</h5>
-                <p class="text-muted mb-0">Enter your email to receive a verification code</p>
+                <h5 class="fw-bold text-primary">Verify Your Identity</h5>
+                <p class="text-muted mb-0">Enter the OTP sent to your email</p>
             </div>
-            <hr class="mb-4" />
+            <hr class="mb-3" />
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
 
             @if (TempData["ErrorMessage"] != null)
             {
@@ -41,23 +46,40 @@
 
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-            <form asp-action="ForgotPassword" method="post">
+            <form asp-action="VerifyOTP" method="post">
                 @Html.AntiForgeryToken()
-                <div class="form-group mb-4">
+
+                <div class="form-group mb-3">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input asp-for="Email" type="email" class="form-control" placeholder="Enter your registered email" 
-                               value="@(TempData["RecoveryEmail"]?.ToString() ?? "")" />
+                        <input asp-for="Email" class="form-control" placeholder="Email address" readonly="@(!string.IsNullOrEmpty(Model.Email))" />
                     </div>
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
+                <div class="form-group mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                        <input asp-for="OTP" class="form-control" placeholder="Enter 6-digit OTP" autocomplete="off" />
+                    </div>
+                    <span asp-validation-for="OTP" class="text-danger"></span>
+                </div>
+
                 <div class="d-grid mb-3">
                     <button type="submit" class="btn btn-primary fw-bold">
-                        <i class="bi bi-send"></i> Send Verification Code
+                        <i class="bi bi-check-circle"></i> Verify OTP
                     </button>
                 </div>
             </form>
+
+            <div class="text-center">
+                <p class="mb-2">Didn't receive the OTP?</p>
+                <form asp-action="ResendOTP" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="email" value="@Model.Email" />
+                    <button type="submit" class="btn btn-link p-0">Resend OTP</button>
+                </form>
+            </div>
 
             <hr class="my-3" />
             <div class="text-center">
@@ -72,5 +94,3 @@
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </body>
 </html>
-
-

@@ -55,6 +55,9 @@ namespace HRDCManagementSystem.Controllers
                     .Select(g => g.Key)
                     .ToListAsync();
 
+                // Create list of registration IDs that have feedback
+                var feedbackRegIds = feedbacks;
+
                 var viewModel = new FeedbackHistoryViewModel
                 {
                     CompletedFeedbacks = completedTrainings
@@ -867,7 +870,7 @@ namespace HRDCManagementSystem.Controllers
                 return RedirectToAction("Index");
             }
             
-            var responses = feedbacks
+            var groupedResponses = feedbacks
                 .Where(f => f.Question != null)
                 .GroupBy(f => f.QuestionID)
                 .Select(g => g.First()); // Take the first entry for each question
