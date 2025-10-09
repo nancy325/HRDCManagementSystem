@@ -12,6 +12,10 @@
                     <h5 class="mb-0">Training Feedback</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i> You can provide feedback for trainings where your registration has been confirmed by an administrator and the training has ended.
+                    </div>
+                    
                     @if (TempData["SuccessMessage"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -59,7 +63,7 @@
                         else
                         {
                             <div class="alert alert-info">
-                                You don't have any pending feedback requests.
+                                You don't have any pending feedback requests for completed confirmed trainings.
                             </div>
                         }
                     </div>

@@ -93,4 +93,13 @@ namespace HRDCManagementSystem.Models.ViewModels
         public DateOnly EndDate { get; set; }
         public bool HasFeedback { get; set; }
     }
+
+    public class TrainingFeedbackSummaryViewModel
+    {
+        public int TrainingSysID { get; set; }
+        public string TrainingTitle { get; set; } = string.Empty;
+        public DateOnly EndDate { get; set; }
+        public int ResponseCount { get; set; }
+        public decimal AverageRating { get; set; }
+    }
 }
