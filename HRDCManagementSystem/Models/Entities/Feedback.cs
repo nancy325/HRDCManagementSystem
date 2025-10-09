@@ -8,7 +8,7 @@ public partial class Feedback : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int FeedbackID { get; set; }
-    
+
     [ForeignKey("TrainingRegSysID")]
     public int TrainingRegSysID { get; set; }
 
@@ -18,7 +18,7 @@ public partial class Feedback : BaseEntity
     public int? RatingValue { get; set; }
 
     public string? ResponseText { get; set; }
-    
+
     public virtual FeedbackQuestion? Question { get; set; }
 
     public virtual TrainingRegistration? RegSys { get; set; }

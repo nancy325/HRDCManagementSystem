@@ -24,7 +24,6 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<HRDCContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
 // Register other services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -49,13 +48,16 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
+// SignalR configuration
+builder.Services.AddSignalR();
+
 // Set fallback culture (thread defaults)
 var cultureInfo = new CultureInfo("en-GB");
 cultureInfo.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
 cultureInfo.DateTimeFormat.LongTimePattern = "HH:mm:ss";
 
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 
 // Configure Mapster mappings
 TypeAdapterConfig<DateOnly?, DateTime?>.NewConfig()

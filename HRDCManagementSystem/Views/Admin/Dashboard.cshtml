@@ -146,7 +146,8 @@
                                 var currentTime = TimeOnly.FromDateTime(DateTime.Now);
                                 var currentDate = DateOnly.FromDateTime(DateTime.Now);
 
-                                if (training.ToTime < currentTime && training.EndDate < currentDate)
+                                // Skip trainings that have already ended (either past end date OR past end time on end date)
+                                if (training.EndDate < currentDate || (training.EndDate == currentDate && training.ToTime < currentTime))
                                 {
                                     continue; // Skip trainings that have already ended
                                 }

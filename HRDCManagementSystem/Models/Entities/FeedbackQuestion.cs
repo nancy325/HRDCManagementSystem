@@ -12,11 +12,11 @@ public partial class FeedbackQuestion : BaseEntity
     public string QuestionText { get; set; } = string.Empty;
 
     public bool IsActive { get; set; }
-    
+
     public int? TrainingSysID { get; set; }
-    
+
     public string QuestionType { get; set; } = "Rating";
-    
+
     public bool IsCommon { get; set; }
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();

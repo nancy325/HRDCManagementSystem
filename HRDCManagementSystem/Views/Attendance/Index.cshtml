@@ -1,10 +1,10 @@
 @model IEnumerable<dynamic>
 @{
-    ViewData["Title"] = "Mark Attendance - Completed Trainings";
+    ViewData["Title"] = "Mark Attendance - Active Trainings";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Completed Trainings</h2>
+<h2>Active Trainings</h2>
 
 @if (TempData["ErrorMessage"] != null)
 {
@@ -23,6 +23,7 @@
             <th>End</th>
             <th>Status</th>
             <th></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -30,11 +31,14 @@
     {
         <tr>
             <td>@t.Title</td>
-            <td>@t.StartDate</td>
-            <td>@t.EndDate</td>
+            <td>@t.StartDate.ToString("yyyy-MM-dd")</td>
+            <td>@t.EndDate.ToString("yyyy-MM-dd")</td>
             <td>@t.Status</td>
             <td>
                 <a class="btn btn-primary" asp-action="Mark" asp-route-trainingId="@t.TrainingSysID">Mark Attendance</a>
+            </td>
+            <td>
+                <a class="btn btn-outline-primary" asp-action="ExportCsv" asp-route-trainingId="@t.TrainingSysID">Export CSV</a>
             </td>
         </tr>
     }

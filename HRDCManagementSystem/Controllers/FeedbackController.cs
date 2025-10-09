@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace HRDCManagementSystem.Controllers
 {
@@ -33,29 +32,29 @@ namespace HRDCManagementSystem.Controllers
             else if (User.IsInRole("Employee"))
             {
                 var currentUserId = _currentUserService.GetCurrentUserId();
-                
+
                 // Get employee ID
                 var employee = await _context.Employees
                     .FirstOrDefaultAsync(e => e.UserSysID == currentUserId);
-                
+
                 if (employee == null)
                 {
                     return NotFound("Employee record not found");
                 }
-                
+
                 // Get completed trainings
                 var completedTrainings = await _context.TrainingRegistrations
                     .Include(r => r.TrainingSys)
-                    .Where(r => r.EmployeeSysID == employee.EmployeeSysID && 
+                    .Where(r => r.EmployeeSysID == employee.EmployeeSysID &&
                                 r.TrainingSys.EndDate < DateOnly.FromDateTime(DateTime.Today))
                     .ToListAsync();
-                    
+
                 var feedbacks = await _context.Feedbacks
                     .Where(f => f.CreateUserId == currentUserId)
                     .Select(f => f.TrainingRegSysID)
                     .Distinct()
                     .ToListAsync();
-                    
+
                 var viewModel = new FeedbackHistoryViewModel
                 {
                     CompletedFeedbacks = completedTrainings
@@ -68,7 +67,7 @@ namespace HRDCManagementSystem.Controllers
                             EndDate = t.TrainingSys.EndDate,
                             HasFeedback = true
                         }).ToList(),
-                        
+
                     PendingFeedbacks = completedTrainings
                         .Where(t => !feedbacks.Contains(t.TrainingRegSysID))
                         .Select(t => new FeedbackTrainingItem
@@ -80,10 +79,10 @@ namespace HRDCManagementSystem.Controllers
                             HasFeedback = false
                         }).ToList()
                 };
-                
+
                 return View(viewModel);
             }
-            
+
             // If user is neither Admin nor Employee, return access denied
             return Forbid();
         }
@@ -98,7 +97,7 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
                 return RedirectToAction(nameof(ViewQuestions));
             }
-            
+
             var viewModel = new FeedbackQuestionViewModel();
             await LoadTrainingList(viewModel);
             return View(viewModel);
@@ -116,39 +115,40 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
                 return RedirectToAction(nameof(ViewQuestions));
             }
-            
+
             // Log the model data
-            _logger.LogInformation("Adding question: {@QuestionData}", new { 
-                model.QuestionText, 
-                model.QuestionType, 
-                model.IsCommon, 
-                model.TrainingSysID, 
+            _logger.LogInformation("Adding question: {@QuestionData}", new
+            {
+                model.QuestionText,
+                model.QuestionType,
+                model.IsCommon,
+                model.TrainingSysID,
                 model.IsActive,
                 CurrentUserId = currentUserId
             });
-            
+
             // Validate required fields manually if necessary
             if (string.IsNullOrWhiteSpace(model.QuestionText))
             {
                 ModelState.AddModelError("QuestionText", "Question text is required");
             }
-            
+
             if (string.IsNullOrWhiteSpace(model.QuestionType))
             {
                 ModelState.AddModelError("QuestionType", "Question type is required");
             }
-            
+
             // If not a common question, validate training selection
             if (!model.IsCommon && !model.TrainingSysID.HasValue)
             {
                 ModelState.AddModelError("TrainingSysID", "Please select a training or mark as common question");
             }
-            
+
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid model state when adding question: {@ModelErrors}", 
+                _logger.LogWarning("Invalid model state when adding question: {@ModelErrors}",
                     ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                
+
                 await LoadTrainingList(model);
                 return View(model);
             }
@@ -174,13 +174,13 @@ namespace HRDCManagementSystem.Controllers
                 };
 
                 _logger.LogInformation("Adding new FeedbackQuestion entity");
-                
+
                 // Add the entity directly without setting any tracking state
                 _context.FeedbackQuestions.Add(question);
-                
+
                 _logger.LogInformation("Saving question to database");
                 await _context.SaveChangesAsync();
-                
+
                 _logger.LogInformation("Question saved successfully with ID: {QuestionId}", question.QuestionID);
 
                 TempData["SuccessMessage"] = "Feedback question added successfully.";
@@ -190,7 +190,7 @@ namespace HRDCManagementSystem.Controllers
             {
                 // Log the detailed exception
                 _logger.LogError(ex, "Error adding question: {ErrorMessage}", ex.Message);
-                
+
                 // Get the innermost exception for more details
                 var innerException = ex;
                 while (innerException.InnerException != null)
@@ -198,7 +198,7 @@ namespace HRDCManagementSystem.Controllers
                     innerException = innerException.InnerException;
                     _logger.LogError("Inner exception: {ErrorMessage}", innerException.Message);
                 }
-                
+
                 ModelState.AddModelError("", $"Error adding question: {innerException.Message}");
                 await LoadTrainingList(model);
                 return View(model);
@@ -281,24 +281,24 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
                 return RedirectToAction(nameof(ViewQuestions));
             }
-            
+
             // Validate required fields manually if necessary
             if (string.IsNullOrWhiteSpace(model.QuestionText))
             {
                 ModelState.AddModelError("QuestionText", "Question text is required");
             }
-            
+
             if (string.IsNullOrWhiteSpace(model.QuestionType))
             {
                 ModelState.AddModelError("QuestionType", "Question type is required");
             }
-            
+
             // If not a common question, validate training selection
             if (!model.IsCommon && !model.TrainingSysID.HasValue)
             {
                 ModelState.AddModelError("TrainingSysID", "Please select a training or mark as common question");
             }
-            
+
             if (!ModelState.IsValid)
             {
                 await LoadTrainingList(model);
@@ -324,7 +324,7 @@ namespace HRDCManagementSystem.Controllers
                 question.IsCommon = model.IsCommon;
                 question.TrainingSysID = model.TrainingSysID;
                 question.QuestionType = model.QuestionType;
-                
+
                 // Update audit fields explicitly
                 question.ModifiedDateTime = DateTime.Now;
                 question.ModifiedUserId = currentUserId;
@@ -340,10 +340,10 @@ namespace HRDCManagementSystem.Controllers
             catch (Exception ex)
             {
                 _context.Database.RollbackTransaction();
-                
+
                 // Log the detailed exception
                 _logger.LogError(ex, "Error updating question: {ErrorMessage}", ex.Message);
-                
+
                 // Get the innermost exception for more details
                 var innerException = ex;
                 while (innerException.InnerException != null)
@@ -351,7 +351,7 @@ namespace HRDCManagementSystem.Controllers
                     innerException = innerException.InnerException;
                     _logger.LogError("Inner exception: {ErrorMessage}", innerException.Message);
                 }
-                
+
                 ModelState.AddModelError("", $"Error updating question: {innerException.Message}");
                 await LoadTrainingList(model);
                 return View(model);
@@ -371,11 +371,11 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 question.IsActive = !question.IsActive;
-                
+
                 // Update audit fields
                 question.ModifiedDateTime = DateTime.Now;
                 question.ModifiedUserId = _currentUserService.GetCurrentUserId();
-                
+
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(ViewQuestions));
@@ -454,9 +454,10 @@ namespace HRDCManagementSystem.Controllers
 
             var questionGroups = feedbacks
                 .Where(f => f.Question != null) // Ensure question is not null
-                .GroupBy(f => new { 
-                    f.QuestionID, 
-                    QuestionText = f.Question?.QuestionText ?? "Unknown Question", 
+                .GroupBy(f => new
+                {
+                    f.QuestionID,
+                    QuestionText = f.Question?.QuestionText ?? "Unknown Question",
                     QuestionType = f.Question?.QuestionType ?? "Unknown"
                 });
 
@@ -500,30 +501,30 @@ namespace HRDCManagementSystem.Controllers
         {
             // Verify the training registration exists and belongs to this employee
             var currentUserId = _currentUserService.GetCurrentUserId();
-            
+
             var employee = await _context.Employees
                 .FirstOrDefaultAsync(e => e.UserSysID == currentUserId);
-                
+
             if (employee == null)
             {
                 return NotFound("Employee record not found");
             }
-            
+
             var registration = await _context.TrainingRegistrations
                 .Include(r => r.TrainingSys)
-                .FirstOrDefaultAsync(r => r.TrainingRegSysID == trainingRegSysId && 
+                .FirstOrDefaultAsync(r => r.TrainingRegSysID == trainingRegSysId &&
                                            r.EmployeeSysID == employee.EmployeeSysID);
-                                           
+
             if (registration == null)
             {
                 return NotFound("Training registration not found");
             }
-            
+
             // Check if feedback already submitted
             var existingFeedback = await _context.Feedbacks
-                .AnyAsync(f => f.TrainingRegSysID == trainingRegSysId && 
+                .AnyAsync(f => f.TrainingRegSysID == trainingRegSysId &&
                                f.CreateUserId == currentUserId);
-                               
+
             if (existingFeedback)
             {
                 TempData["ErrorMessage"] = "You have already submitted feedback for this training.";
@@ -542,33 +543,33 @@ namespace HRDCManagementSystem.Controllers
 
             // Combine both lists
             var allQuestions = commonQuestions.Concat(trainingQuestions).ToList();
-            
+
             // If no questions are defined, create default questions
             if (!allQuestions.Any())
             {
                 // Create default questions if none exist
                 var defaultQuestions = new List<FeedbackResponseViewModel>
                 {
-                    new FeedbackResponseViewModel 
-                    { 
+                    new FeedbackResponseViewModel
+                    {
                         QuestionID = 0,
                         QuestionText = "How would you rate the training content?",
                         QuestionType = "Rating"
                     },
-                    new FeedbackResponseViewModel 
-                    { 
+                    new FeedbackResponseViewModel
+                    {
                         QuestionID = 0,
                         QuestionText = "How would you rate the trainer?",
                         QuestionType = "Rating"
                     },
-                    new FeedbackResponseViewModel 
-                    { 
+                    new FeedbackResponseViewModel
+                    {
                         QuestionID = 0,
                         QuestionText = "Do you have any additional comments?",
                         QuestionType = "Text"
                     }
                 };
-                
+
                 var viewModel = new FeedbackSubmissionViewModel
                 {
                     TrainingSysID = registration.TrainingSysID,
@@ -576,10 +577,10 @@ namespace HRDCManagementSystem.Controllers
                     TrainingTitle = registration.TrainingSys?.Title ?? "Training",
                     Responses = defaultQuestions
                 };
-                
+
                 return View(viewModel);
             }
-            
+
             // Create view model with all questions
             var responses = allQuestions.Select(q => new FeedbackResponseViewModel
             {
@@ -605,7 +606,7 @@ namespace HRDCManagementSystem.Controllers
         public async Task<IActionResult> SaveFeedback(FeedbackSubmissionViewModel model)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
-            
+
             if (currentUserId == null)
             {
                 TempData["ErrorMessage"] = "User authentication issue. Please log out and log back in.";
@@ -615,12 +616,12 @@ namespace HRDCManagementSystem.Controllers
             // Check if any validation errors exist
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid model state when submitting feedback: {@ModelErrors}", 
+                _logger.LogWarning("Invalid model state when submitting feedback: {@ModelErrors}",
                     ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                
+
                 return View("SubmitFeedback", model);
             }
-            
+
             // Manually validate rating questions have values
             bool hasValidationErrors = false;
             for (int i = 0; i < model.Responses.Count; i++)
@@ -632,7 +633,7 @@ namespace HRDCManagementSystem.Controllers
                     hasValidationErrors = true;
                 }
             }
-            
+
             if (hasValidationErrors)
             {
                 return View("SubmitFeedback", model);
@@ -640,9 +641,9 @@ namespace HRDCManagementSystem.Controllers
 
             // Check if feedback already exists for this registration
             var existingFeedback = await _context.Feedbacks
-                .AnyAsync(f => f.TrainingRegSysID == model.TrainingRegSysID && 
+                .AnyAsync(f => f.TrainingRegSysID == model.TrainingRegSysID &&
                                f.CreateUserId == currentUserId);
-                               
+
             if (existingFeedback)
             {
                 TempData["ErrorMessage"] = "You have already submitted feedback for this training.";
@@ -655,13 +656,13 @@ namespace HRDCManagementSystem.Controllers
                 try
                 {
                     _logger.LogInformation("Processing feedback submission with {ResponseCount} responses", model.Responses.Count);
-                    
+
                     // Process each response
                     foreach (var response in model.Responses)
                     {
-                        _logger.LogInformation("Processing response: QuestionID={QuestionID}, QuestionType={QuestionType}", 
+                        _logger.LogInformation("Processing response: QuestionID={QuestionID}, QuestionType={QuestionType}",
                             response.QuestionID, response.QuestionType);
-                    
+
                         // For default questions that don't exist in the database
                         if (response.QuestionID == 0)
                         {
@@ -675,14 +676,14 @@ namespace HRDCManagementSystem.Controllers
                                 CreateDateTime = DateTime.Now,
                                 CreateUserId = currentUserId
                             };
-                            
+
                             _context.FeedbackQuestions.Add(newQuestion);
                             await _context.SaveChangesAsync();
-                            
+
                             response.QuestionID = newQuestion.QuestionID;
                             _logger.LogInformation("Created new question with ID: {QuestionID}", newQuestion.QuestionID);
                         }
-                        
+
                         // Create feedback with minimal properties
                         var feedback = new Feedback
                         {
@@ -700,27 +701,27 @@ namespace HRDCManagementSystem.Controllers
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    
-                    _logger.LogInformation("Feedback submitted successfully for TrainingRegSysID={TrainingRegSysID}", 
+
+                    _logger.LogInformation("Feedback submitted successfully for TrainingRegSysID={TrainingRegSysID}",
                         model.TrainingRegSysID);
-                    
+
                     TempData["SuccessMessage"] = "Thank you for your feedback!";
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    
-                    _logger.LogError(ex, "Error saving feedback: {ErrorMessage}, TrainingRegSysID={TrainingRegSysID}", 
+
+                    _logger.LogError(ex, "Error saving feedback: {ErrorMessage}, TrainingRegSysID={TrainingRegSysID}",
                         ex.Message, model.TrainingRegSysID);
-                    
+
                     var innerException = ex;
                     while (innerException.InnerException != null)
                     {
                         innerException = innerException.InnerException;
                         _logger.LogError("Inner exception: {ErrorMessage}", innerException.Message);
                     }
-                    
+
                     TempData["ErrorMessage"] = $"Error saving feedback: {innerException.Message}. Please try again.";
                     return View("SubmitFeedback", model);
                 }
@@ -731,11 +732,11 @@ namespace HRDCManagementSystem.Controllers
         public async Task<IActionResult> ViewMyFeedback(int trainingRegSysId)
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
-            
+
             var registration = await _context.TrainingRegistrations
                 .Include(r => r.TrainingSys)
                 .FirstOrDefaultAsync(r => r.TrainingRegSysID == trainingRegSysId);
-                
+
             if (registration == null)
             {
                 return NotFound();
@@ -743,16 +744,16 @@ namespace HRDCManagementSystem.Controllers
 
             var feedbacks = await _context.Feedbacks
                 .Include(f => f.Question)
-                .Where(f => f.TrainingRegSysID == trainingRegSysId && 
+                .Where(f => f.TrainingRegSysID == trainingRegSysId &&
                             f.CreateUserId == currentUserId)
                 .ToListAsync();
-                
+
             if (!feedbacks.Any())
             {
                 TempData["ErrorMessage"] = "No feedback found for this training.";
                 return RedirectToAction("Index");
             }
-            
+
             var responses = feedbacks
                 .Where(f => f.Question != null)
                 .Select(f => new FeedbackResponseViewModel
@@ -763,7 +764,7 @@ namespace HRDCManagementSystem.Controllers
                     RatingValue = f.RatingValue,
                     ResponseText = f.ResponseText
                 }).ToList();
-            
+
             var viewModel = new FeedbackSubmissionViewModel
             {
                 TrainingRegSysID = trainingRegSysId,
@@ -771,10 +772,10 @@ namespace HRDCManagementSystem.Controllers
                 TrainingTitle = registration.TrainingSys?.Title ?? "Training",
                 Responses = responses
             };
-            
+
             return View(viewModel);
         }
-        
+
         private async Task LoadTrainingList(FeedbackQuestionViewModel viewModel)
         {
             try

@@ -15,12 +15,12 @@
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
 }
 
-@if (Model.IsAlreadyTaken)
+@if (Model != null && Model.IsAlreadyTaken)
 {
     <div class="alert alert-warning">Attendance is already taken for this training/date. You can export below.</div>
 }
 
-<form asp-action="Mark" asp-route-trainingId="@Model.TrainingSysID" method="post" onsubmit="return confirmSave()">
+<form asp-action="Mark" asp-route-trainingId="@(Model != null ? Model.TrainingSysID : null)" method="post" onsubmit="return confirmSave()">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="TrainingSysID" />
 
@@ -48,7 +48,6 @@
                         <input type="hidden" name="Items[@i].EmployeeName" value="@Model.Items[i].EmployeeName" />
                     </td>
                     <td>
-                        <input type="hidden" name="Items[@i].IsPresent" value="false" />
                         <input class="form-check-input" name="Items[@i].IsPresent" type="checkbox" value="true" @(Model.Items[i].IsPresent ? "checked" : "") @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "") />
                     </td>
                 </tr>
@@ -58,7 +57,7 @@
 
     <button type="submit" class="btn btn-success" @(Model.IsAlreadyTaken ? "disabled=\"disabled\"" : "")>Save Attendance</button>
     <a asp-action="Index" class="btn btn-secondary">Back</a>
-    <a asp-action="ExportCsv" asp-route-trainingId="@Model.TrainingSysID" asp-route-date="@Model.AttendanceDate" class="btn btn-outline-primary">Export CSV</a>
+    <a asp-action="ExportCsv" asp-route-trainingId="@Model.TrainingSysID" class="btn btn-outline-primary">Export CSV</a>
 </form>
 
 @section Scripts {

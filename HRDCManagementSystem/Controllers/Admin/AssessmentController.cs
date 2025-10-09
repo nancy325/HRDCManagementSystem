@@ -1,4 +1,4 @@
-﻿﻿using HRDCManagementSystem.Data;
+﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.ViewModels;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
@@ -119,7 +119,7 @@ namespace HRDCManagementSystem.Controllers.Admin
 
                 ViewBag.Trainings = trainingsWithTests;
 
-                _logger.LogInformation("Successfully loaded marks entry form for training {TrainingId} with {ParticipantCount} participants", 
+                _logger.LogInformation("Successfully loaded marks entry form for training {TrainingId} with {ParticipantCount} participants",
                     id, vm.EmployeeMarks.Count);
 
                 return View("~/Views/Admin/Assessment/ManageMarks.cshtml", vm);
@@ -139,7 +139,7 @@ namespace HRDCManagementSystem.Controllers.Admin
         {
             try
             {
-                _logger.LogInformation("Saving marks for training ID: {TrainingId} with {ParticipantCount} participants", 
+                _logger.LogInformation("Saving marks for training ID: {TrainingId} with {ParticipantCount} participants",
                     model.TrainingId, model.EmployeeMarks?.Count ?? 0);
 
                 if (model == null)
@@ -177,14 +177,14 @@ namespace HRDCManagementSystem.Controllers.Admin
                     var empMark = model.EmployeeMarks[i];
                     if (empMark.MarksObtained.HasValue && empMark.MarksObtained.Value > model.MarksOutOf)
                     {
-                        ModelState.AddModelError($"EmployeeMarks[{i}].MarksObtained", 
+                        ModelState.AddModelError($"EmployeeMarks[{i}].MarksObtained",
                             $"Marks obtained cannot exceed {model.MarksOutOf}.");
                         hasValidationErrors = true;
                     }
 
                     if (empMark.MarksObtained.HasValue && empMark.MarksObtained.Value < 0)
                     {
-                        ModelState.AddModelError($"EmployeeMarks[{i}].MarksObtained", 
+                        ModelState.AddModelError($"EmployeeMarks[{i}].MarksObtained",
                             "Marks obtained cannot be negative.");
                         hasValidationErrors = true;
                     }
@@ -228,7 +228,7 @@ namespace HRDCManagementSystem.Controllers.Admin
                         {
                             registration.MarksObtained = empMark.MarksObtained;
                             updatedCount++;
-                            _logger.LogDebug("Updated marks for registration {RegistrationId}: {Marks}", 
+                            _logger.LogDebug("Updated marks for registration {RegistrationId}: {Marks}",
                                 empMark.RegistrationId, empMark.MarksObtained);
                         }
                         else
@@ -251,10 +251,10 @@ namespace HRDCManagementSystem.Controllers.Admin
                 }
 
                 await _context.SaveChangesAsync();
-                
-                _logger.LogInformation("Successfully saved marks for {UpdatedCount} participants in training {TrainingId}", 
+
+                _logger.LogInformation("Successfully saved marks for {UpdatedCount} participants in training {TrainingId}",
                     updatedCount, model.TrainingId);
-                
+
                 TempData["SuccessMessage"] = $"Marks updated successfully for {updatedCount} participant(s)!";
                 return RedirectToAction(nameof(Index));
             }

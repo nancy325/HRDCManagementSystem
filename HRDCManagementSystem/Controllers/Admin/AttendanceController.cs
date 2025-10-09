@@ -29,7 +29,7 @@ public class AttendanceController : Controller
         {
             var now = DateTime.Now;
 
-            // Pull minimal data then evaluate completion using EndDate + toTime on the client side for correct semantics
+            // Pull minimal data without filtering by completion status
             var trainings = (await _context.TrainingPrograms
                 .Where(t => t.RecStatus == "active")
                 .OrderByDescending(t => t.EndDate)
@@ -39,21 +39,9 @@ public class AttendanceController : Controller
                     t.Title,
                     t.StartDate,
                     t.EndDate,
-                    t.fromTime,
-                    t.toTime,
                     t.Status
                 })
-                .ToListAsync())
-                .Where(t => t.Status == "Completed" || now >= t.EndDate.ToDateTime(t.toTime))
-                .Select(t => new
-                {
-                    t.TrainingSysID,
-                    t.Title,
-                    t.StartDate,
-                    t.EndDate,
-                    t.Status
-                })
-                .ToList();
+                .ToListAsync());
 
             return View(trainings);
         }

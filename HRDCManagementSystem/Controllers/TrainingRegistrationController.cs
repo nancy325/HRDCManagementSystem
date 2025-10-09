@@ -165,7 +165,7 @@ namespace HRDCManagementSystem.Controllers
             // Prevent approval/rejection if training is completed
             if (IsTrainingCompleted(reg.TrainingSys))
             {
-                return Json(new { success = false, message = "Training already completed - no action required." });
+                return Json(new { success = false, message = "Training is completed/over." });
             }
 
             var action = (request.Action ?? string.Empty).ToLowerInvariant();
@@ -207,7 +207,7 @@ namespace HRDCManagementSystem.Controllers
                 // Prevent approval if training is completed
                 if (IsTrainingCompleted(reg.TrainingSys))
                 {
-                    TempData["InfoMessage"] = "Training already completed - no action required.";
+                    TempData["InfoMessage"] = "Training is completed/over.";
                 }
                 else
                 {
@@ -246,7 +246,7 @@ namespace HRDCManagementSystem.Controllers
                 // Prevent rejection if training is completed
                 if (IsTrainingCompleted(reg.TrainingSys))
                 {
-                    TempData["InfoMessage"] = "Training already completed - no action required.";
+                    TempData["InfoMessage"] = "Training is completed/over.";
                 }
                 else
                 {
