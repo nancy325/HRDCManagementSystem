@@ -40,6 +40,7 @@ builder.Services.AddSession(options =>
 
 // Register background services
 builder.Services.AddHostedService<TrainingReminderService>();
+builder.Services.AddHostedService<TrainingNotificationService>();
 
 // Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

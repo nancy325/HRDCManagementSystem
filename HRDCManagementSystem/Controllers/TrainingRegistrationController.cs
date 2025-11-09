@@ -14,15 +14,18 @@ namespace HRDCManagementSystem.Controllers
     {
         private readonly HRDCContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
         private readonly ILogger<TrainingRegistrationController> _logger;
 
         public TrainingRegistrationController(
             HRDCContext context,
             INotificationService notificationService,
+            IEmailService emailService,
             ILogger<TrainingRegistrationController> logger)
         {
             _context = context;
             _notificationService = notificationService;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -203,6 +206,7 @@ namespace HRDCManagementSystem.Controllers
             {
                 var registration = await _context.TrainingRegistrations
                     .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
                     .Include(tr => tr.TrainingSys)
                     .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == request.RegistrationId);
 
@@ -229,13 +233,18 @@ namespace HRDCManagementSystem.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Send notification to employee
+                // Send notification and email to employee
                 try
                 {
                     await NotificationUtility.NotifyRegistrationStatusChange(
                         _notificationService,
                         registration,
-                        status);
+                        status,
+                        _emailService,
+                        _logger);
+
+                    _logger.LogInformation("Registration {Status} notification sent to employee {EmployeeId} for training '{TrainingTitle}'",
+                        status, registration.EmployeeSysID, registration.TrainingSys.Title);
                 }
                 catch (Exception ex)
                 {
@@ -244,7 +253,7 @@ namespace HRDCManagementSystem.Controllers
                     // Continue anyway, this shouldn't block the approval process
                 }
 
-                return Json(new { success = true, message = $"Registration has been {status.ToLower()}." });
+                return Json(new { success = true, message = $"Registration has been {status.ToLower()} and notification sent to the employee." });
             }
             catch (Exception ex)
             {
@@ -266,6 +275,7 @@ namespace HRDCManagementSystem.Controllers
             {
                 var registrations = await _context.TrainingRegistrations
                     .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
                     .Include(tr => tr.TrainingSys)
                     .Where(tr => request.RegistrationIds.Contains(tr.TrainingRegSysID))
                     .ToListAsync();
@@ -285,16 +295,34 @@ namespace HRDCManagementSystem.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Send notifications
+                // Send notifications and emails
                 try
                 {
-                    foreach (var registration in registrations)
+                    var notificationTasks = registrations.Select(async registration =>
                     {
-                        await NotificationUtility.NotifyRegistrationStatusChange(
-                            _notificationService,
-                            registration,
-                            status);
-                    }
+                        try
+                        {
+                            await NotificationUtility.NotifyRegistrationStatusChange(
+                                _notificationService,
+                                registration,
+                                status,
+                                _emailService,
+                                _logger);
+
+                            _logger.LogDebug("Bulk {Status} notification sent to employee {EmployeeId} for training '{TrainingTitle}'",
+                                status, registration.EmployeeSysID, registration.TrainingSys.Title);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send notification for bulk registration status change. Registration ID: {RegistrationId}",
+                                registration.TrainingRegSysID);
+                        }
+                    });
+
+                    await Task.WhenAll(notificationTasks);
+
+                    _logger.LogInformation("Completed sending bulk {Status} notifications for {Count} registrations",
+                        status, registrations.Count);
                 }
                 catch (Exception ex)
                 {
@@ -302,9 +330,9 @@ namespace HRDCManagementSystem.Controllers
                     // Continue anyway
                 }
 
-                return Json(new
-                {
-                    success = true,
+                return Json(new 
+                { 
+                    success = true, 
                     message = $"{registrations.Count} registrations have been {request.Action}d.",
                     count = registrations.Count
                 });
