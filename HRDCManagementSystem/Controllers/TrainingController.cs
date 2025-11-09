@@ -16,15 +16,18 @@ namespace HRDCManagementSystem.Controllers
     {
         private readonly HRDCContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
         private readonly ILogger<TrainingController> _logger;
 
         public TrainingController(
             HRDCContext context, 
             INotificationService notificationService,
+            IEmailService emailService,
             ILogger<TrainingController> logger)
         {
             _context = context;
             _notificationService = notificationService;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -177,16 +180,29 @@ namespace HRDCManagementSystem.Controllers
             _context.TrainingPrograms.Add(entity);
             await _context.SaveChangesAsync();
             
-            // Send notifications about the new training
+            // Send targeted notifications and emails about the new training
             try
             {
-                await NotificationUtility.NotifyNewTraining(_notificationService, entity);
+                _logger.LogInformation("Sending targeted notifications for new training: {TrainingTitle} with eligibility: {EligibilityType}", 
+                    entity.Title, entity.EligibilityType ?? "All");
+
+                await NotificationUtility.NotifyNewTraining(
+                    _notificationService, 
+                    entity, 
+                    _context, 
+                    _emailService, 
+                    _logger);
+
+                _logger.LogInformation("Successfully sent notifications for training: {TrainingTitle}", entity.Title);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending notification for new training {TrainingTitle}", entity.Title);
+                _logger.LogError(ex, "Error sending notifications for new training {TrainingTitle}", entity.Title);
+                // Don't fail the entire operation if notification fails
+                TempData["NotificationWarning"] = "Training created successfully, but some notifications may not have been sent.";
             }
 
+            TempData["Success"] = "Training created successfully and notifications sent to eligible employees.";
             return RedirectToAction(nameof(TrainingIndex));
         }
 
@@ -230,6 +246,9 @@ namespace HRDCManagementSystem.Controllers
                     return NotFound();
                 }
 
+                // Store original eligibility type to check if it changed
+                var originalEligibilityType = entity.EligibilityType;
+
                 // Map non-file properties
                 ApplyViewModelToEntity(entity, model);
 
@@ -258,7 +277,34 @@ namespace HRDCManagementSystem.Controllers
                 _context.Update(entity);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Training updated successfully!";
+                // If eligibility type changed, send notifications to newly eligible employees
+                if (originalEligibilityType != entity.EligibilityType)
+                {
+                    try
+                    {
+                        _logger.LogInformation("Eligibility type changed for training {TrainingTitle}: '{OldType}' -> '{NewType}'", 
+                            entity.Title, originalEligibilityType ?? "All", entity.EligibilityType ?? "All");
+
+                        await NotificationUtility.NotifyNewTraining(
+                            _notificationService, 
+                            entity, 
+                            _context, 
+                            _emailService, 
+                            _logger);
+
+                        TempData["Success"] = "Training updated successfully and notifications sent to newly eligible employees.";
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error sending notifications for updated training {TrainingTitle}", entity.Title);
+                        TempData["Success"] = "Training updated successfully, but some notifications may not have been sent.";
+                    }
+                }
+                else
+                {
+                    TempData["Success"] = "Training updated successfully!";
+                }
+
                 return RedirectToAction(nameof(TrainingIndex));
             }
             catch (Exception ex)

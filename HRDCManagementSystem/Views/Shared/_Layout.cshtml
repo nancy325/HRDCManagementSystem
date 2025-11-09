@@ -43,8 +43,8 @@
                 </div>
             </div>
 
-            <!-- Notification Bell (only for logged-in users) -->
-            @if (User.Identity?.IsAuthenticated == true)
+            <!-- Notification Bell (only for logged-in users, excluding Admin role) -->
+            @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
             {
                 <div class="ms-auto me-3">
                     @await Html.PartialAsync("_NotificationBell")

@@ -1,6 +1,7 @@
 ﻿using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Admin;
 using HRDCManagementSystem.Models.ViewModels;
+using HRDCManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +14,24 @@ namespace HRDCManagementSystem.Controllers.Admin
     public class AdminController : Controller
     {
         private readonly HRDCContext _context;
+        private readonly INotificationService _notificationService;
+        private readonly ICurrentUserService _currentUserService;
         DateOnly currentDate = DateOnly.FromDateTime(DateTime.Now);
-        public AdminController(HRDCContext context)
+        
+        public AdminController(HRDCContext context, INotificationService notificationService, ICurrentUserService currentUserService)
         {
             _context = context;
+            _notificationService = notificationService;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Dashboard()
         {
+            // Get current admin user ID and role for notifications
+            var currentUserId = _currentUserService.GetCurrentUserId() ?? 0;
+            var userRole = "Admin";
+            
             var dashboard = new AdminDashboardViewModel
             {
                 TotalEmployees = await _context.Employees.CountAsync(e => e.RecStatus == "active"),
@@ -36,7 +46,8 @@ namespace HRDCManagementSystem.Controllers.Admin
                 PendingFeedbackCount = await GetPendingFeedbackCount(),
                 UpcomingTrainingCount = await _context.TrainingPrograms.CountAsync(tp => tp.StartDate > currentDate && tp.RecStatus == "active"),
                 TotalTrainingRegistrations = await _context.TrainingRegistrations.CountAsync(tr => tr.RecStatus == "active"),
-                NewHelpQueriesCount = await _context.HelpQueries.CountAsync(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active")
+                NewHelpQueriesCount = await _context.HelpQueries.CountAsync(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active"),
+                UnreadNotificationCount = await _notificationService.GetUnreadNotificationCountAsync(currentUserId, userRole)
             };
 
             return View(dashboard);

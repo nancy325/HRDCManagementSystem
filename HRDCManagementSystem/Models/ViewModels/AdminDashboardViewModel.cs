@@ -21,6 +21,9 @@
 
         // Help Queries
         public int NewHelpQueriesCount { get; set; }
+
+        // Notifications
+        public int UnreadNotificationCount { get; set; }
     }
 
     public class TrainingProgramViewModel
