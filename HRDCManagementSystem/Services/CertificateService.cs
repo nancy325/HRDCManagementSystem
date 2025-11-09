@@ -1,26 +1,23 @@
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Utilities;
+using iText.IO.Font.Constants;
+using iText.IO.Image;
+using iText.Kernel.Exceptions;
+using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
-using iText.IO.Image;
-using iText.Kernel.Colors;
-using iText.Kernel.Font;
-using iText.IO.Font.Constants;
-using iText.IO.Exceptions;
-using iText.Kernel.Exceptions;
-using Microsoft.Extensions.Logging;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Runtime.InteropServices;
-using System.IO;
 
 namespace HRDCManagementSystem.Services
 {
     public interface ICertificateService
     {
         Task<string> GenerateCertificateAsync(TrainingRegistration registration);
+        Task<string> GenerateCertificateImageAsync(TrainingRegistration registration);
         Task<bool> SendCertificateEmailAsync(string employeeEmail, string employeeName, string trainingTitle, string certificatePath);
         Task<bool> GenerateAllCertificatesForTrainingAsync(int trainingSysId);
     }
@@ -49,16 +46,16 @@ namespace HRDCManagementSystem.Services
             try
             {
                 _logger.LogInformation("Starting certificate generation for registration ID: {RegistrationId}", registration.TrainingRegSysID);
-                
+
                 // Log OS information
                 string osInfo = RuntimeInformation.OSDescription;
                 bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
                 _logger.LogInformation("Running on OS: {OS}, IsWindows: {IsWindows}", osInfo, isWindows);
-                
+
                 // Create directories if they don't exist
                 var certificatesDirectory = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
                 _logger.LogInformation("Certificate directory path: {Path}", certificatesDirectory);
-                
+
                 if (!Directory.Exists(certificatesDirectory))
                 {
                     _logger.LogInformation("Creating certificates directory");
@@ -67,7 +64,7 @@ namespace HRDCManagementSystem.Services
 
                 var signatureDirectory = Path.Combine(_hostingEnvironment.WebRootPath, "images", "signature");
                 _logger.LogInformation("Signature directory path: {Path}", signatureDirectory);
-                
+
                 if (!Directory.Exists(signatureDirectory))
                 {
                     _logger.LogInformation("Creating signature directory");
@@ -80,7 +77,7 @@ namespace HRDCManagementSystem.Services
                     _logger.LogError("Registration {RegistrationId} is missing employee data", registration.TrainingRegSysID);
                     throw new InvalidOperationException("Registration is missing employee details");
                 }
-                
+
                 if (registration.TrainingSys == null)
                 {
                     _logger.LogError("Registration {RegistrationId} is missing training data", registration.TrainingRegSysID);
@@ -90,17 +87,17 @@ namespace HRDCManagementSystem.Services
                 // Prepare file paths
                 string templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "template.jpg");
                 _logger.LogInformation("Template path: {Path}, Exists: {Exists}", templatePath, File.Exists(templatePath));
-                
+
                 string signaturePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "sign.jpg");
                 _logger.LogInformation("Signature path: {Path}, Exists: {Exists}", signaturePath, File.Exists(signaturePath));
-                
+
                 // Create default template if it doesn't exist
                 if (!File.Exists(templatePath))
                 {
                     _logger.LogInformation("Creating default certificate template");
                     bool templateCreated = await ImageUtility.CreateDefaultCertificateTemplateAsync(templatePath, _logger);
                     _logger.LogInformation("Template creation result: {Result}", templateCreated);
-                    
+
                     // Double check template was created
                     if (!File.Exists(templatePath))
                     {
@@ -115,7 +112,7 @@ namespace HRDCManagementSystem.Services
                     _logger.LogInformation("Creating default signature");
                     bool signatureCreated = await ImageUtility.CreateDefaultSignatureAsync(signaturePath, _logger);
                     _logger.LogInformation("Signature creation result: {Result}", signatureCreated);
-                    
+
                     // Double check signature was created
                     if (!File.Exists(signaturePath))
                     {
@@ -128,7 +125,7 @@ namespace HRDCManagementSystem.Services
                 string fileName = $"{registration.TrainingRegSysID}.pdf";
                 string outputPath = Path.Combine(certificatesDirectory, fileName);
                 _logger.LogInformation("Output PDF path: {Path}", outputPath);
-                
+
                 // Make sure the output directory exists
                 string outputDir = Path.GetDirectoryName(outputPath);
                 if (!Directory.Exists(outputDir) && !string.IsNullOrEmpty(outputDir))
@@ -136,7 +133,7 @@ namespace HRDCManagementSystem.Services
                     _logger.LogInformation("Creating output directory: {Directory}", outputDir);
                     Directory.CreateDirectory(outputDir);
                 }
-                
+
                 // Check if we have write permission
                 try
                 {
@@ -151,7 +148,7 @@ namespace HRDCManagementSystem.Services
                     _logger.LogError(ex, "Failed to write test file to directory {Directory}", certificatesDirectory);
                     throw new UnauthorizedAccessException($"Cannot write to certificate directory {certificatesDirectory}: {ex.Message}", ex);
                 }
-                
+
                 // Delete existing file if it exists to avoid any issues
                 if (File.Exists(outputPath))
                 {
@@ -166,14 +163,14 @@ namespace HRDCManagementSystem.Services
                         // Continue anyway - we'll try to overwrite it
                     }
                 }
-                
+
                 // Check template and signature files
                 if (new FileInfo(templatePath).Length == 0)
                 {
                     _logger.LogError("Template file is empty at {Path}", templatePath);
                     throw new System.IO.IOException("Certificate template file is empty or corrupted");
                 }
-                
+
                 if (new FileInfo(signaturePath).Length == 0)
                 {
                     _logger.LogError("Signature file is empty at {Path}", signaturePath);
@@ -184,13 +181,13 @@ namespace HRDCManagementSystem.Services
                 {
                     // Generate certificate using iText7
                     _logger.LogInformation("Creating PDF writer and document");
-                    
+
                     // Create a new PDF document
                     using (FileStream fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                     {
                         PdfWriter writer = new PdfWriter(fs);
                         PdfDocument pdf = new PdfDocument(writer);
-                        
+
                         try
                         {
                             // Landscape orientation
@@ -223,32 +220,12 @@ namespace HRDCManagementSystem.Services
                             PdfFont standardFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
                             PdfFont boldFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
 
-                            // Add content
-                            _logger.LogInformation("Adding certificate content");
-                            
-                            // Organization Name
-                            Paragraph orgName = new Paragraph("Human Resource Development Centre (HRDC), CHARUSAT")
-                                .SetFont(boldFont)
-                                .SetFontSize(24)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(20);
-                            document.Add(orgName);
+                            // Get page dimensions (A4 Landscape: 842 x 595 points)
+                            float pageWidth = pdf.GetDefaultPageSize().GetWidth();
+                            float pageHeight = pdf.GetDefaultPageSize().GetHeight();
 
-                            // Certificate Title
-                            Paragraph title = new Paragraph("CERTIFICATE OF COMPLETION")
-                                .SetFont(boldFont)
-                                .SetFontSize(18)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(40);
-                            document.Add(title);
-
-                            // This is to certify that
-                            Paragraph certifyText = new Paragraph("This is to certify that")
-                                .SetFont(standardFont)
-                                .SetFontSize(14)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(20);
-                            document.Add(certifyText);
+                            // Add content with fixed positioning - Only essential information
+                            _logger.LogInformation("Adding certificate content with fixed positioning");
 
                             // Employee Name - Handle null values safely
                             string firstName = registration.EmployeeSys.FirstName ?? string.Empty;
@@ -259,64 +236,61 @@ namespace HRDCManagementSystem.Services
                             {
                                 fullName = "Employee"; // Default if name is empty
                             }
-                            
+
                             _logger.LogInformation("Adding employee name: {Name}", fullName);
-                            
+
+                            // Employee Name - Centered, prominent (middle of page)
                             Paragraph name = new Paragraph(fullName)
                                 .SetFont(boldFont)
-                                .SetFontSize(22)
+                                .SetFontSize(24)
                                 .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(20);
+                                .SetFixedPosition((pageWidth - 430) / 2, pageHeight - 320, 430);
                             document.Add(name);
 
-                            // Department and Designation - Handle null values safely
-                            string designation = registration.EmployeeSys.Designation ?? "Employee";
+                            // Department - Handle null values safely
                             string department = registration.EmployeeSys.Department ?? "Department";
-                            
-                            Paragraph position = new Paragraph($"{designation}, {department}")
-                                .SetFont(standardFont)
+                            Paragraph deptPara = new Paragraph($"{department}")
+                                .SetFont(boldFont)
                                 .SetFontSize(14)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(30);
-                            document.Add(position);
-
-                            // Training text
-                            Paragraph trainingText = new Paragraph("has successfully completed the training program on")
-                                .SetFont(standardFont)
-                                .SetFontSize(14)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(20);
-                            document.Add(trainingText);
+                                .SetTextAlignment(TextAlignment.LEFT)
+                                .SetFixedPosition((pageWidth - 430) / 2 - 50, pageHeight - 350, 300);
+                            document.Add(deptPara);
 
                             // Training Title
                             string trainingTitle = registration.TrainingSys.Title ?? "Training Program";
                             _logger.LogInformation("Adding training title: {Title}", trainingTitle);
-                            
+
+
+                            float titleWidth = 400; // slightly less than main name width
+                            float titleX = (pageWidth - titleWidth) / 2 - 60; // a bit left from center
+                            float titleY = pageHeight - 380; // position between name and department
+
                             Paragraph trainingTitlePara = new Paragraph(trainingTitle)
                                 .SetFont(boldFont)
-                                .SetFontSize(18)
+                                .SetFontSize(16)
                                 .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(20);
+                                .SetFixedPosition(titleX, titleY, titleWidth);
                             document.Add(trainingTitlePara);
 
-                            // Training Duration
+                            // Training Date
                             string startDateStr = registration.TrainingSys.StartDate.ToString("MMMM d, yyyy");
                             string endDateStr = registration.TrainingSys.EndDate.ToString("MMMM d, yyyy");
-                            string duration = $"conducted from {startDateStr} to {endDateStr}";
-                            _logger.LogInformation("Adding duration: {Duration}", duration);
-                            
+                            string trainingDate = $"{startDateStr}         {endDateStr}";
+                            _logger.LogInformation("Adding training date: {Date}", trainingDate);
 
-                            Paragraph durationText = new Paragraph(duration)
-                                .SetFont(standardFont)
+                            // Place the training date immediately below the training title
+                            float dateWidth = 400;
+                            float dateX = (pageWidth - dateWidth) / 2 - 120; // align with training title
+                            float dateY = titleY - 30; // put just below the training title
+
+                            Paragraph trainingDatePara = new Paragraph(trainingDate)
+                                .SetFont(boldFont)
                                 .SetFontSize(14)
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetMarginBottom(50);
-                            document.Add(durationText);
+                                .SetTextAlignment(TextAlignment.LEFT)
+                                .SetFixedPosition(dateX, dateY, dateWidth);
+                            document.Add(trainingDatePara);
 
-                            // Date and Signature
-                            DateOnly issueDate = DateOnly.FromDateTime(DateTime.Today);
-                            
-                            // Add signature image on the right side
+                            // Add signature image on the right side at bottom
                             if (File.Exists(signaturePath))
                             {
                                 _logger.LogInformation("Adding signature image");
@@ -324,24 +298,15 @@ namespace HRDCManagementSystem.Services
                                 {
                                     ImageData signData = ImageDataFactory.Create(signaturePath);
                                     iText.Layout.Element.Image signatureImage = new iText.Layout.Element.Image(signData);
-                                    
+
                                     // Set signature size and position
-                                    float signatureWidth = 150;
-                                    float signatureHeight = 75;
+                                    float signatureWidth = 180;
+                                    float signatureHeight = 80;
                                     signatureImage.ScaleToFit(signatureWidth, signatureHeight);
-                                    
-                                    // Position at bottom right with some margin
-                                    float pageWidth = pdf.GetDefaultPageSize().GetWidth();
-                                    signatureImage.SetFixedPosition(pageWidth - 200, 100);
+
+                                    // Position at bottom left
+                                    signatureImage.SetFixedPosition(100, 90);
                                     document.Add(signatureImage);
-                                    
-                                    // Add signature text
-                                    Paragraph signatureText = new Paragraph("Director, HRDC")
-                                        .SetFont(standardFont)
-                                        .SetFontSize(14)
-                                        .SetTextAlignment(TextAlignment.RIGHT)
-                                        .SetMarginRight(80);
-                                    document.Add(signatureText);
                                     _logger.LogInformation("Signature added successfully");
                                 }
                                 catch (Exception ex)
@@ -351,25 +316,17 @@ namespace HRDCManagementSystem.Services
                                 }
                             }
 
-                            // Date on the left side
-                            Paragraph issueDateText = new Paragraph($"Issue Date: {issueDate.ToString("MMMM d, yyyy")}")
-                                .SetFont(standardFont)
-                                .SetFontSize(14)
-                                .SetTextAlignment(TextAlignment.LEFT)
-                                .SetMarginLeft(80);
-                            document.Add(issueDateText);
-
                             _logger.LogInformation("Closing PDF document");
                             document.Close();
                         }
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "Error during PDF document creation/writing");
-                            
+
                             // Make sure resources are disposed
                             try { pdf.Close(); } catch { }
                             try { writer.Close(); } catch { }
-                            
+
                             throw;
                         }
                     }
@@ -401,7 +358,7 @@ namespace HRDCManagementSystem.Services
                     _logger.LogError("PDF file was not created at {Path}", outputPath);
                     throw new FileNotFoundException("Certificate PDF file was not created", outputPath);
                 }
-                
+
                 // Check if the file is valid
                 try
                 {
@@ -425,7 +382,7 @@ namespace HRDCManagementSystem.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating certificate for registration {RegistrationId}: {ExType}: {Message}", 
+                _logger.LogError(ex, "Error generating certificate for registration {RegistrationId}: {ExType}: {Message}",
                     registration.TrainingRegSysID, ex.GetType().Name, ex.Message);
                 throw;
             }
@@ -436,11 +393,11 @@ namespace HRDCManagementSystem.Services
             try
             {
                 _logger.LogInformation("Sending certificate email to: {Email}", employeeEmail);
-                
+
                 // Construct the physical path to the certificate
                 string physicalPath = Path.Combine(_hostingEnvironment.WebRootPath, certificatePath.TrimStart('/'));
                 _logger.LogInformation("Certificate physical path: {Path}, Exists: {Exists}", physicalPath, File.Exists(physicalPath));
-                
+
                 if (!File.Exists(physicalPath))
                 {
                     _logger.LogError("Certificate file not found at {Path}", physicalPath);
@@ -463,13 +420,13 @@ namespace HRDCManagementSystem.Services
                 // Create email attachment
                 _logger.LogInformation("Creating email attachment");
                 using Attachment attachment = new Attachment(physicalPath, MediaTypeNames.Application.Pdf);
-                
+
                 // Send the email using the email service
                 _logger.LogInformation("Sending email with attachment");
                 bool success = await _emailService.SendEmailWithAttachmentAsync(
-                    employeeEmail, 
-                    subject, 
-                    body, 
+                    employeeEmail,
+                    subject,
+                    body,
                     attachment);
 
                 _logger.LogInformation("Email sending result: {Success}", success);
@@ -479,6 +436,103 @@ namespace HRDCManagementSystem.Services
             {
                 _logger.LogError(ex, "Error sending certificate email to {Email}", employeeEmail);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Generates a certificate as a JPG image using SkiaSharp to overlay text on template.jpg
+        /// </summary>
+        public async Task<string> GenerateCertificateImageAsync(TrainingRegistration registration)
+        {
+            try
+            {
+                _logger.LogInformation("Starting certificate image generation using SkiaSharp for registration ID: {RegistrationId}",
+                    registration.TrainingRegSysID);
+
+                // Make sure we have all required data
+                if (registration.EmployeeSys == null)
+                {
+                    _logger.LogError("Registration {RegistrationId} is missing employee data", registration.TrainingRegSysID);
+                    throw new InvalidOperationException("Registration is missing employee details");
+                }
+
+                if (registration.TrainingSys == null)
+                {
+                    _logger.LogError("Registration {RegistrationId} is missing training data", registration.TrainingRegSysID);
+                    throw new InvalidOperationException("Registration is missing training details");
+                }
+
+                // Create directories if they don't exist
+                var certificatesDirectory = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
+                if (!Directory.Exists(certificatesDirectory))
+                {
+                    Directory.CreateDirectory(certificatesDirectory);
+                }
+
+                // Prepare file paths
+                string templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "template.jpg");
+                string signaturePath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates", "sign.jpg");
+
+                // Verify template exists
+                if (!File.Exists(templatePath))
+                {
+                    _logger.LogError("Template file not found at {Path}", templatePath);
+                    throw new FileNotFoundException("Certificate template file not found", templatePath);
+                }
+
+                // Prepare certificate data
+                string firstName = registration.EmployeeSys.FirstName ?? string.Empty;
+                string middleName = registration.EmployeeSys.MiddleName ?? string.Empty;
+                string lastName = registration.EmployeeSys.LastName ?? string.Empty;
+                string fullName = $"{firstName} {middleName} {lastName}".Trim();
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    fullName = "Employee";
+                }
+
+                string department = registration.EmployeeSys.Department ?? "Department";
+                string trainingTitle = registration.TrainingSys.Title ?? "Training Program";
+                string startDateStr = registration.TrainingSys.StartDate.ToString("MMMM d, yyyy");
+                string endDateStr = registration.TrainingSys.EndDate.ToString("MMMM d, yyyy");
+                string trainingDate = $"{startDateStr} to {endDateStr}";
+
+                // Generate output file path
+                string fileName = $"{registration.TrainingRegSysID}.jpg";
+                string outputPath = Path.Combine(certificatesDirectory, fileName);
+
+                // Use SkiaSharp to overlay text on template
+                bool success = await ImageUtility.OverlayTextOnTemplateAsync(
+                    templatePath: templatePath,
+                    outputPath: outputPath,
+                    employeeName: fullName,
+                    department: department,
+                    trainingTitle: trainingTitle,
+                    trainingDate: trainingDate,
+                    signaturePath: File.Exists(signaturePath) ? signaturePath : null,
+                    logger: _logger);
+
+                if (!success)
+                {
+                    _logger.LogError("Failed to generate certificate image for registration {RegistrationId}",
+                        registration.TrainingRegSysID);
+                    throw new InvalidOperationException("Failed to generate certificate image");
+                }
+
+                // Verify the file was created
+                if (!File.Exists(outputPath))
+                {
+                    _logger.LogError("Certificate image file was not created at {Path}", outputPath);
+                    throw new FileNotFoundException("Certificate image file was not created", outputPath);
+                }
+
+                _logger.LogInformation("Certificate image generation completed successfully");
+                return $"/images/certificates/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating certificate image for registration {RegistrationId}: {ExType}: {Message}",
+                    registration.TrainingRegSysID, ex.GetType().Name, ex.Message);
+                throw;
             }
         }
 

@@ -4,7 +4,6 @@ using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace HRDCManagementSystem.Services
 {
@@ -16,7 +15,7 @@ namespace HRDCManagementSystem.Services
         private readonly ILogger<NotificationService> _logger;
 
         public NotificationService(
-            HRDCContext context, 
+            HRDCContext context,
             ICurrentUserService currentUserService,
             IHubContext<NotificationHub> hubContext,
             ILogger<NotificationService> logger)
@@ -67,8 +66,8 @@ namespace HRDCManagementSystem.Services
             try
             {
                 return await _context.Notifications
-                    .Where(n => (n.UserSysID == userSysId || 
-                              (n.UserSysID == null && n.UserType == userType)) && 
+                    .Where(n => (n.UserSysID == userSysId ||
+                              (n.UserSysID == null && n.UserType == userType)) &&
                               n.RecStatus == "active")
                     .OrderByDescending(n => n.CreatedDateTime)
                     .Select(n => new NotificationViewModel
@@ -94,9 +93,9 @@ namespace HRDCManagementSystem.Services
             try
             {
                 return await _context.Notifications
-                    .CountAsync(n => (n.UserSysID == userSysId || 
-                                   (n.UserSysID == null && n.UserType == userType)) && 
-                                   n.IsRead == false && 
+                    .CountAsync(n => (n.UserSysID == userSysId ||
+                                   (n.UserSysID == null && n.UserType == userType)) &&
+                                   n.IsRead == false &&
                                    n.RecStatus == "active");
             }
             catch (Exception ex)
@@ -115,7 +114,7 @@ namespace HRDCManagementSystem.Services
                 {
                     notification.IsRead = true;
                     await _context.SaveChangesAsync();
-                    
+
                     // If user-specific notification
                     if (notification.UserSysID.HasValue)
                     {
@@ -137,9 +136,9 @@ namespace HRDCManagementSystem.Services
             try
             {
                 var notifications = await _context.Notifications
-                    .Where(n => (n.UserSysID == userSysId || 
-                              (n.UserSysID == null && n.UserType == userType)) && 
-                              n.IsRead == false && 
+                    .Where(n => (n.UserSysID == userSysId ||
+                              (n.UserSysID == null && n.UserType == userType)) &&
+                              n.IsRead == false &&
                               n.RecStatus == "active")
                     .ToListAsync();
 
@@ -149,7 +148,7 @@ namespace HRDCManagementSystem.Services
                 }
 
                 await _context.SaveChangesAsync();
-                
+
                 // Notify the client that all notifications are read
                 // Fix for warning: We know userSysId is not null here as it's an int (not nullable)
                 string userIdString = userSysId.ToString();

@@ -2,7 +2,6 @@ using HRDCManagementSystem.Data;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace HRDCManagementSystem.Utilities
 {
@@ -43,12 +42,12 @@ namespace HRDCManagementSystem.Utilities
         /// Create notification for training registration status change
         /// </summary>
         public static async Task NotifyRegistrationStatusChange(
-            INotificationService notificationService, 
+            INotificationService notificationService,
             TrainingRegistration registration,
             string status)
         {
-            if (registration?.EmployeeSys?.UserSysID == null || 
-                registration.TrainingSys == null || 
+            if (registration?.EmployeeSys?.UserSysID == null ||
+                registration.TrainingSys == null ||
                 string.IsNullOrEmpty(status))
             {
                 return;
@@ -56,7 +55,7 @@ namespace HRDCManagementSystem.Utilities
 
             // We only send to the specific employee
             await notificationService.CreateNotificationAsync(
-                registration.EmployeeSys.UserSysID, 
+                registration.EmployeeSys.UserSysID,
                 "Employee",
                 $"Training Registration {status}",
                 $"Your registration for '{registration.TrainingSys.Title}' has been {status.ToLower()}.");
@@ -69,7 +68,7 @@ namespace HRDCManagementSystem.Utilities
             INotificationService notificationService,
             Certificate certificate)
         {
-            if (certificate?.RegSys?.EmployeeSys?.UserSysID == null || 
+            if (certificate?.RegSys?.EmployeeSys?.UserSysID == null ||
                 certificate.RegSys?.TrainingSys == null)
             {
                 return;
@@ -114,7 +113,7 @@ namespace HRDCManagementSystem.Utilities
                 }
             }
         }
-        
+
         /// <summary>
         /// Create notification for feedback requests
         /// </summary>
@@ -122,7 +121,7 @@ namespace HRDCManagementSystem.Utilities
             INotificationService notificationService,
             TrainingRegistration registration)
         {
-            if (registration?.EmployeeSys?.UserSysID == null || 
+            if (registration?.EmployeeSys?.UserSysID == null ||
                 registration.TrainingSys == null)
             {
                 return;

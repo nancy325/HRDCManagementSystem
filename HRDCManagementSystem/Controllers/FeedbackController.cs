@@ -870,7 +870,7 @@ namespace HRDCManagementSystem.Controllers
                 TempData["ErrorMessage"] = "No feedback found for this training.";
                 return RedirectToAction("Index");
             }
-            
+
             var groupedResponses = feedbacks
                 .Where(f => f.Question != null)
                 .GroupBy(f => f.QuestionID)

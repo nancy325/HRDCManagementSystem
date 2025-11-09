@@ -110,19 +110,24 @@
                                                 @if (reg.HasCertificate)
                                                 {
                                                     <div class="btn-group">
-                                                        <form asp-action="GenerateCertificate" asp-route-trainingRegId="@reg.TrainingRegSysID" method="post">
+                                                        <form asp-action="GenerateCertificate" asp-route-trainingRegId="@reg.TrainingRegSysID" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
                                                             <button type="submit" class="btn btn-sm btn-outline-primary me-2" title="Regenerate Certificate">
                                                                 <i class="bi bi-arrow-repeat"></i> Regenerate
                                                             </button>
                                                         </form>
-                                                        <a href="@reg.CertificatePath" target="_blank" class="btn btn-sm btn-primary" title="Download Certificate">
-                                                            <i class="bi bi-download"></i> Download
-                                                        </a>
+                                                        @if (reg.CertificateSysID.HasValue)
+                                                        {
+                                                            <a asp-action="Download" asp-controller="Certificate" asp-route-id="@reg.CertificateSysID.Value" class="btn btn-sm btn-primary" title="Download Certificate">
+                                                                <i class="bi bi-download"></i> Download
+                                                            </a>
+                                                        }
                                                     </div>
                                                 }
                                                 else
                                                 {
                                                     <form asp-action="GenerateCertificate" asp-route-trainingRegId="@reg.TrainingRegSysID" method="post">
+                                                        @Html.AntiForgeryToken()
                                                         <button type="submit" class="btn btn-sm btn-success" title="Generate Certificate">
                                                             <i class="bi bi-file-earmark-pdf me-1"></i> Generate Certificate
                                                         </button>

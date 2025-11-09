@@ -3,12 +3,11 @@ using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Models.ViewModels;
 using HRDCManagementSystem.Services;
 using HRDCManagementSystem.Utilities;
+using iText.Kernel.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.InteropServices;
-using iText.IO.Exceptions;
-using iText.Kernel.Exceptions;
 
 namespace HRDCManagementSystem.Controllers
 {
@@ -44,11 +43,11 @@ namespace HRDCManagementSystem.Controllers
             try
             {
                 _logger.LogInformation("Fetching all certificates for admin view");
-                
+
                 // First check if we have any certificates at all (for debugging)
                 var allCertificatesCount = await _context.Certificates.CountAsync();
                 _logger.LogInformation($"Total certificates in database: {allCertificatesCount}");
-                
+
                 // Get the filtered certificates with all required relations
                 var certificates = await _context.Certificates
                     .Include(c => c.RegSys)
@@ -76,9 +75,9 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 // Check if any certificate has null navigation properties
-                var invalidCerts = certificates.Where(c => 
-                    c.RegSys == null || 
-                    c.RegSys.EmployeeSys == null || 
+                var invalidCerts = certificates.Where(c =>
+                    c.RegSys == null ||
+                    c.RegSys.EmployeeSys == null ||
                     c.RegSys.TrainingSys == null).ToList();
 
                 if (invalidCerts.Any())
@@ -88,20 +87,29 @@ namespace HRDCManagementSystem.Controllers
 
                 // Transform valid certificates to view models
                 var viewModel = new List<CertificateViewModel>();
-                
+
                 foreach (var certificate in certificates)
                 {
-                    try 
+                    try
                     {
                         // Only process certificates with all required navigation properties
                         if (certificate.RegSys?.EmployeeSys != null && certificate.RegSys?.TrainingSys != null)
                         {
+                            string firstName = certificate.RegSys.EmployeeSys.FirstName ?? string.Empty;
+                            string middleName = certificate.RegSys.EmployeeSys.MiddleName ?? string.Empty;
+                            string lastName = certificate.RegSys.EmployeeSys.LastName ?? string.Empty;
+                            string employeeName = $"{firstName} {middleName} {lastName}".Trim();
+                            if (string.IsNullOrWhiteSpace(employeeName))
+                            {
+                                employeeName = "Unknown Employee";
+                            }
+
                             viewModel.Add(new CertificateViewModel
                             {
                                 CertificateSysID = certificate.CertificateSysID,
                                 TrainingRegSysID = certificate.TrainingRegSysID,
-                                EmployeeName = $"{certificate.RegSys.EmployeeSys.FirstName} {certificate.RegSys.EmployeeSys.MiddleName} {certificate.RegSys.EmployeeSys.LastName}",
-                                TrainingTitle = certificate.RegSys.TrainingSys.Title,
+                                EmployeeName = employeeName,
+                                TrainingTitle = certificate.RegSys.TrainingSys.Title ?? "Unknown Training",
                                 IssueDate = certificate.IssueDate ?? DateOnly.FromDateTime(certificate.CreateDateTime ?? DateTime.Now),
                                 CertificatePath = certificate.CertificatePath,
                                 IsGenerated = certificate.IsGenerated ?? false
@@ -154,15 +162,25 @@ namespace HRDCManagementSystem.Controllers
                 var certificate = await _context.Certificates
                     .FirstOrDefaultAsync(c => c.TrainingRegSysID == reg.TrainingRegSysID && c.RecStatus == "active");
 
+                string firstName = reg.EmployeeSys.FirstName ?? string.Empty;
+                string middleName = reg.EmployeeSys.MiddleName ?? string.Empty;
+                string lastName = reg.EmployeeSys.LastName ?? string.Empty;
+                string employeeName = $"{firstName} {middleName} {lastName}".Trim();
+                if (string.IsNullOrWhiteSpace(employeeName))
+                {
+                    employeeName = "Unknown Employee";
+                }
+
                 certificateStatusList.Add(new RegistrationCertificateViewModel
                 {
                     TrainingRegSysID = reg.TrainingRegSysID,
                     EmployeeSysID = reg.EmployeeSysID,
-                    EmployeeName = $"{reg.EmployeeSys.FirstName} {reg.EmployeeSys.MiddleName} {reg.EmployeeSys.LastName}",
-                    Department = reg.EmployeeSys.Department,
-                    Designation = reg.EmployeeSys.Designation,
+                    EmployeeName = employeeName,
+                    Department = reg.EmployeeSys.Department ?? string.Empty,
+                    Designation = reg.EmployeeSys.Designation ?? string.Empty,
                     Email = reg.EmployeeSys.UserSys?.Email,
                     HasCertificate = certificate != null && certificate.IsGenerated == true,
+                    CertificateSysID = certificate?.CertificateSysID,
                     CertificatePath = certificate?.CertificatePath,
                     IssueDate = certificate?.IssueDate
                 });
@@ -188,7 +206,7 @@ namespace HRDCManagementSystem.Controllers
             try
             {
                 _logger.LogInformation("GenerateCertificate: Starting certificate generation for registration ID {RegId}", trainingRegId);
-                
+
                 // Get the registration with all required data
                 var registration = await _context.TrainingRegistrations
                     .Include(r => r.EmployeeSys)
@@ -286,7 +304,7 @@ namespace HRDCManagementSystem.Controllers
                     existingCertificate.CertificatePath = certificatePath;
                     existingCertificate.ModifiedDateTime = DateTime.Now;
                     existingCertificate.ModifiedUserId = _currentUserService.GetCurrentUserId();
-                    
+
                     _context.Certificates.Update(existingCertificate);
                     certificate = existingCertificate;
                 }
@@ -327,18 +345,18 @@ namespace HRDCManagementSystem.Controllers
                     {
                         string employeeName = $"{registration.EmployeeSys.FirstName} {registration.EmployeeSys.LastName}";
                         _logger.LogInformation("Sending certificate email to {Email}", registration.EmployeeSys.UserSys.Email);
-                        
+
                         bool emailSent = await _certificateService.SendCertificateEmailAsync(
                             registration.EmployeeSys.UserSys.Email,
                             employeeName,
                             registration.TrainingSys.Title,
                             certificatePath);
-                        
+
                         if (!emailSent)
                         {
                             _logger.LogWarning("Failed to send certificate email to {Email}", registration.EmployeeSys.UserSys.Email);
                         }
-                        
+
                         // Send notification to employee about certificate generation
                         await NotificationUtility.NotifyCertificateGenerated(
                             _notificationService,
@@ -353,7 +371,7 @@ namespace HRDCManagementSystem.Controllers
                 }
                 else
                 {
-                    _logger.LogWarning("Employee {EmployeeId} has no email address for sending certificate", 
+                    _logger.LogWarning("Employee {EmployeeId} has no email address for sending certificate",
                         registration.EmployeeSysID);
                 }
 
@@ -416,7 +434,7 @@ namespace HRDCManagementSystem.Controllers
                             .FirstOrDefaultAsync(c => c.TrainingRegSysID == registration.TrainingRegSysID && c.RecStatus == "active");
 
                         Certificate certificate;
-                        
+
                         if (existingCertificate != null)
                         {
                             // Update existing certificate
@@ -425,7 +443,7 @@ namespace HRDCManagementSystem.Controllers
                             existingCertificate.CertificatePath = certificatePath;
                             existingCertificate.ModifiedDateTime = DateTime.Now;
                             existingCertificate.ModifiedUserId = _currentUserService.GetCurrentUserId();
-                            
+
                             _context.Certificates.Update(existingCertificate);
                             certificate = existingCertificate;
                         }
@@ -459,7 +477,7 @@ namespace HRDCManagementSystem.Controllers
                                     employeeName,
                                     registration.TrainingSys.Title,
                                     certificatePath);
-                                    
+
                                 // Send notification to employee about certificate generation
                                 await NotificationUtility.NotifyCertificateGenerated(
                                     _notificationService,
@@ -505,11 +523,11 @@ namespace HRDCManagementSystem.Controllers
         public async Task<IActionResult> MyCertificates()
         {
             var currentUserId = _currentUserService.GetCurrentUserId();
-            
+
             // Get employee ID
             var employee = await _context.Employees
                 .FirstOrDefaultAsync(e => e.UserSysID == currentUserId);
-            
+
             if (employee == null)
             {
                 return NotFound("Employee record not found");
@@ -519,7 +537,7 @@ namespace HRDCManagementSystem.Controllers
             var certificates = await _context.Certificates
                 .Include(c => c.RegSys)
                 .ThenInclude(r => r.TrainingSys)
-                .Where(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID && 
+                .Where(c => c.RegSys.EmployeeSysID == employee.EmployeeSysID &&
                        c.IsGenerated == true && c.RecStatus == "active")
                 .OrderByDescending(c => c.IssueDate)
                 .ToListAsync();
@@ -527,9 +545,9 @@ namespace HRDCManagementSystem.Controllers
             var viewModel = certificates.Select(c => new MyCertificateViewModel
             {
                 CertificateSysID = c.CertificateSysID,
-                TrainingTitle = c.RegSys.TrainingSys.Title,
-                StartDate = c.RegSys.TrainingSys.StartDate,
-                EndDate = c.RegSys.TrainingSys.EndDate,
+                TrainingTitle = c.RegSys?.TrainingSys?.Title ?? "Unknown Training",
+                StartDate = c.RegSys?.TrainingSys?.StartDate ?? DateOnly.FromDateTime(DateTime.Today),
+                EndDate = c.RegSys?.TrainingSys?.EndDate ?? DateOnly.FromDateTime(DateTime.Today),
                 IssueDate = c.IssueDate ?? DateOnly.FromDateTime(c.CreateDateTime ?? DateTime.Now),
                 CertificatePath = c.CertificatePath
             }).ToList();
@@ -550,7 +568,14 @@ namespace HRDCManagementSystem.Controllers
             if (certificate == null)
             {
                 TempData["ErrorMessage"] = "Certificate not found.";
-                return RedirectToAction("Index");
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    return RedirectToAction("MyCertificates");
+                }
             }
 
             // Check authorization - admin can download any certificate, employee can only download their own
@@ -559,7 +584,7 @@ namespace HRDCManagementSystem.Controllers
                 var currentUserId = _currentUserService.GetCurrentUserId();
                 var employee = await _context.Employees
                     .FirstOrDefaultAsync(e => e.UserSysID == currentUserId);
-                
+
                 if (employee == null || certificate.RegSys.EmployeeSysID != employee.EmployeeSysID)
                 {
                     return Forbid();
@@ -574,7 +599,7 @@ namespace HRDCManagementSystem.Controllers
             }
 
             string filePath = Path.Combine(_hostingEnvironment.WebRootPath, certificate.CertificatePath.TrimStart('/'));
-            
+
             if (!System.IO.File.Exists(filePath))
             {
                 TempData["ErrorMessage"] = "Certificate file not found.";
@@ -582,9 +607,18 @@ namespace HRDCManagementSystem.Controllers
             }
 
             // Generate a filename for download
-            string employeeName = certificate.RegSys.EmployeeSys?.FirstName ?? "Employee";
-            string trainingTitle = certificate.RegSys.TrainingSys?.Title ?? "Training";
-            string fileName = $"{employeeName}_{trainingTitle}_Certificate.pdf".Replace(" ", "_");
+            string firstName = certificate.RegSys?.EmployeeSys?.FirstName ?? string.Empty;
+            string lastName = certificate.RegSys?.EmployeeSys?.LastName ?? string.Empty;
+            string employeeName = $"{firstName} {lastName}".Trim();
+            if (string.IsNullOrWhiteSpace(employeeName))
+            {
+                employeeName = "Employee";
+            }
+            string trainingTitle = certificate.RegSys?.TrainingSys?.Title ?? "Training";
+            // Sanitize filename - remove invalid characters
+            string sanitizedEmployeeName = employeeName.Replace(" ", "_").Replace("/", "_").Replace("\\", "_");
+            string sanitizedTrainingTitle = trainingTitle.Replace(" ", "_").Replace("/", "_").Replace("\\", "_");
+            string fileName = $"{sanitizedEmployeeName}_{sanitizedTrainingTitle}_Certificate.pdf";
 
             // Return the file
             return PhysicalFile(filePath, "application/pdf", fileName);
@@ -598,35 +632,35 @@ namespace HRDCManagementSystem.Controllers
             {
                 // Create a diagnostic report on the certificate generation environment
                 var diagnosticInfo = new Dictionary<string, string>();
-                
+
                 // System info
                 diagnosticInfo["OS"] = RuntimeInformation.OSDescription;
                 diagnosticInfo["Framework"] = RuntimeInformation.FrameworkDescription;
                 diagnosticInfo["IsWindows"] = RuntimeInformation.IsOSPlatform(OSPlatform.Windows).ToString();
-                
+
                 // Directory paths
                 diagnosticInfo["WebRootPath"] = _hostingEnvironment.WebRootPath;
                 diagnosticInfo["ContentRootPath"] = _hostingEnvironment.ContentRootPath;
-                
+
                 string certificatesDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
                 string signatureDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "signature");
-                
+
                 diagnosticInfo["CertificatesDir"] = certificatesDir;
                 diagnosticInfo["SignatureDir"] = signatureDir;
-                
+
                 diagnosticInfo["CertificatesDirExists"] = Directory.Exists(certificatesDir).ToString();
                 diagnosticInfo["SignatureDirExists"] = Directory.Exists(signatureDir).ToString();
-                
+
                 // Check template files
                 string templatePath = Path.Combine(certificatesDir, "template.jpg");
                 string signaturePath = Path.Combine(certificatesDir, "sign.jpg");
-                
+
                 diagnosticInfo["TemplateFilePath"] = templatePath;
                 diagnosticInfo["SignatureFilePath"] = signaturePath;
-                
+
                 diagnosticInfo["TemplateFileExists"] = System.IO.File.Exists(templatePath).ToString();
                 diagnosticInfo["SignatureFileExists"] = System.IO.File.Exists(signaturePath).ToString();
-                
+
                 // Check permissions
                 try
                 {
@@ -640,9 +674,9 @@ namespace HRDCManagementSystem.Controllers
                 {
                     diagnosticInfo["WritePermissions"] = $"Error: {ex.Message}";
                 }
-                
+
                 // Check for iText7 assemblies
-                try 
+                try
                 {
                     var iText7Assembly = typeof(iText.Kernel.Pdf.PdfDocument).Assembly;
                     diagnosticInfo["iText7Assembly"] = iText7Assembly.FullName;
@@ -651,7 +685,7 @@ namespace HRDCManagementSystem.Controllers
                 {
                     diagnosticInfo["iText7Assembly"] = "Not found or error loading";
                 }
-                
+
                 // Check for System.Drawing.Common if on Windows
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
@@ -665,20 +699,20 @@ namespace HRDCManagementSystem.Controllers
                         diagnosticInfo["SystemDrawingAssembly"] = "Not found or error loading";
                     }
                 }
-                
+
                 // List any existing certificates
                 try
                 {
                     var certFiles = Directory.GetFiles(certificatesDir, "*.pdf").Take(5).ToArray();
-                    diagnosticInfo["ExistingCertificates"] = certFiles.Length > 0 
-                        ? string.Join(", ", certFiles.Select(Path.GetFileName)) 
+                    diagnosticInfo["ExistingCertificates"] = certFiles.Length > 0
+                        ? string.Join(", ", certFiles.Select(Path.GetFileName))
                         : "None found";
                 }
                 catch
                 {
                     diagnosticInfo["ExistingCertificates"] = "Error listing certificate files";
                 }
-                
+
                 return View(diagnosticInfo);
             }
             catch (Exception ex)
@@ -697,25 +731,25 @@ namespace HRDCManagementSystem.Controllers
             {
                 return NotFound();
             }
-            
+
             try
             {
                 _logger.LogInformation("Testing image generation");
-                
+
                 // Define paths
                 string certificatesDir = Path.Combine(_hostingEnvironment.WebRootPath, "images", "certificates");
                 if (!Directory.Exists(certificatesDir))
                 {
                     Directory.CreateDirectory(certificatesDir);
                 }
-                
+
                 string templatePath = Path.Combine(certificatesDir, "template_test.jpg");
                 string signaturePath = Path.Combine(certificatesDir, "signature_test.jpg");
-                
+
                 // Generate test images
                 bool templateResult = await ImageUtility.CreateDefaultCertificateTemplateAsync(templatePath, _logger);
                 bool signatureResult = await ImageUtility.CreateDefaultSignatureAsync(signaturePath, _logger);
-                
+
                 var results = new Dictionary<string, string>
                 {
                     ["TemplateGeneration"] = templateResult ? "Success" : "Failed",
@@ -723,17 +757,17 @@ namespace HRDCManagementSystem.Controllers
                     ["TemplateExists"] = System.IO.File.Exists(templatePath).ToString(),
                     ["SignatureExists"] = System.IO.File.Exists(signaturePath).ToString()
                 };
-                
+
                 if (System.IO.File.Exists(templatePath))
                 {
                     results["TemplateFileSize"] = new FileInfo(templatePath).Length.ToString() + " bytes";
                 }
-                
+
                 if (System.IO.File.Exists(signaturePath))
                 {
                     results["SignatureFileSize"] = new FileInfo(signaturePath).Length.ToString() + " bytes";
                 }
-                
+
                 return Json(results);
             }
             catch (Exception ex)

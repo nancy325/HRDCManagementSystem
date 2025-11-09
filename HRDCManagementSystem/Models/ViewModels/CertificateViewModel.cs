@@ -30,6 +30,7 @@ namespace HRDCManagementSystem.Models.ViewModels
         public string Designation { get; set; } = string.Empty;
         public string? Email { get; set; }
         public bool HasCertificate { get; set; }
+        public int? CertificateSysID { get; set; }
         public string? CertificatePath { get; set; }
         public DateOnly? IssueDate { get; set; }
     }

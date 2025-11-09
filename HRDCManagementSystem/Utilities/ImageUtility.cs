@@ -1,6 +1,6 @@
+using SkiaSharp;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using Microsoft.Extensions.Logging;
 
 namespace HRDCManagementSystem.Utilities
 {
@@ -25,7 +25,7 @@ namespace HRDCManagementSystem.Utilities
             try
             {
                 logger.LogInformation("CreateDefaultCertificateTemplateAsync: Creating template at {Path}", path);
-                logger.LogInformation("Runtime OS: {OS}, IsWindows: {IsWindows}", 
+                logger.LogInformation("Runtime OS: {OS}, IsWindows: {IsWindows}",
                     RuntimeInformation.OSDescription,
                     IsWindows);
 
@@ -55,7 +55,7 @@ namespace HRDCManagementSystem.Utilities
                 if (IsWindows)
                 {
                     logger.LogInformation("Using Windows-specific image generation");
-                    try 
+                    try
                     {
                         await CreateWindowsCertificateTemplateAsync(path);
                         logger.LogInformation("Windows certificate template created successfully");
@@ -75,21 +75,21 @@ namespace HRDCManagementSystem.Utilities
                 // Verify the file was created
                 bool fileExists = File.Exists(path);
                 logger.LogInformation("Template file created: {Result}", fileExists);
-                
+
                 if (fileExists)
                 {
                     try
                     {
                         var fileInfo = new FileInfo(path);
                         logger.LogInformation("Template file size: {Size} bytes", fileInfo.Length);
-                        
+
                         // If the file size is 0, delete it and try the basic method
                         if (fileInfo.Length == 0)
                         {
                             logger.LogWarning("Created template file is empty, trying again with basic template");
                             File.Delete(path);
                             await CreateBasicTemplateAsync(path);
-                            
+
                             // Check again
                             fileInfo = new FileInfo(path);
                             logger.LogInformation("Template file created with basic method, size: {Size} bytes", fileInfo.Length);
@@ -138,7 +138,7 @@ namespace HRDCManagementSystem.Utilities
             try
             {
                 logger.LogInformation("CreateDefaultSignatureAsync: Creating signature at {Path}", path);
-                
+
                 // Create directory if it doesn't exist
                 string directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -165,7 +165,7 @@ namespace HRDCManagementSystem.Utilities
                 if (IsWindows)
                 {
                     logger.LogInformation("Using Windows-specific signature generation");
-                    try 
+                    try
                     {
                         await CreateWindowsSignatureAsync(path);
                         logger.LogInformation("Windows signature created successfully");
@@ -185,21 +185,21 @@ namespace HRDCManagementSystem.Utilities
                 // Verify the file was created
                 bool fileExists = File.Exists(path);
                 logger.LogInformation("Signature file created: {Result}", fileExists);
-                
+
                 if (fileExists)
                 {
                     try
                     {
                         var fileInfo = new FileInfo(path);
                         logger.LogInformation("Signature file size: {Size} bytes", fileInfo.Length);
-                        
+
                         // If the file size is 0, delete it and try the basic method
                         if (fileInfo.Length == 0)
                         {
                             logger.LogWarning("Created signature file is empty, trying again with basic signature");
                             File.Delete(path);
                             await CreateBasicSignatureAsync(path);
-                            
+
                             // Check again
                             fileInfo = new FileInfo(path);
                             logger.LogInformation("Signature file created with basic method, size: {Size} bytes", fileInfo.Length);
@@ -244,10 +244,10 @@ namespace HRDCManagementSystem.Utilities
         private static async Task CreateBasicTemplateAsync(string path)
         {
             using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
-            
+
             // Use a built-in minimal JPEG
             byte[] minimalJpeg = GetMinimalJpegBytes();
-            
+
             await fs.WriteAsync(minimalJpeg, 0, minimalJpeg.Length);
             await fs.FlushAsync();
         }
@@ -258,10 +258,10 @@ namespace HRDCManagementSystem.Utilities
         private static async Task CreateBasicSignatureAsync(string path)
         {
             using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
-            
+
             // Use a built-in minimal PNG
             byte[] minimalPng = GetMinimalPngBytes();
-            
+
             await fs.WriteAsync(minimalPng, 0, minimalPng.Length);
             await fs.FlushAsync();
         }
@@ -277,9 +277,9 @@ namespace HRDCManagementSystem.Utilities
                     using (var g = System.Drawing.Graphics.FromImage(bitmap))
                     {
                         g.FillRectangle(
-                            new System.Drawing.SolidBrush(System.Drawing.Color.White), 
+                            new System.Drawing.SolidBrush(System.Drawing.Color.White),
                             0, 0, bitmap.Width, bitmap.Height);
-                        
+
                         // Add a border
                         using (var pen = new System.Drawing.Pen(
                             System.Drawing.Color.FromArgb(180, 180, 180), 5))
@@ -294,15 +294,15 @@ namespace HRDCManagementSystem.Utilities
                             // Top-left corner
                             g.DrawLine(cornerPen, 20, 60, 100, 60);
                             g.DrawLine(cornerPen, 60, 20, 60, 100);
-                            
+
                             // Top-right corner
                             g.DrawLine(cornerPen, bitmap.Width - 100, 60, bitmap.Width - 20, 60);
                             g.DrawLine(cornerPen, bitmap.Width - 60, 20, bitmap.Width - 60, 100);
-                            
+
                             // Bottom-left corner
                             g.DrawLine(cornerPen, 20, bitmap.Height - 60, 100, bitmap.Height - 60);
                             g.DrawLine(cornerPen, 60, bitmap.Height - 100, 60, bitmap.Height - 20);
-                            
+
                             // Bottom-right corner
                             g.DrawLine(cornerPen, bitmap.Width - 100, bitmap.Height - 60, bitmap.Width - 20, bitmap.Height - 60);
                             g.DrawLine(cornerPen, bitmap.Width - 60, bitmap.Height - 100, bitmap.Width - 60, bitmap.Height - 20);
@@ -334,7 +334,7 @@ namespace HRDCManagementSystem.Utilities
                         g.FillRectangle(
                             new System.Drawing.SolidBrush(System.Drawing.Color.White),
                             0, 0, bitmap.Width, bitmap.Height);
-                        
+
                         // Draw signature lines
                         using (var pen = new System.Drawing.Pen(System.Drawing.Color.Black, 2))
                         {
@@ -356,7 +356,7 @@ namespace HRDCManagementSystem.Utilities
 
             await Task.CompletedTask; // To make the method async
         }
-        
+
         /// <summary>
         /// Get bytes for a minimal valid JPEG image
         /// </summary>
@@ -384,7 +384,7 @@ namespace HRDCManagementSystem.Utilities
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xFF, 0xD9
             };
         }
-        
+
         /// <summary>
         /// Get bytes for a minimal valid PNG image
         /// </summary>
@@ -401,6 +401,156 @@ namespace HRDCManagementSystem.Utilities
                 0xF0, 0x9F, 0x01, 0x00, 0x03, 0x03, 0x03, 0x00, 0x36, 0xD6, 0x29, 0x8D, 0x00, 0x00, 0x00, 0x00,
                 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
             };
+        }
+
+        /// <summary>
+        /// Overlays dynamic text on a certificate template image using SkiaSharp
+        /// </summary>
+        /// <param name="templatePath">Path to the template image (2000x1414 pixels)</param>
+        /// <param name="outputPath">Path to save the output image</param>
+        /// <param name="employeeName">Employee full name</param>
+        /// <param name="department">Employee department</param>
+        /// <param name="trainingTitle">Training title</param>
+        /// <param name="trainingDate">Training date range</param>
+        /// <param name="signaturePath">Optional path to signature image</param>
+        /// <param name="logger">Logger for capturing errors</param>
+        /// <returns>True if successful, false otherwise</returns>
+        public static async Task<bool> OverlayTextOnTemplateAsync(
+            string templatePath,
+            string outputPath,
+            string employeeName,
+            string department,
+            string trainingTitle,
+            string trainingDate,
+            string? signaturePath = null,
+            ILogger? logger = null)
+        {
+            try
+            {
+                logger?.LogInformation("Overlaying text on template using SkiaSharp. Template: {TemplatePath}, Output: {OutputPath}", 
+                    templatePath, outputPath);
+
+                if (!File.Exists(templatePath))
+                {
+                    logger?.LogError("Template file not found at {Path}", templatePath);
+                    return false;
+                }
+
+                // Create output directory if it doesn't exist
+                string? outputDir = Path.GetDirectoryName(outputPath);
+                if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+
+                // Load the template image
+                using var templateBitmap = SKBitmap.Decode(templatePath);
+                if (templateBitmap == null)
+                {
+                    logger?.LogError("Failed to decode template image at {Path}", templatePath);
+                    return false;
+                }
+
+                // Create a surface to draw on
+                using var surface = SKSurface.Create(new SKImageInfo(templateBitmap.Width, templateBitmap.Height));
+                if (surface == null)
+                {
+                    logger?.LogError("Failed to create SKSurface");
+                    return false;
+                }
+
+                var canvas = surface.Canvas;
+
+                // Draw the template as background
+                using var templateImage = SKImage.FromBitmap(templateBitmap);
+                canvas.DrawImage(templateImage, 0, 0);
+
+                // Template dimensions: 2000 x 1414 pixels
+                int width = templateBitmap.Width;
+                int height = templateBitmap.Height;
+
+                // Define text positions (scaled to 2000x1414)
+                // These positions are approximate - adjust based on your template design
+                float centerX = width / 2f;
+
+                // Create paint for text
+                var textPaint = new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill,
+                    TextAlign = SKTextAlign.Center,
+                    Color = SKColors.Black
+                };
+
+                // Employee Name - Large, centered, near top-middle
+                textPaint.TextSize = 72; // Adjust size as needed
+                textPaint.Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold);
+                textPaint.Color = SKColors.Black;
+                float nameY = height * 0.4f; // 40% from top
+                canvas.DrawText(employeeName, centerX, nameY, textPaint);
+
+                // Department - Below name
+                textPaint.TextSize = 36;
+                textPaint.Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal);
+                textPaint.Color = SKColors.DarkGray;
+                float deptY = nameY + 80;
+                canvas.DrawText($"From: {department}", centerX, deptY, textPaint);
+
+                // Training Title - Below department
+                textPaint.TextSize = 48;
+                textPaint.Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold);
+                textPaint.Color = SKColors.Black;
+                float titleY = deptY + 100;
+                canvas.DrawText(trainingTitle, centerX, titleY, textPaint);
+
+                // Training Date - Below title
+                textPaint.TextSize = 32;
+                textPaint.Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal);
+                textPaint.Color = SKColors.DarkGray;
+                float dateY = titleY + 80;
+                canvas.DrawText(trainingDate, centerX, dateY, textPaint);
+
+                // Overlay signature if provided
+                if (!string.IsNullOrEmpty(signaturePath) && File.Exists(signaturePath))
+                {
+                    try
+                    {
+                        using var signatureBitmap = SKBitmap.Decode(signaturePath);
+                        if (signatureBitmap != null)
+                        {
+                            // Position signature at bottom right
+                            float signatureWidth = 200; // Adjust size as needed
+                            float signatureHeight = 100;
+                            float signatureX = width - signatureWidth - 100; // 100px from right edge
+                            float signatureY = height - signatureHeight - 100; // 100px from bottom
+
+                            using var signatureImage = SKImage.FromBitmap(signatureBitmap);
+                            var destRect = new SKRect(signatureX, signatureY, signatureX + signatureWidth, signatureY + signatureHeight);
+                            canvas.DrawImage(signatureImage, destRect);
+                            logger?.LogInformation("Signature overlaid successfully");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning(ex, "Failed to overlay signature image");
+                    }
+                }
+
+                // Encode and save the image
+                using var image = surface.Snapshot();
+                using var data = image.Encode(SKEncodedImageFormat.Jpeg, 95); // 95% quality
+                using var stream = File.Create(outputPath); // Use Create to ensure file is overwritten
+                await data.AsStream().CopyToAsync(stream);
+                await stream.FlushAsync();
+
+                logger?.LogInformation("Certificate image generated successfully at {Path}", outputPath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error overlaying text on template: {Message}", ex.Message);
+                return false;
+            }
         }
     }
 }

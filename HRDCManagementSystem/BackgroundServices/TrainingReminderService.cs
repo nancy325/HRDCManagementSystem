@@ -49,10 +49,10 @@ namespace HRDCManagementSystem.BackgroundServices
             var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var currentDate = DateOnly.FromDateTime(DateTime.Today);
-            
+
             // Check for trainings starting in 3 days
             var threeDaysLater = currentDate.AddDays(3);
-            
+
             var upcomingTrainings = await context.TrainingPrograms
                 .Where(t => t.StartDate == threeDaysLater &&
                        t.RecStatus == "active" &&
@@ -61,7 +61,7 @@ namespace HRDCManagementSystem.BackgroundServices
                 .ToListAsync();
 
             _logger.LogInformation($"Found {upcomingTrainings.Count} trainings starting in 3 days");
-            
+
             foreach (var trainingId in upcomingTrainings)
             {
                 await NotificationUtility.NotifyUpcomingTraining(
@@ -71,10 +71,10 @@ namespace HRDCManagementSystem.BackgroundServices
                     3
                 );
             }
-            
+
             // Check for trainings starting tomorrow
             var tomorrow = currentDate.AddDays(1);
-            
+
             var tomorrowTrainings = await context.TrainingPrograms
                 .Where(t => t.StartDate == tomorrow &&
                        t.RecStatus == "active" &&
@@ -83,7 +83,7 @@ namespace HRDCManagementSystem.BackgroundServices
                 .ToListAsync();
 
             _logger.LogInformation($"Found {tomorrowTrainings.Count} trainings starting tomorrow");
-            
+
             foreach (var trainingId in tomorrowTrainings)
             {
                 await NotificationUtility.NotifyUpcomingTraining(

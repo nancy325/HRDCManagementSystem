@@ -17,7 +17,7 @@ namespace HRDCManagementSystem.Controllers
         private readonly ILogger<TrainingRegistrationController> _logger;
 
         public TrainingRegistrationController(
-            HRDCContext context, 
+            HRDCContext context,
             INotificationService notificationService,
             ILogger<TrainingRegistrationController> logger)
         {
@@ -118,7 +118,76 @@ namespace HRDCManagementSystem.Controllers
             }
 
             TempData["SuccessMessage"] = "You have successfully registered for this training. Your registration is pending approval.";
-            return RedirectToAction("Details", "Training", new { id = trainingId });
+            return RedirectToAction("MyRegistrations");
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> MyRegistrations()
+        {
+            var currentUserEmail = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserEmail))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
+
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Your employee record could not be found.";
+                return RedirectToAction("Index", "EmployeeDashboard");
+            }
+
+            var registrations = await _context.TrainingRegistrations
+                .Include(tr => tr.TrainingSys)
+                .Where(tr => tr.EmployeeSysID == employee.EmployeeSysID && tr.RecStatus == "active")
+                .ToListAsync();
+
+            return View("MyRegistrations", registrations);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> Cancel(int registrationId)
+        {
+            var currentUserEmail = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserEmail))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserSys.Email == currentUserEmail && e.RecStatus == "active");
+
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Your employee record could not be found.";
+                return RedirectToAction("Index", "EmployeeDashboard");
+            }
+
+            var registration = await _context.TrainingRegistrations
+                .Include(tr => tr.TrainingSys)
+                .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == registrationId && tr.EmployeeSysID == employee.EmployeeSysID && tr.RecStatus == "active");
+
+            if (registration == null)
+            {
+                TempData["ErrorMessage"] = "Registration not found.";
+                return RedirectToAction("MyRegistrations");
+            }
+
+            if (registration.TrainingSys.StartDate <= DateOnly.FromDateTime(DateTime.Now))
+            {
+                TempData["ErrorMessage"] = "Cannot cancel registration for a training that has already started.";
+                return RedirectToAction("MyRegistrations");
+            }
+
+            registration.RecStatus = "inactive";
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Registration cancelled successfully.";
+            return RedirectToAction("MyRegistrations");
         }
 
         [HttpPost]
@@ -233,9 +302,9 @@ namespace HRDCManagementSystem.Controllers
                     // Continue anyway
                 }
 
-                return Json(new 
-                { 
-                    success = true, 
+                return Json(new
+                {
+                    success = true,
                     message = $"{registrations.Count} registrations have been {request.Action}d.",
                     count = registrations.Count
                 });

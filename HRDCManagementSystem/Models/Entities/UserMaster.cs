@@ -14,7 +14,7 @@ public partial class UserMaster : BaseEntity
     public string Password { get; set; } = null!;
 
     public string Role { get; set; } = null!;
-    
+
     public bool IsWebNotificationEnabled { get; set; } = true;
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();

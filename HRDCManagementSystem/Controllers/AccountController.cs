@@ -199,7 +199,7 @@ namespace HRDCManagementSystem.Controllers
             // Generate random 6-digit OTP
             var random = new Random();
             string otp = random.Next(100000, 999999).ToString();
-            
+
             // Store OTP in the dictionary with 5-minute expiry
             _otpStore[model.Email] = (otp, DateTime.UtcNow.AddMinutes(5));
 
@@ -227,11 +227,11 @@ namespace HRDCManagementSystem.Controllers
                 </html>";
 
             await _emailService.SendEmailAsync(model.Email, subject, body);
-            
+
             // Store email in TempData to pre-fill the next form
             TempData["RecoveryEmail"] = model.Email;
             TempData["SuccessMessage"] = "OTP has been sent to your email address. Please check your inbox.";
-            
+
             return RedirectToAction(nameof(VerifyOTP));
         }
 
@@ -239,7 +239,7 @@ namespace HRDCManagementSystem.Controllers
         public IActionResult VerifyOTP()
         {
             var model = new VerifyOTPViewModel();
-            
+
             // Pre-fill email if available in TempData
             if (TempData["RecoveryEmail"] != null)
             {
@@ -247,7 +247,7 @@ namespace HRDCManagementSystem.Controllers
                 // Keep the value for the POST action
                 TempData.Keep("RecoveryEmail");
             }
-            
+
             return View(model);
         }
 
@@ -284,7 +284,7 @@ namespace HRDCManagementSystem.Controllers
 
             // OTP is valid, redirect to reset password
             TempData["ResetPasswordEmail"] = model.Email;
-            
+
             return RedirectToAction(nameof(ResetPassword));
         }
 
@@ -292,12 +292,12 @@ namespace HRDCManagementSystem.Controllers
         public IActionResult ResetPassword()
         {
             var model = new ResetPasswordViewModel();
-            
+
             // Pre-fill email if available in TempData
             if (TempData["ResetPasswordEmail"] != null)
             {
                 model.Email = TempData["ResetPasswordEmail"].ToString();
-                
+
                 // Verify this email has a valid OTP entry
                 if (!_otpStore.ContainsKey(model.Email))
                 {
@@ -310,7 +310,7 @@ namespace HRDCManagementSystem.Controllers
                 // No email in TempData, redirect back to forgot password
                 return RedirectToAction(nameof(ForgotPassword));
             }
-            
+
             return View(model);
         }
 

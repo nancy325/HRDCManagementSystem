@@ -1,9 +1,5 @@
-using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.Net.Mail;
-using MimeKit.Utils;
-using MimeKit.IO;
 
 namespace HRDCManagementSystem.Services
 {
@@ -111,7 +107,7 @@ namespace HRDCManagementSystem.Services
                 throw new InvalidOperationException($"Failed to send email: {ex.Message}", ex);
             }
         }
-        
+
         // New method to handle System.Net.Mail.Attachment type
         public async Task<bool> SendEmailWithAttachmentAsync(string to, string subject, string body, System.Net.Mail.Attachment attachment)
         {
@@ -123,7 +119,7 @@ namespace HRDCManagementSystem.Services
                 message.Subject = subject;
 
                 var multipart = new Multipart("mixed");
-                
+
                 // Add HTML body
                 var textPart = new TextPart("html")
                 {
@@ -167,7 +163,7 @@ namespace HRDCManagementSystem.Services
 
                     await client.SendAsync(message);
                     await client.DisconnectAsync(true);
-                    
+
                     return true;
                 }
             }

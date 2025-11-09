@@ -13,7 +13,7 @@ namespace HRDCManagementSystem.Controllers
         private readonly ILogger<NotificationController> _logger;
 
         public NotificationController(
-            INotificationService notificationService, 
+            INotificationService notificationService,
             ICurrentUserService currentUserService,
             ILogger<NotificationController> logger)
         {

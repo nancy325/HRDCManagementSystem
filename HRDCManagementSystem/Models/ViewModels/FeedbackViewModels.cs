@@ -44,9 +44,9 @@ namespace HRDCManagementSystem.Models.ViewModels
         public string QuestionText { get; set; } = string.Empty;
 
         public string QuestionType { get; set; } = "Rating";
-        
+
         public decimal? RatingValue { get; set; }
-        
+
         public string? ResponseText { get; set; }
     }
 

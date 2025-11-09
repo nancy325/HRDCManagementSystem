@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Microsoft.Extensions.Logging;
 
 
 namespace HRDCManagementSystem.Controllers
@@ -19,7 +18,7 @@ namespace HRDCManagementSystem.Controllers
         private readonly ILogger<TrainingController> _logger;
 
         public TrainingController(
-            HRDCContext context, 
+            HRDCContext context,
             INotificationService notificationService,
             ILogger<TrainingController> logger)
         {
@@ -176,7 +175,7 @@ namespace HRDCManagementSystem.Controllers
 
             _context.TrainingPrograms.Add(entity);
             await _context.SaveChangesAsync();
-            
+
             // Send notifications about the new training
             try
             {

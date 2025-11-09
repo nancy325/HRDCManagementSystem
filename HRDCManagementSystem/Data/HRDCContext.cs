@@ -329,7 +329,7 @@ public partial class HRDCContext : DbContext
         {
             entity.HasKey(e => e.NotificationID);
             entity.ToTable("Notification");
-            
+
             entity.Property(e => e.NotificationID).ValueGeneratedOnAdd().UseIdentityColumn();
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Message).IsRequired();
