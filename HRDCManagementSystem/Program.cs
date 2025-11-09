@@ -6,103 +6,127 @@ using Mapster;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Serilog;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Supported cultures
-var supportedCultures = new[] { new CultureInfo("en-GB") };
-builder.Services.Configure<RequestLocalizationOptions>(options =>
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+try
 {
-    options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
-    options.SupportedCultures = supportedCultures;
-    options.SupportedUICultures = supportedCultures;
-});
+    Log.Information("Starting HRDC Management System application");
 
-// Add services to the container
-builder.Services.AddControllersWithViews();
+    // Use Serilog for logging
+    builder.Host.UseSerilog();
 
-// Register DbContext
-builder.Services.AddDbContext<HRDCContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Register other services
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<ICertificateService, CertificateService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
-// Register background services
-builder.Services.AddHostedService<TrainingReminderService>();
-builder.Services.AddHostedService<TrainingNotificationService>();
-
-// Authentication
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+    // Supported cultures
+    var supportedCultures = new[] { new CultureInfo("en-GB") };
+    builder.Services.Configure<RequestLocalizationOptions>(options =>
     {
-        options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
+        options.SupportedCultures = supportedCultures;
+        options.SupportedUICultures = supportedCultures;
     });
 
-// Email service configuration
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
-builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+    // Add services to the container
+    builder.Services.AddControllersWithViews();
 
-// SignalR configuration
-builder.Services.AddSignalR();
+    // Register DbContext
+    builder.Services.AddDbContext<HRDCContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Set fallback culture (thread defaults)
-var cultureInfo = new CultureInfo("en-GB");
-cultureInfo.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
-cultureInfo.DateTimeFormat.LongTimePattern = "HH:mm:ss";
+    // Register other services
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+    builder.Services.AddScoped<ICertificateService, CertificateService>();
+    builder.Services.AddScoped<INotificationService, NotificationService>();
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(30);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+    });
 
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+    // Register background services
+    builder.Services.AddHostedService<TrainingReminderService>();
+    builder.Services.AddHostedService<TrainingNotificationService>();
 
-// Configure Mapster mappings
-TypeAdapterConfig<DateOnly?, DateTime?>.NewConfig()
-    .MapWith(src => src.HasValue ? src.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null);
+    // Authentication
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.AccessDeniedPath = "/Account/AccessDenied";
+            options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        });
 
-var app = builder.Build();
+    // Email service configuration
+    builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+    builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
+    // SignalR configuration
+    builder.Services.AddSignalR();
+
+    // Set fallback culture (thread defaults)
+    var cultureInfo = new CultureInfo("en-GB");
+    cultureInfo.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
+    cultureInfo.DateTimeFormat.LongTimePattern = "HH:mm:ss";
+
+    CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+    CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+
+    // Configure Mapster mappings
+    TypeAdapterConfig<DateOnly?, DateTime?>.NewConfig()
+        .MapWith(src => src.HasValue ? src.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null);
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+
+    // Apply localization options
+    var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+    app.UseRequestLocalization(localizationOptions);
+
+    app.UseRouting();
+
+    app.UseSession();
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    // Map SignalR hub
+    app.MapHub<NotificationHub>("/notificationHub");
+
+    // Register all routes - both attribute routing and conventional routing
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Account}/{action=Login}/{id?}");
+
+    Log.Information("Application started successfully");
+    app.Run();
 }
-else
+catch (Exception ex)
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    Log.Fatal(ex, "Application terminated unexpectedly");
+    throw;
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-// Apply localization options
-var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
-app.UseRequestLocalization(localizationOptions);
-
-app.UseRouting();
-
-app.UseSession();
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Map SignalR hub
-app.MapHub<NotificationHub>("/notificationHub");
-
-// Register all routes - both attribute routing and conventional routing
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
-
-app.Run();
+finally
+{
+    Log.CloseAndFlush();
+}

@@ -178,18 +178,18 @@ namespace HRDCManagementSystem.Controllers
 
             _context.TrainingPrograms.Add(entity);
             await _context.SaveChangesAsync();
-            
+
             // Send notifications about the new training
             try
             {
-                _logger.LogInformation("Sending targeted notifications for new training: {TrainingTitle} with eligibility: {EligibilityType}", 
+                _logger.LogInformation("Sending targeted notifications for new training: {TrainingTitle} with eligibility: {EligibilityType}",
                     entity.Title, entity.EligibilityType ?? "All");
 
                 await NotificationUtility.NotifyNewTraining(
-                    _notificationService, 
-                    entity, 
-                    _context, 
-                    _emailService, 
+                    _notificationService,
+                    entity,
+                    _context,
+                    _emailService,
                     _logger);
 
                 _logger.LogInformation("Successfully sent notifications for training: {TrainingTitle}", entity.Title);
@@ -281,14 +281,14 @@ namespace HRDCManagementSystem.Controllers
                 {
                     try
                     {
-                        _logger.LogInformation("Eligibility type changed for training {TrainingTitle}: '{OldType}' -> '{NewType}'", 
+                        _logger.LogInformation("Eligibility type changed for training {TrainingTitle}: '{OldType}' -> '{NewType}'",
                             entity.Title, originalEligibilityType ?? "All", entity.EligibilityType ?? "All");
 
                         await NotificationUtility.NotifyNewTraining(
-                            _notificationService, 
-                            entity, 
-                            _context, 
-                            _emailService, 
+                            _notificationService,
+                            entity,
+                            _context,
+                            _emailService,
                             _logger);
 
                         TempData["Success"] = "Training updated successfully and notifications sent to newly eligible employees.";

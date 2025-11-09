@@ -14,7 +14,7 @@ namespace HRDCManagementSystem.Utilities
         /// Create notification and send email for when a new training is created - sends only to applicable employees
         /// </summary>
         public static async Task NotifyNewTraining(
-            INotificationService notificationService, 
+            INotificationService notificationService,
             TrainingProgram training,
             HRDCContext context = null,
             IEmailService emailService = null,
@@ -38,10 +38,10 @@ namespace HRDCManagementSystem.Utilities
                 if (context != null && emailService != null)
                 {
                     var eligibleEmployees = await GetEligibleEmployees(context, training, logger);
-                    
+
                     if (eligibleEmployees.Any())
                     {
-                        logger?.LogInformation("Found {Count} eligible employees for training '{Title}' with eligibility type '{EligibilityType}'", 
+                        logger?.LogInformation("Found {Count} eligible employees for training '{Title}' with eligibility type '{EligibilityType}'",
                             eligibleEmployees.Count, training.Title, training.EligibilityType ?? "All");
 
                         // Send individual notifications to each eligible employee
@@ -68,7 +68,7 @@ namespace HRDCManagementSystem.Utilities
                     }
                     else
                     {
-                        logger?.LogWarning("No eligible employees found for training '{Title}' with eligibility type '{EligibilityType}'", 
+                        logger?.LogWarning("No eligible employees found for training '{Title}' with eligibility type '{EligibilityType}'",
                             training.Title, training.EligibilityType ?? "All");
                     }
                 }
@@ -93,8 +93,8 @@ namespace HRDCManagementSystem.Utilities
         /// Get employees eligible for a training based on eligibility type
         /// </summary>
         private static async Task<List<Employee>> GetEligibleEmployees(
-            HRDCContext context, 
-            TrainingProgram training, 
+            HRDCContext context,
+            TrainingProgram training,
             ILogger logger = null)
         {
             try
@@ -107,12 +107,12 @@ namespace HRDCManagementSystem.Utilities
                 if (!string.IsNullOrEmpty(training.EligibilityType))
                 {
                     var eligibilityType = training.EligibilityType.Trim();
-                    
+
                     switch (eligibilityType.ToLower())
                     {
                         case "technical":
                             // For technical trainings, target employees in technical departments/designations
-                            query = query.Where(e => 
+                            query = query.Where(e =>
                                 e.Type.ToLower().Contains("technical") ||
                                 e.Department.ToLower().Contains("it") ||
                                 e.Department.ToLower().Contains("computer") ||
@@ -128,7 +128,7 @@ namespace HRDCManagementSystem.Utilities
 
                         case "non-technical":
                             // For non-technical trainings, target employees in non-technical departments/designations
-                            query = query.Where(e => 
+                            query = query.Where(e =>
                                 e.Type.ToLower().Contains("non-technical") ||
                                 e.Type.ToLower().Contains("administrative") ||
                                 e.Department.ToLower().Contains("hr") ||
@@ -154,7 +154,7 @@ namespace HRDCManagementSystem.Utilities
 
                         default:
                             // For custom eligibility types, try to match by Type, Department, or Designation
-                            query = query.Where(e => 
+                            query = query.Where(e =>
                                 e.Type.ToLower().Contains(eligibilityType.ToLower()) ||
                                 e.Department.ToLower().Contains(eligibilityType.ToLower()) ||
                                 e.Designation.ToLower().Contains(eligibilityType.ToLower()));
@@ -163,8 +163,8 @@ namespace HRDCManagementSystem.Utilities
                 }
 
                 var result = await query.ToListAsync();
-                
-                logger?.LogInformation("Eligibility filter applied: '{EligibilityType}' - Found {Count} eligible employees", 
+
+                logger?.LogInformation("Eligibility filter applied: '{EligibilityType}' - Found {Count} eligible employees",
                     training.EligibilityType ?? "All", result.Count);
 
                 return result;
@@ -180,16 +180,16 @@ namespace HRDCManagementSystem.Utilities
         /// Send email notifications to eligible employees about new training
         /// </summary>
         private static async Task SendTrainingNotificationEmails(
-            IEmailService emailService, 
-            List<Employee> eligibleEmployees, 
-            TrainingProgram training, 
+            IEmailService emailService,
+            List<Employee> eligibleEmployees,
+            TrainingProgram training,
             ILogger logger = null)
         {
             try
             {
                 // Prepare email content
                 string subject = $"New Training Available: {training.Title}";
-                
+
                 // Create email tasks for all eligible employees
                 var emailTasks = eligibleEmployees
                     .Where(e => e.UserSys != null && !string.IsNullOrEmpty(e.UserSys.Email))
@@ -199,21 +199,21 @@ namespace HRDCManagementSystem.Utilities
                         {
                             string emailBody = CreateTrainingNotificationEmailBody(employee, training);
                             await emailService.SendEmailAsync(employee.UserSys.Email, subject, emailBody, true);
-                            
-                            logger?.LogInformation("Training notification email sent to {Email} for training '{Title}'", 
+
+                            logger?.LogInformation("Training notification email sent to {Email} for training '{Title}'",
                                 employee.UserSys.Email, training.Title);
                         }
                         catch (Exception ex)
                         {
-                            logger?.LogError(ex, "Failed to send training notification email to {Email}", 
+                            logger?.LogError(ex, "Failed to send training notification email to {Email}",
                                 employee.UserSys?.Email ?? "unknown");
                         }
                     });
 
                 // Send all emails concurrently
                 await Task.WhenAll(emailTasks);
-                
-                logger?.LogInformation("Completed sending training notification emails to {Count} employees for training '{Title}'", 
+
+                logger?.LogInformation("Completed sending training notification emails to {Count} employees for training '{Title}'",
                     eligibleEmployees.Count, training.Title);
             }
             catch (Exception ex)
@@ -304,7 +304,7 @@ namespace HRDCManagementSystem.Utilities
 
             // We only send to the specific employee
             await notificationService.CreateNotificationAsync(
-                registration.EmployeeSys.UserSysID, 
+                registration.EmployeeSys.UserSysID,
                 "Employee",
                 $"Training Registration {status}",
                 $"Your registration for '{registration.TrainingSys.Title}' has been {status.ToLower()}.");

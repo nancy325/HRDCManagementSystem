@@ -132,7 +132,7 @@ namespace HRDCManagementSystem.Helpers
             ";
         }
 
-        public static string GetTrainingApprovalEmailTemplate(string firstName, string lastName, string trainingTitle, 
+        public static string GetTrainingApprovalEmailTemplate(string firstName, string lastName, string trainingTitle,
             DateTime startDate, DateTime endDate, string trainerName, string venue, string mode, bool isApproved)
         {
             var statusText = isApproved ? "APPROVED" : "REJECTED";
@@ -140,8 +140,8 @@ namespace HRDCManagementSystem.Helpers
             var statusIcon = isApproved ? "?" : "?";
             var statusMessage = isApproved ? "Great news! Your training registration has been approved." : "We regret to inform you that your training registration has been rejected.";
             var actionText = isApproved ? "You can now prepare to attend the training session." : "You may contact HR for more information about alternative training opportunities.";
-            
-            var nextStepsHtml = isApproved ? 
+
+            var nextStepsHtml = isApproved ?
                 @"<div style='background-color: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745;'>
                     <h3 style='color: #155724; margin-top: 0;'>Next Steps:</h3>
                     <ul style='color: #155724; margin: 0; padding-left: 20px;'>
@@ -195,7 +195,7 @@ namespace HRDCManagementSystem.Helpers
                             
                             <p>{actionText}</p>
                             
-                            {(isApproved ? 
+                            {(isApproved ?
                                 "<p style='color: #28a745; font-weight: bold;'>We look forward to your participation in this training program!</p>" :
                                 "<p style='color: #6c757d;'>Thank you for your interest in our training programs.</p>")}
                             

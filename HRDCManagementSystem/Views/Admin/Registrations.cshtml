@@ -135,14 +135,14 @@
                                             <form asp-action="Approve" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'approve', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <button type="submit" class="btn btn-success btn-sm shadow-sm"
-                                                        @(r.Confirmation == true || isTrainingCompleted ? "disabled" : null)>
+                                                        @(r.Confirmation != null || isTrainingCompleted ? "disabled" : null)>
                                                     <i class="bi bi-check-circle me-1"></i> Approve
                                                 </button>
                                             </form>
                                             <form asp-action="Reject" asp-controller="TrainingRegistration" method="post" onsubmit="return handleApprovalAjax(this, 'reject', @isTrainingCompleted.ToString().ToLower());">
                                                 <input type="hidden" name="id" value="@r.TrainingRegSysID" />
                                                 <button type="submit" class="btn btn-danger btn-sm shadow-sm"
-                                                        @(r.Confirmation == false || isTrainingCompleted ? "disabled" : null)>
+                                                        @(r.Confirmation != null || isTrainingCompleted ? "disabled" : null)>
                                                     <i class="bi bi-x-circle me-1"></i> Reject
                                                 </button>
                                             </form>
@@ -198,7 +198,10 @@
                     statusCell.innerHTML = action === 'approve'
                         ? '<span class="badge bg-success">Approved</span>'
                         : '<span class="badge bg-danger">Rejected</span>';
-                    row.querySelectorAll('button').forEach(b => b.disabled = true);
+                    // Disable both buttons after status is set
+                    row.querySelectorAll('button[type="submit"]').forEach(b => b.disabled = true);
+                    // Update row data-status attribute
+                    row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
                 } else {
                     alert(data.message || 'Action failed.');
                     submitBtn.disabled = false;

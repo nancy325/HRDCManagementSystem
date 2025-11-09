@@ -17,7 +17,7 @@ namespace HRDCManagementSystem.Controllers.Admin
         private readonly INotificationService _notificationService;
         private readonly ICurrentUserService _currentUserService;
         DateOnly currentDate = DateOnly.FromDateTime(DateTime.Now);
-        
+
         public AdminController(HRDCContext context, INotificationService notificationService, ICurrentUserService currentUserService)
         {
             _context = context;
@@ -31,7 +31,7 @@ namespace HRDCManagementSystem.Controllers.Admin
             // Get current admin user ID and role for notifications
             var currentUserId = _currentUserService.GetCurrentUserId() ?? 0;
             var userRole = "Admin";
-            
+
             var dashboard = new AdminDashboardViewModel
             {
                 TotalEmployees = await _context.Employees.CountAsync(e => e.RecStatus == "active"),

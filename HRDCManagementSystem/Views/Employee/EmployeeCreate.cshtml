@@ -44,7 +44,11 @@
                 </div>
                 <div class="mb-3">
                     <label asp-for="Type" class="form-label">Type <span class="text-danger">*</span></label>
-                    <input asp-for="Type" class="form-control" required />
+                    <select asp-for="Type" class="form-select" required>
+                        <option value="">Select Type</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Non-Tech">Non-Tech</option>
+                    </select>
                     <span asp-validation-for="Type" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
@@ -56,11 +60,6 @@
                     <label asp-for="AlternatePhone" class="form-label">Alternate Phone</label>
                     <input asp-for="AlternatePhone" class="form-control" />
                     <span asp-validation-for="AlternatePhone" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="JoinDate" class="form-label">Join Date <span class="text-danger">*</span></label>
-                    <input asp-for="JoinDate" type="date" class="form-control" required />
-                    <span asp-validation-for="JoinDate" class="text-danger"></span>
                 </div>
             </div>
             <div class="col-md-6">

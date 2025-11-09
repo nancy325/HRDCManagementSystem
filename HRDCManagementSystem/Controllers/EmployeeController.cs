@@ -50,17 +50,45 @@ namespace HRDCManagementSystem.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Employee employee, IFormFile ProfilePhoto, string Email, string Role)
         {
-            // First, check email uniqueness before processing other validations
-            if (await _context.UserMasters.AnyAsync(u => u.Email == Email && u.RecStatus == "active"))
+            // Remove validation errors for fields we handle manually
+            ModelState.Remove("UserSys");
+            ModelState.Remove("ProfilePhotoPath");
+            ModelState.Remove("JoinDate"); // We set this automatically
+            ModelState.Remove("LeftDate");
+            ModelState.Remove("UserSysID");
+
+            // Clear any ProfilePhoto related validation errors to ensure it's treated as optional
+            var profilePhotoKeys = ModelState.Keys.Where(k => k.Contains("ProfilePhoto")).ToList();
+            foreach (var key in profilePhotoKeys)
+            {
+                ModelState.Remove(key);
+            }
+
+            // Validate Email and Role
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                ModelState.AddModelError("Email", "Email is required.");
+            }
+            else if (await _context.UserMasters.AnyAsync(u => u.Email == Email && u.RecStatus == "active"))
             {
                 ModelState.AddModelError("Email", "Email already exists.");
+            }
+
+            if (string.IsNullOrWhiteSpace(Role))
+            {
+                ModelState.AddModelError("Role", "Role is required.");
+            }
+
+            // If model validation fails, return to view
+            if (!ModelState.IsValid)
+            {
                 return View("EmployeeCreate", employee);
             }
 
             // Automatically generate a secure password
             string generatedPassword = GenerateRandomPassword();
 
-            // Create UserMaster with hashed password
+            // Create UserMaster with hashed password FIRST
             var passwordHasher = new PasswordHasher<UserMaster>();
             var user = new UserMaster
             {
@@ -73,28 +101,32 @@ namespace HRDCManagementSystem.Controllers
 
             try
             {
-                // Add and save UserMaster to get the auto-incremented UserSysID
+                // Step 1: Add and save UserMaster to get the auto-incremented UserSysID
                 _context.UserMasters.Add(user);
                 await _context.SaveChangesAsync();
 
-                // Now assign the generated UserSysID to the employee
+                // Step 2: Now assign the generated UserSysID to the employee
                 employee.UserSysID = user.UserSysID;
 
-                // Process profile photo if provided
-                if (ProfilePhoto != null)
+                // Step 3: Process profile photo if provided (optional)
+                if (ProfilePhoto != null && ProfilePhoto.Length > 0)
                 {
                     var result = ValidateAndSavePhoto(ProfilePhoto);
                     if (!result.Success)
                     {
+                        // Clean up the created user if photo validation fails
+                        _context.UserMasters.Remove(user);
+                        await _context.SaveChangesAsync();
                         ModelState.AddModelError("ProfilePhotoPath", result.ErrorMessage);
                         return View("EmployeeCreate", employee);
                     }
                     employee.ProfilePhotoPath = result.FileName;
                 }
 
-                // Set employee fields and save
+                // Step 4: Set employee fields and save
                 employee.RecStatus = "active";
                 employee.CreateDateTime = DateTime.Now;
+                employee.JoinDate = DateTime.Now; // Set joining date automatically when employee is created
                 _context.Employees.Add(employee);
                 await _context.SaveChangesAsync();
 
@@ -136,105 +168,14 @@ namespace HRDCManagementSystem.Controllers
             }
         }
 
-        // GET: Employees/Edit/5
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var employee = await _context.Employees.FindAsync(id);
-            if (employee == null) return NotFound();
-            return View("EmployeeEdit", employee);
-        }
-
-        // POST: Employees/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, Employee employee, IFormFile ProfilePhoto)
-        {
-            if (id != employee.EmployeeSysID)
-            {
-                ModelState.AddModelError("", "Employee not found.");
-                return View("EmployeeEdit", employee);
-            }
-
-            // Important: Retrieve the complete employee with UserSys relationship
-            var dbEmployee = await _context.Employees
-                .Include(e => e.UserSys)
-                .FirstOrDefaultAsync(e => e.EmployeeSysID == id);
-
-            if (dbEmployee == null)
-            {
-                ModelState.AddModelError("", "Employee not found in database.");
-                return View("EmployeeEdit", employee);
-            }
-
-            // Remove validation errors for these fields since we handle them specially
-            ModelState.Remove("UserSys");
-            ModelState.Remove("ProfilePhotoPath");
-
-            // Clear any ProfilePhoto related validation errors to ensure it's treated as optional
-            var profilePhotoKeys = ModelState.Keys.Where(k => k.Contains("ProfilePhoto")).ToList();
-            foreach (var key in profilePhotoKeys)
-            {
-                ModelState.Remove(key);
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    // Only update photo if a new one is uploaded
-                    if (ProfilePhoto != null)
-                    {
-                        var result = ValidateAndSavePhoto(ProfilePhoto);
-                        if (!result.Success)
-                        {
-                            ModelState.AddModelError("ProfilePhotoPath", result.ErrorMessage);
-                            return View("EmployeeEdit", employee);
-                        }
-                        dbEmployee.ProfilePhotoPath = result.FileName;
-                    }
-                    // ProfilePhotoPath remains unchanged if no new photo
-
-                    // Update employee fields
-                    dbEmployee.FirstName = employee.FirstName;
-                    dbEmployee.MiddleName = employee.MiddleName;
-                    dbEmployee.LastName = employee.LastName;
-                    dbEmployee.Department = employee.Department;
-                    dbEmployee.Designation = employee.Designation;
-                    dbEmployee.Institute = employee.Institute;
-                    dbEmployee.Type = employee.Type;
-                    dbEmployee.PhoneNumber = employee.PhoneNumber;
-                    dbEmployee.AlternatePhone = employee.AlternatePhone;
-                    dbEmployee.JoinDate = employee.JoinDate;
-                    dbEmployee.LeftDate = employee.LeftDate;
-                    dbEmployee.ModifiedDateTime = DateTime.Now;
-
-                    // UserSysID remains unchanged - we don't assign employee.UserSysID to dbEmployee.UserSysID
-
-                    _context.Update(dbEmployee);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Employee updated successfully.";
-                    return Redirect("/Admin/Employees");
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", $"An error occurred while updating: {ex.Message}");
-                }
-            }
-
-            // If we reach here, there was a validation error
-            // Make sure to populate navigation properties for view
-            return View("EmployeeEdit", employee);
-        }
-
         // GET: Employees/Details/5
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int id)
         {
             var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.EmployeeSysID == id && e.RecStatus == "active");
+                .Include(e => e.UserSys)
+                .FirstOrDefaultAsync(e => e.EmployeeSysID == id);
             if (employee == null) return NotFound();
             return View("EmployeeDetail", employee);
         }
@@ -265,6 +206,7 @@ namespace HRDCManagementSystem.Controllers
                 // Set employee record to inactive
                 employee.RecStatus = "inactive";
                 employee.ModifiedDateTime = DateTime.Now;
+                employee.LeftDate = DateTime.Now; // Set left date when employee is deleted
 
                 // Also set the related UserMaster record to inactive
                 if (employee.UserSys != null)

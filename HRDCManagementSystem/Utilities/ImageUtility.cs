@@ -427,7 +427,7 @@ namespace HRDCManagementSystem.Utilities
         {
             try
             {
-                logger?.LogInformation("Overlaying text on template using SkiaSharp. Template: {TemplatePath}, Output: {OutputPath}", 
+                logger?.LogInformation("Overlaying text on template using SkiaSharp. Template: {TemplatePath}, Output: {OutputPath}",
                     templatePath, outputPath);
 
                 if (!File.Exists(templatePath))

@@ -215,6 +215,21 @@ namespace HRDCManagementSystem.Controllers
                     return Json(new { success = false, message = "Registration not found." });
                 }
 
+                // Check if training is completed
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                var isTrainingCompleted = registration.TrainingSys.EndDate < currentDate;
+                
+                if (isTrainingCompleted)
+                {
+                    return Json(new { success = false, message = "Cannot approve or reject registration for a completed training." });
+                }
+
+                // Check if status is already set
+                if (registration.Confirmation != null)
+                {
+                    return Json(new { success = false, message = "Registration status has already been set. Cannot change it." });
+                }
+
                 string status;
                 if (request.Action == "approve")
                 {
@@ -330,9 +345,9 @@ namespace HRDCManagementSystem.Controllers
                     // Continue anyway
                 }
 
-                return Json(new 
-                { 
-                    success = true, 
+                return Json(new
+                {
+                    success = true,
                     message = $"{registrations.Count} registrations have been {request.Action}d.",
                     count = registrations.Count
                 });

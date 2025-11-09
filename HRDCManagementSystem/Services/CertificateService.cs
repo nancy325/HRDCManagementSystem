@@ -384,7 +384,11 @@ namespace HRDCManagementSystem.Services
             {
                 _logger.LogError(ex, "Error generating certificate for registration {RegistrationId}: {ExType}: {Message}",
                     registration.TrainingRegSysID, ex.GetType().Name, ex.Message);
-                throw;
+
+                // Display user-friendly message for UI or API response
+                throw new ApplicationException(
+                    "We could not generate your certificate at this time. Please try again later or contact support if the problem persists."
+                );
             }
         }
 
@@ -532,7 +536,11 @@ namespace HRDCManagementSystem.Services
             {
                 _logger.LogError(ex, "Error generating certificate image for registration {RegistrationId}: {ExType}: {Message}",
                     registration.TrainingRegSysID, ex.GetType().Name, ex.Message);
-                throw;
+
+                // Display user-friendly message for UI or API response
+                throw new ApplicationException(
+                    "We could not generate your certificate image at this time. Please try again later or contact support if the problem persists."
+                );
             }
         }
 

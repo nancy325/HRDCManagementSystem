@@ -34,7 +34,7 @@
                     </a>
                 </div>
                 <div class="notification-icon">
-                    <button class="btn btn-icon position-relative">
+                    <button class="btn btn-icon position-relative notification-btn">
                         <i class="bi bi-bell fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                             @Model.PendingFeedbackCount
@@ -179,20 +179,22 @@
                         <div class="tab-pane fade" id="completed" role="tabpanel">
                             @foreach (var training in Model.CompletedTrainings.Take(2))
                             {
-                                <div class="training-card">
-                                    <h4>@training.Title</h4>
-                                    <div class="d-flex flex-wrap gap-3 mt-2">
-                                        <div class="training-date">
-                                            <i class="bi bi-calendar-event"></i>
-                                            <span>@training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</span>
+                                <a href="@Url.Action("Details", "Training", new { id = training.TrainingSysID })" class="training-card-link">
+                                    <div class="training-card">
+                                        <h4>@training.Title</h4>
+                                        <div class="d-flex flex-wrap gap-3 mt-2">
+                                            <div class="training-date">
+                                                <i class="bi bi-calendar-event"></i>
+                                                <span>@training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</span>
+                                            </div>
+                                            <div class="training-registered">
+                                                <i class="bi bi-people-fill"></i>
+                                                <span>@training.RegisteredCount registered</span>
+                                            </div>
                                         </div>
-                                        <div class="training-registered">
-                                            <i class="bi bi-people-fill"></i>
-                                            <span>@training.RegisteredCount registered</span>
-                                        </div>
+                                        <span class="badge bg-success status-badge mt-2">Completed</span>
                                     </div>
-                                    <span class="badge bg-success status-badge mt-2">Completed</span>
-                                </div>
+                                </a>
                             }
 
                             @if (Model.CompletedTrainings.Count > 2)
@@ -303,4 +305,12 @@
     document.querySelector('.add-employee-btn button').addEventListener('click', function() {
         window.location.href = '@Url.Action("Create", "Employee")';
     });
+
+    // Notification bell click to redirect to notification page
+    document.querySelector('.notification-btn').addEventListener('click', function() {
+        window.location.href = '@Url.Action("Index", "Notification")';
+    });
+
+    // REMOVE the logic that disables and prevents switching to the completed tab.
+    // Now allow tab switching as normal.
 </script>
