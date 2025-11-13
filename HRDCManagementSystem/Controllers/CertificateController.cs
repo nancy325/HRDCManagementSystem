@@ -150,7 +150,7 @@ namespace HRDCManagementSystem.Controllers
             var registrations = await _context.TrainingRegistrations
                 .Include(r => r.EmployeeSys)
                 .ThenInclude(e => e.UserSys)
-                .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && r.Confirmation)
+                .Where(r => r.TrainingSysID == trainingId && r.RecStatus == "active" && (r.Confirmation ?? false))
                 .ToListAsync();
 
             // Get certificate status for each registration
@@ -222,7 +222,7 @@ namespace HRDCManagementSystem.Controllers
                 }
 
                 // Check if this is a confirmed registration
-                if (!registration.Confirmation)
+                if (!(registration.Confirmation ?? false))
                 {
                     _logger.LogWarning("Registration {RegId} is not confirmed", trainingRegId);
                     TempData["ErrorMessage"] = "Cannot generate certificate for unconfirmed registration.";

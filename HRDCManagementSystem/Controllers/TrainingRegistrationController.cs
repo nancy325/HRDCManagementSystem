@@ -97,8 +97,8 @@ namespace HRDCManagementSystem.Controllers
                 EmployeeSysID = employee.EmployeeSysID,
                 TrainingSysID = trainingId,
                 Registration = true,
-                // Set to false initially, will be approved by admin
-                Confirmation = false
+                // Set to null initially (pending), will be approved or rejected by admin
+                Confirmation = null
             };
 
             _context.TrainingRegistrations.Add(registration);
@@ -218,7 +218,7 @@ namespace HRDCManagementSystem.Controllers
                 // Check if training is completed
                 var currentDate = DateOnly.FromDateTime(DateTime.Now);
                 var isTrainingCompleted = registration.TrainingSys.EndDate < currentDate;
-                
+
                 if (isTrainingCompleted)
                 {
                     return Json(new { success = false, message = "Cannot approve or reject registration for a completed training." });

@@ -132,13 +132,6 @@ namespace HRDCManagementSystem.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public ActionResult CreateTraining()
-        {
-            return View("CreateTraining", new TrainingViewModel());
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View("CreateTraining", new TrainingViewModel());
@@ -342,6 +335,118 @@ namespace HRDCManagementSystem.Controllers
             training.RecStatus = "inactive";
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(TrainingIndex));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        [ActionName("Cancel")]
+        public async Task<ActionResult> CancelTraining(int id)
+        {
+            try
+            {
+                var training = await _context.TrainingPrograms
+                    .FirstOrDefaultAsync(t => t.TrainingSysID == id && t.RecStatus == "active");
+
+                if (training == null)
+                {
+                    TempData["ErrorMessage"] = "Training not found or already deleted.";
+                    return RedirectToAction(nameof(TrainingIndex));
+                }
+
+                // Check if training is already cancelled or completed
+                if (training.Status?.ToLower() == "cancelled")
+                {
+                    TempData["ErrorMessage"] = "This training has already been cancelled.";
+                    return RedirectToAction("Details", new { id });
+                }
+
+                if (training.Status?.ToLower() == "completed")
+                {
+                    TempData["ErrorMessage"] = "Cannot cancel a completed training.";
+                    return RedirectToAction("Details", new { id });
+                }
+
+                // Update training status to Cancelled
+                training.Status = "Cancelled";
+                await _context.SaveChangesAsync();
+
+                // Get all registered employees for this training
+                var registrations = await _context.TrainingRegistrations
+                    .Where(tr => tr.TrainingSysID == id &&
+                                 tr.Registration == true &&
+                                 tr.RecStatus == "active")
+                    .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
+                    .ToListAsync();
+
+                // Send cancellation emails to all registered employees
+                if (registrations.Any())
+                {
+                    var emailAddresses = registrations
+                        .Where(r => r.EmployeeSys?.UserSys != null && !string.IsNullOrEmpty(r.EmployeeSys.UserSys.Email))
+                        .Select(r => r.EmployeeSys.UserSys.Email)
+                        .Distinct()
+                        .ToList();
+
+                    if (emailAddresses.Any())
+                    {
+                        try
+                        {
+                            var emailSubject = $"Training Cancellation: {training.Title}";
+                            var emailBody = $@"
+                                <html>
+                                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                                        <h2 style='color: #dc3545;'>Training Cancellation Notice</h2>
+                                        <p>Dear Participant,</p>
+                                        <p>We regret to inform you that the following training program has been cancelled:</p>
+                                        <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0;'>
+                                            <p style='margin: 5px 0;'><strong>Training Title:</strong> {training.Title}</p>
+                                            <p style='margin: 5px 0;'><strong>Trainer:</strong> {training.TrainerName}</p>
+                                            <p style='margin: 5px 0;'><strong>Scheduled Date:</strong> {training.StartDate:dd MMM yyyy} - {training.EndDate:dd MMM yyyy}</p>
+                                            <p style='margin: 5px 0;'><strong>Time:</strong> {training.fromTime:HH:mm} - {training.toTime:HH:mm}</p>
+                                            <p style='margin: 5px 0;'><strong>Venue:</strong> {training.Venue ?? "N/A"}</p>
+                                        </div>
+                                        <p>We apologize for any inconvenience this may cause. If you have any questions or concerns, please contact the HRDC team.</p>
+                                        <p>Thank you for your understanding.</p>
+                                        <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;'>
+                                        <p style='color: #6c757d; font-size: 12px;'>This is an automated message from HRDC Management System.</p>
+                                    </div>
+                                </body>
+                                </html>";
+
+                            await _emailService.SendEmailAsync(emailAddresses, emailSubject, emailBody, isHtml: true);
+
+                            _logger.LogInformation("Cancellation emails sent to {Count} registered employees for training {TrainingId}: {TrainingTitle}",
+                                emailAddresses.Count, id, training.Title);
+
+                            TempData["SuccessMessage"] = $"Training cancelled successfully. Cancellation emails have been sent to {emailAddresses.Count} registered participant(s).";
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send cancellation emails for training {TrainingId}", id);
+                            TempData["SuccessMessage"] = "Training cancelled successfully, but some emails may not have been sent. Please contact registered participants manually.";
+                        }
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "Training cancelled successfully. No registered participants found to notify.";
+                    }
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Training cancelled successfully. No registered participants found to notify.";
+                }
+
+                return RedirectToAction("Details", new { id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling training {TrainingId}", id);
+                TempData["ErrorMessage"] = "An error occurred while cancelling the training. Please try again.";
+                return RedirectToAction("Details", new { id });
+            }
         }
 
         private static TrainingViewModel MapToViewModel(TrainingProgram tp)

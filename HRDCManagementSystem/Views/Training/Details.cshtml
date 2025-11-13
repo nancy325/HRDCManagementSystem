@@ -27,6 +27,18 @@
                    class="btn btn-warning btn-lg shadow-sm text-dark fw-semibold">
                     <i class="bi bi-pencil-square me-1"></i> Edit
                 </a>
+                
+                @if (Model.Status?.ToLower() != "cancelled" && Model.Status?.ToLower() != "completed")
+                {
+                    <form asp-action="Cancel" asp-controller="Training" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.TrainingSysID" />
+                        <button type="submit" class="btn btn-danger btn-lg shadow-sm fw-semibold"
+                                onclick="return confirm('Are you sure you want to cancel this training? All registered participants will be notified via email.');">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Training
+                        </button>
+                    </form>
+                }
             }
         </div>
     </div>
@@ -102,7 +114,7 @@
                     {
                         <div class="info-box">
                             <div class="small text-muted">Status</div>
-                            <span class="badge @(Model.Status?.ToLower() == "published" ? "bg-success" : "bg-secondary") px-3 py-2">
+                            <span class="badge @(Model.Status?.ToLower() == "published" ? "bg-success" : Model.Status?.ToLower() == "cancelled" ? "bg-danger" : Model.Status?.ToLower() == "completed" ? "bg-info" : "bg-secondary") px-3 py-2">
                                 @Model.Status
                             </span>
                         </div>

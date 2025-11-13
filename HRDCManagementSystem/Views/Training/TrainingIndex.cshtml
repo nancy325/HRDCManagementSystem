@@ -93,6 +93,14 @@
                                         {
                                             <span class="badge bg-secondary-subtle text-secondary fw-semibold px-3 py-2 rounded-pill">Draft</span>
                                         }
+                                        else if (t.Status?.ToLower() == "cancelled")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger fw-semibold px-3 py-2 rounded-pill">Cancelled</span>
+                                        }
+                                        else if (t.Status?.ToLower() == "completed")
+                                        {
+                                            <span class="badge bg-info-subtle text-info fw-semibold px-3 py-2 rounded-pill">Completed</span>
+                                        }
                                         else
                                         {
                                             <span class="badge bg-light text-dark">@t.Status</span>
@@ -113,7 +121,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">—</span>
+                                            <span class="text-muted">ï¿½</span>
                                         }
                                     </td>
                                     <td class="text-end">
@@ -128,6 +136,19 @@
                                                class="btn btn-sm btn-outline-warning me-1 action-btn" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
+
+                                            @if (t.Status?.ToLower() != "cancelled" && t.Status?.ToLower() != "completed")
+                                            {
+                                                <form asp-action="Cancel" asp-controller="Training" method="post" class="d-inline me-1">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@t.TrainingSysID" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger action-btn"
+                                                            onclick="return confirm('Are you sure you want to cancel this training? All registered participants will be notified via email.');" 
+                                                            title="Cancel Training">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </form>
+                                            }
 
                                             <a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
                                                class="btn btn-sm btn-outline-danger action-btn"

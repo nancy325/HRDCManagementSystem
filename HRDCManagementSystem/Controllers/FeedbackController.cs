@@ -716,7 +716,7 @@ namespace HRDCManagementSystem.Controllers
             }
 
             // Check if the employee is confirmed by admin for this training
-            if (!registration.Confirmation)
+            if ((bool)!registration.Confirmation)
             {
                 TempData["ErrorMessage"] = "Your registration has not been confirmed by the administrator yet. Feedback submission is only available for confirmed participants.";
                 return RedirectToAction("Index");
@@ -852,7 +852,7 @@ namespace HRDCManagementSystem.Controllers
             }
 
             // Check if the registration is confirmed
-            if (!registration.Confirmation)
+            if ((bool)!registration.Confirmation)
             {
                 TempData["ErrorMessage"] = "You can only view feedback for confirmed training registrations.";
                 return RedirectToAction("Index");
