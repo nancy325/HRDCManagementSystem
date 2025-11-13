@@ -280,7 +280,7 @@ namespace HRDCManagementSystem.Services
 
                             // Place the training date immediately below the training title
                             float dateWidth = 400;
-                            float dateX = (pageWidth - dateWidth) / 2 - 120; // align with training title
+                            float dateX = (pageWidth - dateWidth) / 2 - 140; // align with training title
                             float dateY = titleY - 30; // put just below the training title
 
                             Paragraph trainingDatePara = new Paragraph(trainingDate)
