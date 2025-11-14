@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label for="ValidTill" class="form-label fw-semibold">Valid Till</label>
+                        <label for="ValidTill" class="form-label fw-semibold">Registrations Valid Till</label>
                         <input type="text" class="form-control datepicker" id="ValidTill" name="ValidTill" placeholder="dd/mm/yyyy" />
                     </div>
 
@@ -66,6 +66,7 @@
                             <option value="">-- Select Eligibility --</option>
                             <option value="Technical">Technical</option>
                             <option value="Non-Technical">Non-Technical</option>
+                            <option value="All">All</option>
                         </select>
                         <span asp-validation-for="EligibilityType" class="text-danger small"></span>
                     </div>
