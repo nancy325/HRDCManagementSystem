@@ -4,127 +4,251 @@
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
 <link href="~/css/admindashboard.css" rel="stylesheet" />
 
+<style>
+    /* --- GENERAL PAGE --- */
+    body {
+        background: #f7f9fc;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.06);
+    }
+
+    /* --- HEADER TOOLS --- */
+    .header-tools {
+        background: #fff;
+        padding: 20px 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    }
+
+    .btn-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .2s;
+    }
+
+    .btn-icon:hover {
+        background: #eef1f4;
+    }
+
+    /* --- STAT CARDS --- */
+    .stat-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 20px;
+        text-align: center;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+        transition: .2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    /* --- TRAINING CARDS --- */
+    .training-card {
+        background: #fff;
+        padding: 20px 22px;
+        border-radius: 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        border-left: 4px solid #0d6efd;
+        transition: .2s;
+    }
+
+    .training-card:hover {
+        transform: translateX(4px);
+    }
+
+    .status-badge {
+        font-size: .8rem;
+        padding: 6px 12px;
+    }
+
+    .view-all {
+        text-decoration: none;
+        color: #0d6efd;
+        font-weight: 600;
+        margin-top: 8px;
+        display: inline-block;
+    }
+
+    /* --- APPROVAL CARD --- */
+    .approval-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        border-left: 4px solid #10b981;
+        transition: .2s;
+    }
+
+    .approval-card:hover {
+        transform: translateX(4px);
+    }
+
+    .btn-action i {
+        margin-right: 6px;
+    }
+</style>
+
 <!-- Header Tools Section -->
-<div class="header-tools container mb-3">
+<div class="header-tools container mb-4">
     <div class="row align-items-center">
+
+        <!-- Search -->
         <div class="col-md-6">
-            <div class="search-container">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="bi bi-search text-secondary"></i>
-                    </span>
-                    <input type="text" class="form-control border-start-0" placeholder="Search employees, trainings, reports...">
-                    <button class="btn btn-primary">Search</button>
-                </div>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-secondary"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" placeholder="Search employees, trainings, reports...">
+                <button class="btn btn-primary px-4">Search</button>
             </div>
         </div>
+
+        <!-- Icons -->
         <div class="col-md-6 text-end">
             <div class="d-flex justify-content-end align-items-center gap-3">
-                <div class="notification-icon me-2">
-                    <a href="@Url.Action("HelpQueries", "Admin")" class="btn btn-icon position-relative">
-                        <i class="bi bi-question-circle fs-5"></i>
-                        @if (Model.NewHelpQueriesCount > 0)
-                        {
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                @Model.NewHelpQueriesCount
-                            </span>
-                        }
-                    </a>
-                </div>
-                <div class="notification-icon">
-                    <a href="@Url.Action("Index", "Notification")" class="btn btn-icon position-relative notification-btn">
-                        <i class="bi bi-bell fs-5"></i>
-                        @if (Model.UnreadNotificationCount > 0)
-                        {
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                @Model.UnreadNotificationCount
-                            </span>
-                        }
-                    </a>
-                </div>
-                @* <div class="add-employee-btn">
-                    <button class="btn btn-primary">
-                        <i class="bi bi-person-plus me-2"></i>Add Employee
-                    </button>
-                </div> *@
 
-                <div class="add-employee-btn">
-                    <button class="btn btn-primary">
-                        <img src="~/images/DashBoard Pics/AddEmployee.png" alt="Add Employee" width=30" height="30" class="me-2" />
-                    </button>
-                </div>
+                <!-- Help Queries -->
+                <a href="@Url.Action("HelpQueries", "Admin")" class="btn-icon position-relative">
+                    <i class="bi bi-question-circle fs-5"></i>
+                    @if (Model.NewHelpQueriesCount > 0)
+                    {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            @Model.NewHelpQueriesCount
+                        </span>
+                    }
+                </a>
+
+                <!-- Notifications -->
+                <a href="@Url.Action("Index", "Notification")" class="btn-icon position-relative">
+                    <i class="bi bi-bell fs-5"></i>
+                    @if (Model.UnreadNotificationCount > 0)
+                    {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            @Model.UnreadNotificationCount
+                        </span>
+                    }
+                </a>
+
+                <!-- Add Employee -->
+                <button class="btn btn-primary rounded-circle p-2" style="width:48px;height:48px;">
+                    <img src="~/images/DashBoard Pics/AddEmployee.png" width="26" height="26" />
+                </button>
 
             </div>
         </div>
+
     </div>
 </div>
 
 <!-- Main Content -->
 <main class="container">
-    <!-- Stats Section -->
-    <div class="row">
+
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
                 <div class="stat-label">Total Employees</div>
                 <div class="stat-value">@Model.TotalEmployees.ToString("N0")</div>
             </div>
         </div>
+
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
                 <div class="stat-label">Active Trainings</div>
                 <div class="stat-value">@Model.ActiveTrainings</div>
             </div>
         </div>
+
         <div class="col-md-3 col-sm-6">
             <div class="stat-card">
                 <div class="stat-label">Certificates Issued</div>
                 <div class="stat-value">@Model.CertificatesIssued.ToString("N0")</div>
             </div>
         </div>
-       
     </div>
 
-    <div class="row mt-4">
-        <!-- Recent Trainings Section -->
+    <div class="row g-4">
+
+        <!-- Recent Trainings -->
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body pb-3">
+
                     <h2 class="section-title">Recent Trainings</h2>
 
-                    <ul class="nav nav-tabs" id="trainingTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">Upcoming (@Model.UpcomingTrainings.Count)</button>
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs" id="trainingTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-target="#upcoming" data-bs-toggle="tab">
+                                Upcoming (@Model.UpcomingTrainings.Count)
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-bs-target="#ongoing" type="button" role="tab">Ongoing (@Model.OngoingTrainings.Count)</button>
+
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-target="#ongoing" data-bs-toggle="tab">
+                                Ongoing (@Model.OngoingTrainings.Count)
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed (@Model.CompletedTrainings.Count)</button>
+
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-target="#completed" data-bs-toggle="tab">
+                                Completed (@Model.CompletedTrainings.Count)
+                            </button>
                         </li>
                     </ul>
 
-                    <div class="tab-content mt-3" id="trainingTabsContent">
-                        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+                    <!-- Tabs Content -->
+                    <div class="tab-content mt-3">
+
+                        <!-- UPCOMING -->
+                        <div class="tab-pane fade show active" id="upcoming">
                             @foreach (var training in Model.UpcomingTrainings.Take(2))
                             {
                                 <div class="training-card">
                                     <h4>@training.Title</h4>
+
                                     <div class="d-flex flex-wrap gap-3 mt-2">
-                                        <div class="training-date">
-                                            <i class="bi bi-calendar-event"></i>
-                                            <span>@training.StartDate.ToString("MM/dd/yyyy")</span>
-                                        </div>
-                                        <div class="training-registered">
-                                            <i class="bi bi-people-fill"></i>
-                                            <span>@training.RegisteredCount registered</span>
-                                        </div>
-                                        <div class="training-capacity">
-                                            <i class="bi bi-diagram-3"></i>
-                                            <span>Capacity: @training.Capacity</span>
-                                        </div>
+                                        <div><i class="bi bi-calendar-event"></i> @training.StartDate.ToString("MM/dd/yyyy")</div>
+                                        <div><i class="bi bi-people-fill"></i> @training.RegisteredCount registered</div>
+                                        <div><i class="bi bi-diagram-3"></i> Capacity: @training.Capacity</div>
                                     </div>
+
                                     <span class="badge bg-info status-badge mt-2">Upcoming</span>
                                 </div>
                             }
@@ -132,35 +256,28 @@
                             @if (Model.UpcomingTrainings.Count > 2)
                             {
                                 <a href="@Url.Action("TrainingIndex", "Training")" class="view-all">
-                                    <span>View All</span>
-                                    <i class="bi bi-arrow-right"></i>
+                                    View All <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             }
                         </div>
 
-                        <div class="tab-pane fade" id="ongoing" role="tabpanel">
+                        <!-- ONGOING -->
+                        <div class="tab-pane fade" id="ongoing">
                             @foreach (var training in Model.OngoingTrainings.Take(2))
                             {
                                 var currentTime = TimeOnly.FromDateTime(DateTime.Now);
                                 var currentDate = DateOnly.FromDateTime(DateTime.Now);
 
-                                // Skip trainings that have already ended (either past end date OR past end time on end date)
-                                if (training.EndDate < currentDate || (training.EndDate == currentDate && training.ToTime < currentTime))
-                                {
-                                    continue; // Skip trainings that have already ended
-                                }
+                                if (training.EndDate < currentDate || (training.EndDate == currentDate && training.ToTime < currentTime)) continue;
+
                                 <div class="training-card">
                                     <h4>@training.Title</h4>
+
                                     <div class="d-flex flex-wrap gap-3 mt-2">
-                                        <div class="training-date">
-                                            <i class="bi bi-calendar-event"></i>
-                                            <span>@training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</span>
-                                        </div>
-                                        <div class="training-registered">
-                                            <i class="bi bi-people-fill"></i>
-                                            <span>@training.RegisteredCount registered</span>
-                                        </div>
+                                        <div><i class="bi bi-calendar-event"></i> @training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</div>
+                                        <div><i class="bi bi-people-fill"></i> @training.RegisteredCount registered</div>
                                     </div>
+
                                     <span class="badge bg-warning status-badge mt-2">Ongoing</span>
                                 </div>
                             }
@@ -168,28 +285,24 @@
                             @if (Model.OngoingTrainings.Count > 2)
                             {
                                 <a href="@Url.Action("TrainingIndex", "Training")" class="view-all">
-                                    <span>View All</span>
-                                    <i class="bi bi-arrow-right"></i>
+                                    View All <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             }
                         </div>
 
-                        <div class="tab-pane fade" id="completed" role="tabpanel">
+                        <!-- COMPLETED -->
+                        <div class="tab-pane fade" id="completed">
                             @foreach (var training in Model.CompletedTrainings.Take(2))
                             {
-                                <a href="@Url.Action("Details", "Training", new { id = training.TrainingSysID })" class="training-card-link">
+                                <a href="@Url.Action("Details", "Training", new { id = training.TrainingSysID })" class="text-decoration-none text-dark">
                                     <div class="training-card">
                                         <h4>@training.Title</h4>
+
                                         <div class="d-flex flex-wrap gap-3 mt-2">
-                                            <div class="training-date">
-                                                <i class="bi bi-calendar-event"></i>
-                                                <span>@training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</span>
-                                            </div>
-                                            <div class="training-registered">
-                                                <i class="bi bi-people-fill"></i>
-                                                <span>@training.RegisteredCount registered</span>
-                                            </div>
+                                            <div><i class="bi bi-calendar-event"></i> @training.StartDate.ToString("MM/dd/yyyy") - @training.EndDate.ToString("MM/dd/yyyy")</div>
+                                            <div><i class="bi bi-people-fill"></i> @training.RegisteredCount registered</div>
                                         </div>
+
                                         <span class="badge bg-success status-badge mt-2">Completed</span>
                                     </div>
                                 </a>
@@ -198,20 +311,22 @@
                             @if (Model.CompletedTrainings.Count > 2)
                             {
                                 <a href="@Url.Action("TrainingIndex", "Training")" class="view-all">
-                                    <span>View All</span>
-                                    <i class="bi bi-arrow-right"></i>
+                                    View All <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             }
                         </div>
+
                     </div>
+
                 </div>
             </div>
         </div>
 
-        <!-- Pending Approvals Section -->
+        <!-- Pending Approvals -->
         <div class="col-lg-4">
+
             <div class="card">
-                <div class="card-body">
+                <div class="card-body pb-3">
                     <h2 class="section-title">Pending Approvals (@Model.PendingApprovals.Count)</h2>
 
                     @foreach (var approval in Model.PendingApprovals.Take(2))
@@ -219,13 +334,10 @@
                         <div class="approval-card" data-registration-id="@approval.TrainingRegSysID">
                             <h5>@approval.EmployeeName</h5>
                             <p class="mb-2">@approval.TrainingTitle - @approval.Department</p>
+
                             <div class="d-flex gap-2">
-                                <button class="btn btn-success btn-action" data-action="approve">
-                                    <i class="bi bi-check-circle"></i> Approve
-                                </button>
-                                <button class="btn btn-danger btn-action" data-action="reject">
-                                    <i class="bi bi-x-circle"></i> Reject
-                                </button>
+                                <button class="btn btn-success btn-action" data-action="approve"><i class="bi bi-check-circle"></i> Approve</button>
+                                <button class="btn btn-danger btn-action" data-action="reject"><i class="bi bi-x-circle"></i> Reject</button>
                             </div>
                         </div>
                     }
@@ -233,77 +345,66 @@
                     @if (Model.PendingApprovals.Count > 2)
                     {
                         <a href="@Url.Action("PendingApprovals", "Training")" class="view-all">
-                            <span>View All</span>
-                            <i class="bi bi-arrow-right"></i>
+                            View All <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     }
                 </div>
             </div>
-            
-            <!-- Help Queries Card -->
+
+            <!-- Help Queries -->
             @if (Model.NewHelpQueriesCount > 0)
             {
                 <div class="card mt-4">
                     <div class="card-body">
                         <h2 class="section-title">
-                            <i class="bi bi-question-circle me-2"></i>New Help Queries
+                            <i class="bi bi-question-circle me-2"></i> New Help Queries
                             <span class="badge bg-danger ms-2">@Model.NewHelpQueriesCount</span>
                         </h2>
+
                         <p>There are new help queries waiting for your review.</p>
+
                         <a href="@Url.Action("HelpQueries", "Admin")" class="btn btn-primary">
-                            <i class="bi bi-eye me-2"></i>View Queries
+                            <i class="bi bi-eye me-2"></i> View Queries
                         </a>
                     </div>
                 </div>
             }
+
         </div>
+
     </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     // Approval actions with AJAX
     document.querySelectorAll('.btn-action').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const card = this.closest('.approval-card');
             const registrationId = card.dataset.registrationId;
             const action = this.dataset.action;
             const name = card.querySelector('h5').textContent;
 
-            // AJAX call to handle approval/rejection
             fetch('/TrainingRegistration/HandleApproval', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    registrationId: parseInt(registrationId),
-                    action: action
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ registrationId: parseInt(registrationId), action: action })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     alert(`Registration for ${name} has been ${action === 'approve' ? 'approved' : 'rejected'}`);
                     card.style.opacity = '0.5';
-                    card.querySelectorAll('.btn-action').forEach(btn => {
-                        btn.disabled = true;
-                    });
-                } else {
-                    alert('Error processing request: ' + data.message);
+                    card.querySelectorAll('.btn-action').forEach(btn => btn.disabled = true);
                 }
-            })
-            .catch(error => {
-                alert('Error: ' + error);
             });
         });
     });
 
-    // Add Employee button interaction
-    document.querySelector('.add-employee-btn button').addEventListener('click', function() {
+    // Add Employee button
+    document.querySelector('.btn-primary.rounded-circle').addEventListener('click', function () {
         window.location.href = '@Url.Action("Create", "Employee")';
     });
-
-    // REMOVE the logic that disables and prevents switching to the completed tab.
-    // Now allow tab switching as normal.
 </script>

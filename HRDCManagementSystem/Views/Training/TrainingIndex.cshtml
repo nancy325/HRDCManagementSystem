@@ -16,6 +16,29 @@
     }
 }
 
+<style>
+    /* FIX: Clean, consistent action button alignment */
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .action-buttons .btn {
+            min-width: 34px;
+            padding: 4px 8px;
+        }
+
+        .action-buttons form {
+            margin: 0;
+        }
+
+    .table thead th {
+        white-space: nowrap;
+    }
+</style>
+
 <div class="container mt-4 trainings-page">
 
     <!-- Header -->
@@ -26,9 +49,10 @@
             </h2>
             <p class="text-muted mb-0">Explore and manage all available training programs</p>
         </div>
+
         @if (User.IsInRole("Admin"))
         {
-            <a asp-action="Create" asp-controller="Training" class="btn btn-primary shadow-sm">
+            <a asp-action="Create" asp-controller="Training" class="btn btn-primary shadow-sm px-4">
                 <i class="bi bi-plus-circle me-2"></i> Create Training
             </a>
         }
@@ -37,15 +61,16 @@
     <!-- Alerts -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
     <!-- Table Section -->
-    <div class="card border-0 shadow-sm">
+    <div class="card shadow-sm border-0">
         <div class="card-body p-0">
+
             @if (!trainingsToShow.Any())
             {
                 <div class="p-5 text-center text-muted">
@@ -56,34 +81,43 @@
             else
             {
                 <div class="table-responsive">
+
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light text-uppercase small">
                             <tr>
-                                <th>#</th>
+                                <th style="width: 50px;">#</th>
                                 <th>Title</th>
                                 <th>Trainer</th>
                                 <th>Dates</th>
                                 <th>Venue</th>
                                 <th>Status</th>
                                 <th>Mode</th>
-                                <th class="text-end">Actions</th>
+                                <th class="text-end" style="width: 170px;">Actions</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             @for (int i = 0; i < trainingsToShow.Count(); i++)
                             {
                                 var t = trainingsToShow.ElementAt(i);
-                                <tr class="table-row-hover">
-                                    <td class="fw-bold text-muted">@(i + 1)</td>
+
+                                <tr>
+                                    <td class="fw-bold text-muted">@((i + 1))</td>
+
                                     <td class="fw-semibold text-dark">@t.Title</td>
+
                                     <td>@t.TrainerName</td>
+
                                     <td>
-                                        <div class="small">
+                                        <div class="small text-muted">
                                             <i class="bi bi-calendar3 text-primary me-1"></i>
                                             @t.StartDate.ToString("dd MMM") - @t.EndDate.ToString("dd MMM yyyy")
                                         </div>
                                     </td>
+
                                     <td>@t.Venue</td>
+
+                                    <!-- STATUS -->
                                     <td>
                                         @if (t.Status?.ToLower() == "published")
                                         {
@@ -106,6 +140,8 @@
                                             <span class="badge bg-light text-dark">@t.Status</span>
                                         }
                                     </td>
+
+                                    <!-- MODE -->
                                     <td>
                                         @if (t.Mode?.ToLower() == "online")
                                         {
@@ -121,56 +157,74 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">�</span>
+                                            <span class="text-muted">—</span>
                                         }
                                     </td>
-                                    <td class="text-end">
-                                        <a asp-action="Details" asp-route-id="@t.TrainingSysID"
-                                           class="btn btn-sm btn-outline-info me-1 action-btn" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
 
-                                        @if (User.IsInRole("Admin"))
-                                        {
-                                            <a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
-                                               class="btn btn-sm btn-outline-warning me-1 action-btn" title="Edit">
-                                                <i class="bi bi-pencil-square"></i>
+                                    <!-- ACTIONS (FIXED + CLEAN + ALIGNED) -->
+                                    <td>
+                                        <div class="action-buttons">
+
+                                            <!-- VIEW -->
+                                            <a asp-action="Details" asp-route-id="@t.TrainingSysID"
+                                               class="btn btn-sm btn-outline-info"
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
                                             </a>
 
-                                            @if (t.Status?.ToLower() != "cancelled" && t.Status?.ToLower() != "completed")
+                                            @if (User.IsInRole("Admin"))
                                             {
-                                                <form asp-action="Cancel" asp-controller="Training" method="post" class="d-inline me-1">
+                                                <!-- EDIT -->
+                                                <a asp-action="EditTraining" asp-route-id="@t.TrainingSysID"
+                                                   class="btn btn-sm btn-outline-warning"
+                                                   title="Edit Training">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+
+                                                <!-- CANCEL -->
+                                                @if (t.Status?.ToLower() != "cancelled" && t.Status?.ToLower() != "completed")
+                                                {
+                                                    <form asp-action="Cancel" asp-controller="Training" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@t.TrainingSysID" />
+
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                onclick="return confirm('Are you sure you want to cancel this training? All registered participants will be notified via email.');"
+                                                                title="Cancel Training">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+
+                                                <!-- DELETE -->
+                                                <a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this training?');"
+                                                   title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
+
+                                            @if (User.IsInRole("Employee"))
+                                            {
+                                                <form asp-action="Register" asp-controller="TrainingRegistration" method="post">
                                                     @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@t.TrainingSysID" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger action-btn"
-                                                            onclick="return confirm('Are you sure you want to cancel this training? All registered participants will be notified via email.');" 
-                                                            title="Cancel Training">
-                                                        <i class="bi bi-x-circle"></i>
+                                                    <input type="hidden" name="trainingId" value="@t.TrainingSysID" />
+
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary"
+                                                            onclick="return confirm('Register for this training?');"
+                                                            title="Register">
+                                                        <i class="bi bi-journal-plus"></i>
                                                     </button>
                                                 </form>
                                             }
 
-                                            <a asp-action="DeleteTraining" asp-route-id="@t.TrainingSysID"
-                                               class="btn btn-sm btn-outline-danger action-btn"
-                                               onclick="return confirm('Are you sure you want to delete this training?');" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        }
-                                        else if (User.IsInRole("Employee"))
-                                        {
-                                            <form asp-action="Register" asp-controller="TrainingRegistration" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="trainingId" value="@t.TrainingSysID" />
-                                                <button type="submit" class="btn btn-sm btn-outline-primary action-btn"
-                                                        onclick="return confirm('Register for this training?');" title="Register">
-                                                    <i class="bi bi-journal-plus me-1"></i> Register
-                                                </button>
-                                            </form>
-                                        }
+                                        </div>
                                     </td>
                                 </tr>
                             }
                         </tbody>
+
                     </table>
                 </div>
             }

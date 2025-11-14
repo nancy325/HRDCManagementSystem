@@ -2,83 +2,95 @@
 @functions {
     string IsActive(string controller, string action = null)
     {
-        var routeData = Context.GetRouteData();
-        var currentController = routeData.Values["controller"]?.ToString();
-        var currentAction = routeData.Values["action"]?.ToString();
-        bool controllerMatches = string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase);
-        bool actionMatches = action == null || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase);
-        return controllerMatches && actionMatches ? "active" : "";
+        var r = Context.GetRouteData();
+        var c = r.Values["controller"]?.ToString();
+        var a = r.Values["action"]?.ToString();
+        bool cm = string.Equals(controller, c, StringComparison.OrdinalIgnoreCase);
+        bool am = action == null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase);
+        return cm && am ? "active" : "";
+    }
+
+    string DisplayName()
+    {
+        var full = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+        if (string.IsNullOrWhiteSpace(full)) return "User";
+        if (full.Contains("@")) return full.Split('@')[0];
+        return full;
     }
 }
 
 <link rel="stylesheet" href="~/css/participant-sidebar.css" asp-append-version="true" />
 
-<!-- Sidebar -->
 <div class="participant-sidebar shadow-sm" id="participantSidebar">
     <div class="sidebar-content d-flex flex-column justify-content-between h-100">
 
-        <!-- 🔹 Logo Section -->
         <div class="logo-container text-center py-4 border-bottom">
             <img src="~/images/hrdc-logo.png" alt="HRDC Logo" class="sidebar-logo mb-2" style="height: 60px;" />
             <h6 class="fw-semibold text-primary mb-0">HRDC Portal</h6>
         </div>
 
-        <!-- 🔹 Navigation Menu -->
         <nav class="participant-nav-container flex-grow-1 mt-3">
             <ul class="participant-nav list-unstyled px-2">
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Employee" asp-action="Dashboard"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Employee", "Dashboard")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Employee", "Dashboard"))">
                         <i class="bi bi-house-door me-2"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Training" asp-action="TrainingIndex"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Training", "TrainingIndex")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Training", "TrainingIndex"))">
                         <i class="bi bi-journal-text me-2"></i>
                         <span>Available Trainings</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="TrainingRegistration" asp-action="MyRegistrations"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("TrainingRegistration", "MyRegistrations")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("TrainingRegistration", "MyRegistrations"))">
                         <i class="bi bi-journal-check me-2"></i>
                         <span>My Registrations</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Certificate" asp-action="MyCertificates"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Certificate", "MyCertificates")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Certificate", "MyCertificates"))">
                         <i class="bi bi-award me-2"></i>
                         <span>My Certificates</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Feedback" asp-action="Index"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Feedback", "Index")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Feedback", "Index"))">
                         <i class="bi bi-chat-dots me-2"></i>
                         <span>Feedback</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Employee" asp-action="Profile"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Employee", "Profile")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Employee", "Profile"))">
                         <i class="bi bi-person-circle me-2"></i>
                         <span>My Profile</span>
                     </a>
                 </li>
+
                 <li class="participant-nav-item mb-1">
                     <a asp-controller="Account" asp-action="Settings"
-                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @IsActive("Account", "Settings")">
+                       class="participant-nav-link d-flex align-items-center px-3 py-2 rounded @(IsActive("Account", "Settings"))">
                         <i class="bi bi-gear me-2"></i>
                         <span>Settings</span>
                     </a>
                 </li>
+
             </ul>
         </nav>
 
-        <!-- 🔹 User Profile + Logout -->
         <div class="user-profile border-top px-3 py-3">
             <a asp-controller="Employee" asp-action="Profile" class="d-flex align-items-center text-decoration-none mb-3">
                 <div class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
@@ -86,7 +98,7 @@
                 </div>
                 <div class="profile-info">
                     <div class="profile-name fw-semibold">
-                        @User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+                        @DisplayName()
                     </div>
                     <small class="text-muted">Participant</small>
                 </div>
@@ -98,10 +110,10 @@
                 </button>
             </form>
         </div>
+
     </div>
 </div>
 
-<!-- Mobile Toggle -->
 <button class="sidebar-toggle d-lg-none position-fixed top-0 start-0 m-2 btn btn-light border" onclick="toggleSidebar()">
     <i class="bi bi-list fs-5"></i>
 </button>
