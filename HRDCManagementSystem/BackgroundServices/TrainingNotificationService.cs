@@ -1,4 +1,5 @@
 using HRDCManagementSystem.Data;
+using HRDCManagementSystem.Helpers;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
@@ -227,83 +228,23 @@ namespace HRDCManagementSystem.BackgroundServices
 
         private string CreateTrainingNotificationEmailBody(Employee employee, TrainingProgram training, string triggerType)
         {
-            var actionText = triggerType switch
-            {
-                "updated" => "has been updated",
-                "reminder" => "is coming up soon",
-                _ => "has been added"
-            };
-
-            var headerColor = triggerType switch
-            {
-                "updated" => "#ffc107",
-                "reminder" => "#fd7e14",
-                _ => "#667eea"
-            };
-
-            var iconEmoji = triggerType switch
-            {
-                "updated" => "??",
-                "reminder" => "?",
-                _ => "??"
-            };
-
-            return $@"
-                <html>
-                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                        <div style='background: linear-gradient(135deg, {headerColor} 0%, {headerColor}99 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;'>
-                            <h1 style='margin: 0; font-size: 28px;'>{iconEmoji} Training {triggerType.ToUpper()}!</h1>
-                        </div>
-                        
-                        <div style='background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e9ecef;'>
-                            <p style='font-size: 16px; margin-bottom: 20px;'>Dear <strong>{employee.FirstName} {employee.LastName}</strong>,</p>
-                            
-                            <p style='font-size: 16px; margin-bottom: 25px;'>A training program that matches your profile {actionText}:</p>
-                            
-                            <div style='background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {headerColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-                                <h2 style='color: {headerColor}; margin-top: 0; font-size: 22px;'>{training.Title}</h2>
-                                
-                                <div style='margin: 15px 0;'>
-                                    <p style='margin: 8px 0;'><strong>?? Duration:</strong> {training.StartDate:dd MMMM yyyy} - {training.EndDate:dd MMMM yyyy}</p>
-                                    <p style='margin: 8px 0;'><strong>? Time:</strong> {training.fromTime:HH:mm} - {training.toTime:HH:mm}</p>
-                                    <p style='margin: 8px 0;'><strong>????? Trainer:</strong> {training.TrainerName}</p>
-                                    {(string.IsNullOrEmpty(training.Venue) ? "" : $"<p style='margin: 8px 0;'><strong>?? Venue:</strong> {training.Venue}</p>")}
-                                    <p style='margin: 8px 0;'><strong>?? Eligibility:</strong> {training.EligibilityType ?? "General"}</p>
-                                    <p style='margin: 8px 0;'><strong>?? Capacity:</strong> {training.Capacity} participants</p>
-                                    <p style='margin: 8px 0;'><strong>?? Mode:</strong> {training.Mode}</p>
-                                </div>
-                            </div>
-                            
-                            <div style='text-align: center; margin: 30px 0;'>
-                                <p style='font-size: 16px; color: #28a745; font-weight: bold;'>?? {(triggerType == "created" ? "Registration is now open!" : triggerType == "reminder" ? "Don't forget to attend!" : "Check the updated details!")}</p>
-                                <p style='font-size: 14px; color: #6c757d;'>Log in to the HRDC portal for more information.</p>
-                            </div>
-                            
-                            <div style='background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #b3d7ff;'>
-                                <p style='margin: 0; font-size: 14px; color: #0056b3;'>
-                                    <strong>?? Note:</strong> This training has been recommended for you based on your role as <strong>{employee.Designation}</strong> in the <strong>{employee.Department}</strong> department.
-                                </p>
-                            </div>
-                            
-                            <p style='font-size: 16px; margin: 25px 0 10px 0;'>Don't miss this opportunity to enhance your skills!</p>
-                            
-                            <p style='font-size: 16px; margin-bottom: 25px;'>
-                                Best regards,<br>
-                                <strong>Human Resource Development Centre (HRDC)</strong><br>
-                                <span style='color: #6c757d;'>CHARUSAT University</span>
-                            </p>
-                            
-                            <hr style='border: none; border-top: 1px solid #e9ecef; margin: 30px 0;'>
-                            
-                            <p style='font-size: 12px; color: #6c757d; text-align: center; margin: 0;'>
-                                This is an automated notification. Please do not reply to this email.<br>
-                                For any queries, please contact the HRDC administration.
-                            </p>
-                        </div>
-                    </div>
-                </body>
-                </html>";
+            return EmailTemplates.GetTrainingNotificationEmailTemplate(
+                firstName: employee.FirstName,
+                lastName: employee.LastName,
+                trainingTitle: training.Title,
+                startDate: training.StartDate.ToDateTime(training.fromTime),
+                endDate: training.EndDate.ToDateTime(training.toTime),
+                trainerName: training.TrainerName,
+                venue: training.Venue ?? "Online/TBD",
+                eligibilityType: training.EligibilityType ?? "General",
+                capacity: training.Capacity,
+                mode: training.Mode,
+                department: employee.Department,
+                designation: employee.Designation,
+                fromTime: training.fromTime,
+                toTime: training.toTime,
+                triggerType: triggerType
+            );
         }
     }
 
