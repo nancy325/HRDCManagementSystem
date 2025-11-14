@@ -1,4 +1,5 @@
 using HRDCManagementSystem.Data;
+using HRDCManagementSystem.Helpers;
 using HRDCManagementSystem.Models.Entities;
 using HRDCManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
@@ -302,12 +303,65 @@ namespace HRDCManagementSystem.Utilities
                 return;
             }
 
-            // We only send to the specific employee
-            await notificationService.CreateNotificationAsync(
-                registration.EmployeeSys.UserSysID,
-                "Employee",
-                $"Training Registration {status}",
-                $"Your registration for '{registration.TrainingSys.Title}' has been {status.ToLower()}.");
+            try
+            {
+                // Create notification
+                await notificationService.CreateNotificationAsync(
+                    registration.EmployeeSys.UserSysID,
+                    "Employee",
+                    $"Training Registration {status}",
+                    $"Your registration for '{registration.TrainingSys.Title}' has been {status.ToLower()}.");
+
+                // Send email if email service is available and user has email
+                if (emailService != null && 
+                    registration.EmployeeSys.UserSys?.Email != null &&
+                    !string.IsNullOrEmpty(registration.EmployeeSys.UserSys.Email))
+                {
+                    bool isApproved = status.Equals("Approved", StringComparison.OrdinalIgnoreCase);
+                    
+                    string subject = $"Training Registration {status} - {registration.TrainingSys.Title}";
+                    
+                    string emailBody = EmailTemplates.GetTrainingApprovalEmailTemplate(
+                        firstName: registration.EmployeeSys.FirstName,
+                        lastName: registration.EmployeeSys.LastName,
+                        trainingTitle: registration.TrainingSys.Title,
+                        startDate: registration.TrainingSys.StartDate.ToDateTime(registration.TrainingSys.fromTime),
+                        endDate: registration.TrainingSys.EndDate.ToDateTime(registration.TrainingSys.toTime),
+                        trainerName: registration.TrainingSys.TrainerName,
+                        venue: registration.TrainingSys.Venue ?? "Online/TBD",
+                        mode: registration.TrainingSys.Mode,
+                        isApproved: isApproved
+                    );
+
+                    await emailService.SendEmailAsync(
+                        registration.EmployeeSys.UserSys.Email,
+                        subject,
+                        emailBody,
+                        true // isHtml
+                    );
+
+                    logger?.LogInformation(
+                        "Training registration {Status} email sent to {Email} for training '{Title}'",
+                        status,
+                        registration.EmployeeSys.UserSys.Email,
+                        registration.TrainingSys.Title
+                    );
+                }
+                else
+                {
+                    logger?.LogWarning(
+                        "Email service not available or employee email not found for registration {RegistrationId}",
+                        registration.TrainingRegSysID
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, 
+                    "Error sending registration status change notification/email for registration {RegistrationId}, Status: {Status}",
+                    registration.TrainingRegSysID, status);
+                throw;
+            }
         }
 
         /// <summary>

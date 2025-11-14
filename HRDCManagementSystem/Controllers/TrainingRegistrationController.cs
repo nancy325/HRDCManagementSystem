@@ -358,6 +358,145 @@ namespace HRDCManagementSystem.Controllers
                 return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
             }
         }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Approve(int id, int? trainingId, string startDate, string endDate, string status)
+        {
+            try
+            {
+                var registration = await _context.TrainingRegistrations
+                    .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
+                    .Include(tr => tr.TrainingSys)
+                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == id);
+
+                if (registration == null)
+                {
+                    TempData["ErrorMessage"] = "Registration not found.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                // Check if training is completed
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                var isTrainingCompleted = registration.TrainingSys.EndDate < currentDate;
+
+                if (isTrainingCompleted)
+                {
+                    TempData["ErrorMessage"] = "Cannot approve registration for a completed training.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                // Check if status is already set
+                if (registration.Confirmation != null)
+                {
+                    TempData["ErrorMessage"] = "Registration status has already been set.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                registration.Confirmation = true;
+                await _context.SaveChangesAsync();
+
+                // Send notification and email to employee
+                try
+                {
+                    await NotificationUtility.NotifyRegistrationStatusChange(
+                        _notificationService,
+                        registration,
+                        "Approved",
+                        _emailService,
+                        _logger);
+
+                    _logger.LogInformation("Registration approved and notification sent to employee {EmployeeId} for training '{TrainingTitle}'",
+                        registration.EmployeeSysID, registration.TrainingSys.Title);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send notification for registration approval. Registration ID: {RegistrationId}",
+                        registration.TrainingRegSysID);
+                    // Continue anyway, this shouldn't block the approval process
+                }
+
+                TempData["SuccessMessage"] = "Registration approved successfully and notification sent to the employee.";
+                return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving registration {RegistrationId}", id);
+                TempData["ErrorMessage"] = $"An error occurred while approving the registration: {ex.Message}";
+                return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+            }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Reject(int id, int? trainingId, string startDate, string endDate, string status)
+        {
+            try
+            {
+                var registration = await _context.TrainingRegistrations
+                    .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
+                    .Include(tr => tr.TrainingSys)
+                    .FirstOrDefaultAsync(tr => tr.TrainingRegSysID == id);
+
+                if (registration == null)
+                {
+                    TempData["ErrorMessage"] = "Registration not found.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                // Check if training is completed
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                var isTrainingCompleted = registration.TrainingSys.EndDate < currentDate;
+
+                if (isTrainingCompleted)
+                {
+                    TempData["ErrorMessage"] = "Cannot reject registration for a completed training.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                // Check if status is already set
+                if (registration.Confirmation != null)
+                {
+                    TempData["ErrorMessage"] = "Registration status has already been set.";
+                    return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+                }
+
+                registration.Confirmation = false;
+                await _context.SaveChangesAsync();
+
+                // Send notification and email to employee
+                try
+                {
+                    await NotificationUtility.NotifyRegistrationStatusChange(
+                        _notificationService,
+                        registration,
+                        "Rejected",
+                        _emailService,
+                        _logger);
+
+                    _logger.LogInformation("Registration rejected and notification sent to employee {EmployeeId} for training '{TrainingTitle}'",
+                        registration.EmployeeSysID, registration.TrainingSys.Title);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send notification for registration rejection. Registration ID: {RegistrationId}",
+                        registration.TrainingRegSysID);
+                    // Continue anyway, this shouldn't block the rejection process
+                }
+
+                TempData["SuccessMessage"] = "Registration rejected successfully and notification sent to the employee.";
+                return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error rejecting registration {RegistrationId}", id);
+                TempData["ErrorMessage"] = $"An error occurred while rejecting the registration: {ex.Message}";
+                return RedirectToAction("Registrations", "Admin", new { trainingId, startDate, endDate, status });
+            }
+        }
+
     }
 
     public class ApprovalRequest

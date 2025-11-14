@@ -34,12 +34,15 @@
                     </a>
                 </div>
                 <div class="notification-icon">
-                    <button class="btn btn-icon position-relative notification-btn">
+                    <a href="@Url.Action("Index", "Notification")" class="btn btn-icon position-relative notification-btn">
                         <i class="bi bi-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            @Model.PendingFeedbackCount
-                        </span>
-                    </button>
+                        @if (Model.UnreadNotificationCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @Model.UnreadNotificationCount
+                            </span>
+                        }
+                    </a>
                 </div>
                 @* <div class="add-employee-btn">
                     <button class="btn btn-primary">
@@ -299,11 +302,6 @@
     // Add Employee button interaction
     document.querySelector('.add-employee-btn button').addEventListener('click', function() {
         window.location.href = '@Url.Action("Create", "Employee")';
-    });
-
-    // Notification bell click to redirect to notification page
-    document.querySelector('.notification-btn').addEventListener('click', function() {
-        window.location.href = '@Url.Action("Index", "Notification")';
     });
 
     // REMOVE the logic that disables and prevents switching to the completed tab.
