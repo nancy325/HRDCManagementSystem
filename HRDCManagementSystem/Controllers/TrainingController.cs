@@ -277,7 +277,7 @@ namespace HRDCManagementSystem.Controllers
                         _logger.LogInformation("Eligibility type changed for training {TrainingTitle}: '{OldType}' -> '{NewType}'",
                             entity.Title, originalEligibilityType ?? "All", entity.EligibilityType ?? "All");
 
-                        await NotificationUtility.NotifyNewTraining(
+                        await NotificationUtility.NotifyTrainingUpdated(
                             _notificationService,
                             entity,
                             _context,

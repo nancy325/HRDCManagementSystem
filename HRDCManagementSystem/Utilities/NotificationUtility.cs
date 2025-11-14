@@ -228,62 +228,23 @@ namespace HRDCManagementSystem.Utilities
         /// </summary>
         private static string CreateTrainingNotificationEmailBody(Employee employee, TrainingProgram training)
         {
-            return $@"
-                <html>
-                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;'>
-                            <h1 style='margin: 0; font-size: 28px;'>?? New Training Available!</h1>
-                        </div>
-                        
-                        <div style='background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e9ecef;'>
-                            <p style='font-size: 16px; margin-bottom: 20px;'>Dear <strong>{employee.FirstName} {employee.LastName}</strong>,</p>
-                            
-                            <p style='font-size: 16px; margin-bottom: 25px;'>We're excited to announce a new training program that matches your profile:</p>
-                            
-                            <div style='background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-                                <h2 style='color: #667eea; margin-top: 0; font-size: 22px;'>{training.Title}</h2>
-                                
-                                <div style='margin: 15px 0;'>
-                                    <p style='margin: 8px 0;'><strong>?? Duration:</strong> {training.StartDate:dd MMMM yyyy} - {training.EndDate:dd MMMM yyyy}</p>
-                                    <p style='margin: 8px 0;'><strong>? Time:</strong> {training.fromTime:HH:mm} - {training.toTime:HH:mm}</p>
-                                    <p style='margin: 8px 0;'><strong>????? Trainer:</strong> {training.TrainerName}</p>
-                                    {(string.IsNullOrEmpty(training.Venue) ? "" : $"<p style='margin: 8px 0;'><strong>?? Venue:</strong> {training.Venue}</p>")}
-                                    <p style='margin: 8px 0;'><strong>?? Eligibility:</strong> {training.EligibilityType ?? "General"}</p>
-                                    <p style='margin: 8px 0;'><strong>?? Capacity:</strong> {training.Capacity} participants</p>
-                                    <p style='margin: 8px 0;'><strong>?? Mode:</strong> {training.Mode}</p>
-                                </div>
-                            </div>
-                            
-                            <div style='text-align: center; margin: 30px 0;'>
-                                <p style='font-size: 16px; color: #28a745; font-weight: bold;'>?? Registration is now open!</p>
-                                <p style='font-size: 14px; color: #6c757d;'>Log in to the HRDC portal to register for this training.</p>
-                            </div>
-                            
-                            <div style='background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #b3d7ff;'>
-                                <p style='margin: 0; font-size: 14px; color: #0056b3;'>
-                                    <strong>?? Note:</strong> This training has been recommended for you based on your role as <strong>{employee.Designation}</strong> in the <strong>{employee.Department}</strong> department.
-                                </p>
-                            </div>
-                            
-                            <p style='font-size: 16px; margin: 25px 0 10px 0;'>Don't miss this opportunity to enhance your skills!</p>
-                            
-                            <p style='font-size: 16px; margin-bottom: 25px;'>
-                                Best regards,<br>
-                                <strong>Human Resource Development Centre (HRDC)</strong><br>
-                                <span style='color: #6c757d;'>CHARUSAT University</span>
-                            </p>
-                            
-                            <hr style='border: none; border-top: 1px solid #e9ecef; margin: 30px 0;'>
-                            
-                            <p style='font-size: 12px; color: #6c757d; text-align: center; margin: 0;'>
-                                This is an automated notification. Please do not reply to this email.<br>
-                                For any queries, please contact the HRDC administration.
-                            </p>
-                        </div>
-                    </div>
-                </body>
-                </html>";
+            return EmailTemplates.GetTrainingNotificationEmailTemplate(
+                firstName: employee.FirstName,
+                lastName: employee.LastName,
+                trainingTitle: training.Title,
+                startDate: training.StartDate.ToDateTime(training.fromTime),
+                endDate: training.EndDate.ToDateTime(training.toTime),
+                trainerName: training.TrainerName,
+                venue: training.Venue ?? "Online/TBD",
+                eligibilityType: training.EligibilityType ?? "General",
+                capacity: training.Capacity,
+                mode: training.Mode,
+                department: employee.Department,
+                designation: employee.Designation,
+                fromTime: training.fromTime,
+                toTime: training.toTime,
+                triggerType: "created"
+            );
         }
 
         /// <summary>
@@ -435,6 +396,155 @@ namespace HRDCManagementSystem.Utilities
                 "Employee",
                 "Feedback Request",
                 $"Please provide your feedback for the training '{registration.TrainingSys.Title}' that you attended.");
+        }
+
+        /// <summary>
+        /// Create notification and send email for when a training is updated - sends only to applicable employees
+        /// </summary>
+        public static async Task NotifyTrainingUpdated(
+            INotificationService notificationService,
+            TrainingProgram training,
+            HRDCContext context = null,
+            IEmailService emailService = null,
+            ILogger logger = null)
+        {
+            if (training == null || string.IsNullOrEmpty(training.Title))
+            {
+                return;
+            }
+
+            try
+            {
+                // Always notify admins about training updates
+                await notificationService.CreateNotificationAsync(
+                    null,
+                    "Admin",
+                    "Training Updated",
+                    $"The training program '{training.Title}' has been updated.");
+
+                // If we have context and email service, send targeted notifications and emails
+                if (context != null && emailService != null)
+                {
+                    var eligibleEmployees = await GetEligibleEmployees(context, training, logger);
+
+                    if (eligibleEmployees.Any())
+                    {
+                        logger?.LogInformation("Found {Count} eligible employees for updated training '{Title}' with eligibility type '{EligibilityType}'",
+                            eligibleEmployees.Count, training.Title, training.EligibilityType ?? "All");
+
+                        // Send individual notifications to each eligible employee
+                        var notificationTasks = eligibleEmployees.Select(async employee =>
+                        {
+                            try
+                            {
+                                await notificationService.CreateNotificationAsync(
+                                    employee.UserSysID,
+                                    "Employee",
+                                    "Training Updated",
+                                    $"The training program '{training.Title}' that matches your profile has been updated. Please check the latest details.");
+                            }
+                            catch (Exception ex)
+                            {
+                                logger?.LogError(ex, "Failed to create notification for employee {EmployeeId}", employee.EmployeeSysID);
+                            }
+                        });
+
+                        await Task.WhenAll(notificationTasks);
+
+                        // Send targeted update emails to eligible employees
+                        await SendTrainingUpdateNotificationEmails(emailService, eligibleEmployees, training, logger);
+                    }
+                    else
+                    {
+                        logger?.LogWarning("No eligible employees found for updated training '{Title}' with eligibility type '{EligibilityType}'",
+                            training.Title, training.EligibilityType ?? "All");
+                    }
+                }
+                else
+                {
+                    // Fallback: create general notification for all employees if context is not available
+                    await notificationService.CreateNotificationAsync(
+                        null,
+                        "Employee",
+                        "Training Updated",
+                        $"The training program '{training.Title}' has been updated.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error in NotifyTrainingUpdated for training '{Title}'", training.Title);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Send email notifications to eligible employees about training updates
+        /// </summary>
+        private static async Task SendTrainingUpdateNotificationEmails(
+            IEmailService emailService,
+            List<Employee> eligibleEmployees,
+            TrainingProgram training,
+            ILogger logger = null)
+        {
+            try
+            {
+                // Prepare email content
+                string subject = $"Training Updated: {training.Title}";
+
+                // Create email tasks for all eligible employees
+                var emailTasks = eligibleEmployees
+                    .Where(e => e.UserSys != null && !string.IsNullOrEmpty(e.UserSys.Email))
+                    .Select(async employee =>
+                    {
+                        try
+                        {
+                            string emailBody = CreateTrainingUpdateNotificationEmailBody(employee, training);
+                            await emailService.SendEmailAsync(employee.UserSys.Email, subject, emailBody, true);
+
+                            logger?.LogInformation("Training update notification email sent to {Email} for training '{Title}'",
+                                employee.UserSys.Email, training.Title);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogError(ex, "Failed to send training update notification email to {Email}",
+                                employee.UserSys?.Email ?? "unknown");
+                        }
+                    });
+
+                // Send all emails concurrently
+                await Task.WhenAll(emailTasks);
+
+                logger?.LogInformation("Completed sending training update notification emails to {Count} employees for training '{Title}'",
+                    eligibleEmployees.Count, training.Title);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error sending training update notification emails for training '{Title}'", training.Title);
+            }
+        }
+
+        /// <summary>
+        /// Create HTML email body for training update notification
+        /// </summary>
+        private static string CreateTrainingUpdateNotificationEmailBody(Employee employee, TrainingProgram training)
+        {
+            return EmailTemplates.GetTrainingNotificationEmailTemplate(
+                firstName: employee.FirstName,
+                lastName: employee.LastName,
+                trainingTitle: training.Title,
+                startDate: training.StartDate.ToDateTime(training.fromTime),
+                endDate: training.EndDate.ToDateTime(training.toTime),
+                trainerName: training.TrainerName,
+                venue: training.Venue ?? "Online/TBD",
+                eligibilityType: training.EligibilityType ?? "General",
+                capacity: training.Capacity,
+                mode: training.Mode,
+                department: employee.Department,
+                designation: employee.Designation,
+                fromTime: training.fromTime,
+                toTime: training.toTime,
+                triggerType: "updated"
+            );
         }
     }
 }
