@@ -6,7 +6,7 @@
 
 <div class="container mt-4">
     <h2 class="mb-4"><i class="bi bi-question-circle me-2"></i>Help & Support Queries</h2>
-    
+
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -14,7 +14,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    
+
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -65,6 +65,7 @@
             <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Query List</h5>
             <span class="badge bg-light text-primary">@Model.Count Queries</span>
         </div>
+
         <div class="card-body p-0">
             @if (!Model.Any())
             {
@@ -118,98 +119,13 @@
                                         }
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#queryModal-@query.HelpQueryID">
+                                        <button type="button" class="btn btn-sm btn-info"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#queryModal-@query.HelpQueryID">
                                             <i class="bi bi-eye"></i> View
                                         </button>
                                     </td>
                                 </tr>
-                                
-                                <!-- Modal for each query -->
-                                <div class="modal fade" id="queryModal-@query.HelpQueryID" tabindex="-1" aria-labelledby="queryModalLabel-@query.HelpQueryID" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="queryModalLabel-@query.HelpQueryID">Query Details</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="row mb-4">
-                                                    <div class="col-md-6">
-                                                        <h6>Submitted By</h6>
-                                                        <p class="text-primary mb-0"><strong>@query.Name (@query.Email)</strong></p>
-                                                        <p class="text-secondary">Employee: @query.EmployeeName</p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <h6>Query Information</h6>
-                                                        <p><strong>Type:</strong> <span class="badge bg-info">@query.QueryType</span></p>
-                                                        <p><strong>Submitted:</strong> @query.CreateDateTime?.ToString("dd/MM/yyyy HH:mm")</p>
-                                                    </div>
-                                                </div>
-                                                <div class="mb-4">
-                                                    <h6>Subject</h6>
-                                                    <p class="fw-bold">@query.Subject</p>
-                                                </div>
-                                                <div class="mb-4">
-                                                    <h6>Message</h6>
-                                                    <div class="p-3 border rounded bg-light">
-                                                        @query.Message
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <h6>Status</h6>
-                                                        <p>
-                                                            @switch (query.Status)
-                                                            {
-                                                                case "Open":
-                                                                    <span class="badge bg-danger">Open</span>
-                                                                    break;
-                                                                case "In Review":
-                                                                    <span class="badge bg-warning text-dark">In Review</span>
-                                                                    break;
-                                                                case "Resolved":
-                                                                    <span class="badge bg-success">Resolved</span>
-                                                                    break;
-                                                                case "Closed":
-                                                                    <span class="badge bg-secondary">Closed</span>
-                                                                    break;
-                                                                default:
-                                                                    <span class="badge bg-secondary">@query.Status</span>
-                                                                    break;
-                                                            }
-                                                            @if (query.Status == "Resolved" && query.ResolvedDate.HasValue)
-                                                            {
-                                                                <span class="ms-2 text-muted">(Resolved on @query.ResolvedDate?.ToString("dd/MM/yyyy HH:mm"))</span>
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <h6>Update Status</h6>
-                                                        <form asp-action="UpdateQueryStatus" asp-controller="Admin" method="post">
-                                                            @Html.AntiForgeryToken()
-                                                            <input type="hidden" name="id" value="@query.HelpQueryID" />
-                                                            <div class="input-group">
-                                                                <select name="status" class="form-select">
-                                                                    <option value="Open" selected="@(query.Status == "Open")">Open</option>
-                                                                    <option value="In Review" selected="@(query.Status == "In Review")">In Review</option>
-                                                                    <option value="Resolved" selected="@(query.Status == "Resolved")">Resolved</option>
-                                                                    <option value="Closed" selected="@(query.Status == "Closed")">Closed</option>
-                                                                </select>
-                                                                <button class="btn btn-primary" type="submit">Update</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                <a href="mailto:@query.Email" class="btn btn-primary">
-                                                    <i class="bi bi-envelope"></i> Reply via Email
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             }
                         </tbody>
                     </table>
@@ -218,6 +134,106 @@
         </div>
     </div>
 </div>
+
+<!-- ALL MODALS MOVED HERE OUTSIDE THE TABLE -->
+@foreach (var query in Model)
+{
+    <div class="modal fade" id="queryModal-@query.HelpQueryID" tabindex="-1"
+         aria-labelledby="queryModalLabel-@query.HelpQueryID" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="queryModalLabel-@query.HelpQueryID">Query Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Submitted By</h6>
+                            <p class="text-primary mb-0"><strong>@query.Name (@query.Email)</strong></p>
+                            <p class="text-secondary">Employee: @query.EmployeeName</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Query Information</h6>
+                            <p><strong>Type:</strong> <span class="badge bg-info">@query.QueryType</span></p>
+                            <p><strong>Submitted:</strong> @query.CreateDateTime?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Subject</h6>
+                        <p class="fw-bold">@query.Subject</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Message</h6>
+                        <div class="p-3 border rounded bg-light">
+                            @query.Message
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Status</h6>
+                            <p>
+                                @switch (query.Status)
+                                {
+                                    case "Open":
+                                        <span class="badge bg-danger">Open</span>
+                                        break;
+                                    case "In Review":
+                                        <span class="badge bg-warning text-dark">In Review</span>
+                                        break;
+                                    case "Resolved":
+                                        <span class="badge bg-success">Resolved</span>
+                                        break;
+                                    case "Closed":
+                                        <span class="badge bg-secondary">Closed</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@query.Status</span>
+                                        break;
+                                }
+
+                                @if (query.Status == "Resolved" && query.ResolvedDate.HasValue)
+                                {
+                                    <span class="ms-2 text-muted">(Resolved on @query.ResolvedDate?.ToString("dd/MM/yyyy HH:mm"))</span>
+                                }
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6>Update Status</h6>
+                            <form asp-action="UpdateQueryStatus" asp-controller="Admin" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@query.HelpQueryID" />
+
+                                <div class="input-group">
+                                    <select name="status" class="form-select">
+                                        <option value="Open" selected="@(query.Status == "Open")">Open</option>
+                                        <option value="In Review" selected="@(query.Status == "In Review")">In Review</option>
+                                        <option value="Resolved" selected="@(query.Status == "Resolved")">Resolved</option>
+                                        <option value="Closed" selected="@(query.Status == "Closed")">Closed</option>
+                                    </select>
+                                    <button class="btn btn-primary" type="submit">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="mailto:@query.Email" class="btn btn-primary">
+                        <i class="bi bi-envelope"></i> Reply via Email
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <style>
     .table th, .table td {

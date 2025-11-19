@@ -154,16 +154,6 @@
                     }
                 </a>
 
-                <!-- Notifications -->
-                <a href="@Url.Action("Index", "Notification")" class="btn-icon position-relative">
-                    <i class="bi bi-bell fs-5"></i>
-                    @if (Model.UnreadNotificationCount > 0)
-                    {
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            @Model.UnreadNotificationCount
-                        </span>
-                    }
-                </a>
 
                 <!-- Add Employee -->
                 <button class="btn btn-primary rounded-circle p-2" style="width:48px;height:48px;">
