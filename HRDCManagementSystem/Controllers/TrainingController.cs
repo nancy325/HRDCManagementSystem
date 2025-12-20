@@ -238,7 +238,15 @@ namespace HRDCManagementSystem.Controllers
                     return NotFound();
                 }
 
-                // Store original eligibility type to check if it changed
+                // Store original values to detect changes
+                var originalTitle = entity.Title;
+                var originalTrainerName = entity.TrainerName;
+                var originalStartDate = entity.StartDate;
+                var originalEndDate = entity.EndDate;
+                var originalFromTime = entity.fromTime;
+                var originalToTime = entity.toTime;
+                var originalVenue = entity.Venue;
+                var originalMode = entity.Mode;
                 var originalEligibilityType = entity.EligibilityType;
 
                 // Map non-file properties
@@ -269,14 +277,25 @@ namespace HRDCManagementSystem.Controllers
                 _context.Update(entity);
                 await _context.SaveChangesAsync();
 
-                // If eligibility type changed, send notifications to newly eligible employees
-                if (originalEligibilityType != entity.EligibilityType)
+                // Check if any significant training details have changed
+                bool hasSignificantChanges = 
+                    originalTitle != entity.Title ||
+                    originalTrainerName != entity.TrainerName ||
+                    originalStartDate != entity.StartDate ||
+                    originalEndDate != entity.EndDate ||
+                    originalFromTime != entity.fromTime ||
+                    originalToTime != entity.toTime ||
+                    originalVenue != entity.Venue ||
+                    originalMode != entity.Mode ||
+                    originalEligibilityType != entity.EligibilityType;
+
+                if (hasSignificantChanges)
                 {
                     try
                     {
-                        _logger.LogInformation("Eligibility type changed for training {TrainingTitle}: '{OldType}' -> '{NewType}'",
-                            entity.Title, originalEligibilityType ?? "All", entity.EligibilityType ?? "All");
+                        _logger.LogInformation("Training details changed for '{TrainingTitle}'. Sending update notifications to eligible employees.", entity.Title);
 
+                        // Send update notifications to all eligible employees
                         await NotificationUtility.NotifyTrainingUpdated(
                             _notificationService,
                             entity,
@@ -284,7 +303,10 @@ namespace HRDCManagementSystem.Controllers
                             _emailService,
                             _logger);
 
-                        TempData["Success"] = "Training updated successfully and notifications sent to newly eligible employees.";
+                        // Also send notifications to already registered employees about the changes
+                        await NotifyRegisteredEmployeesOfUpdates(entity);
+
+                        TempData["Success"] = "Training updated successfully and notifications sent to eligible and registered employees.";
                     }
                     catch (Exception ex)
                     {
@@ -523,6 +545,129 @@ namespace HRDCManagementSystem.Controllers
             entity.TestInstructions = vm.TestInstructions;
             entity.TestAvailableFrom = vm.TestAvailableFrom;
             entity.TestAvailableUntil = vm.TestAvailableUntil;
+        }
+
+        /// <summary>
+        /// Send notifications to employees who are already registered for the training about updates
+        /// </summary>
+        private async Task NotifyRegisteredEmployeesOfUpdates(TrainingProgram training)
+        {
+            try
+            {
+                // Get all employees who are registered for this training
+                var registeredEmployees = await _context.TrainingRegistrations
+                    .Where(tr => tr.TrainingSysID == training.TrainingSysID && tr.RecStatus == "active")
+                    .Include(tr => tr.EmployeeSys)
+                        .ThenInclude(e => e.UserSys)
+                    .Select(tr => tr.EmployeeSys)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (!registeredEmployees.Any())
+                {
+                    _logger.LogInformation("No registered employees found for training '{TrainingTitle}' to notify about updates", training.Title);
+                    return;
+                }
+
+                _logger.LogInformation("Sending update notifications to {Count} registered employees for training '{TrainingTitle}'", 
+                    registeredEmployees.Count, training.Title);
+
+                // Send notifications to registered employees
+                var notificationTasks = registeredEmployees
+                    .Where(emp => emp?.UserSysID != null)
+                    .Select(async employee =>
+                    {
+                        try
+                        {
+                            await _notificationService.CreateNotificationAsync(
+                                employee.UserSysID,
+                                "Employee",
+                                "Training Details Updated",
+                                $"The details for training '{training.Title}' that you are registered for have been updated. Please review the latest information.");
+                            
+                            _logger.LogDebug("Update notification sent to registered employee {EmployeeId} for training '{TrainingTitle}'",
+                                employee.EmployeeSysID, training.Title);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send update notification to registered employee {EmployeeId} for training '{TrainingTitle}'",
+                                employee.EmployeeSysID, training.Title);
+                        }
+                    });
+
+                await Task.WhenAll(notificationTasks);
+
+                // Send update emails to registered employees
+                var emailTasks = registeredEmployees
+                    .Where(emp => emp?.UserSys != null && !string.IsNullOrEmpty(emp.UserSys.Email))
+                    .Select(async employee =>
+                    {
+                        try
+                        {
+                            var subject = $"Training Update: {training.Title}";
+                            var emailBody = CreateTrainingUpdateEmailForRegisteredEmployee(employee, training);
+                            
+                            await _emailService.SendEmailAsync(employee.UserSys.Email, subject, emailBody, true);
+                            
+                            _logger.LogInformation("Training update email sent to registered employee {Email} for training '{TrainingTitle}'",
+                                employee.UserSys.Email, training.Title);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send training update email to registered employee {Email} for training '{TrainingTitle}'",
+                                employee.UserSys?.Email ?? "unknown", training.Title);
+                        }
+                    });
+
+                await Task.WhenAll(emailTasks);
+
+                _logger.LogInformation("Completed sending update notifications and emails to registered employees for training '{TrainingTitle}'", training.Title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error notifying registered employees about updates for training '{TrainingTitle}'", training.Title);
+            }
+        }
+
+        /// <summary>
+        /// Create email body for training update notifications to registered employees
+        /// </summary>
+        private string CreateTrainingUpdateEmailForRegisteredEmployee(Employee employee, TrainingProgram training)
+        {
+            return $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                        <h2 style='color: #007bff;'>Training Details Updated</h2>
+                        <p>Dear {employee.FirstName} {employee.LastName},</p>
+                        <p>We want to inform you that the details for the training program you are registered for have been updated.</p>
+                        
+                        <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;'>
+                            <h3 style='margin-top: 0; color: #007bff;'>Updated Training Details</h3>
+                            <p style='margin: 5px 0;'><strong>Training Title:</strong> {training.Title}</p>
+                            <p style='margin: 5px 0;'><strong>Trainer:</strong> {training.TrainerName}</p>
+                            <p style='margin: 5px 0;'><strong>Start Date:</strong> {training.StartDate:dd MMM yyyy}</p>
+                            <p style='margin: 5px 0;'><strong>End Date:</strong> {training.EndDate:dd MMM yyyy}</p>
+                            <p style='margin: 5px 0;'><strong>Time:</strong> {training.fromTime:HH:mm} - {training.toTime:HH:mm}</p>
+                            <p style='margin: 5px 0;'><strong>Venue:</strong> {training.Venue ?? "Online/TBD"}</p>
+                            <p style='margin: 5px 0;'><strong>Mode:</strong> {training.Mode}</p>
+                        </div>
+                        
+                        <div style='background-color: #fff3cd; padding: 15px; border: 1px solid #ffeaa7; border-radius: 5px; margin: 20px 0;'>
+                            <p style='margin: 0; color: #856404;'><strong>Action Required:</strong> Please review these updated details and make note of any changes that might affect your schedule or preparation.</p>
+                        </div>
+                        
+                        <p>If you have any questions or concerns about these changes, please contact the HRDC team immediately.</p>
+                        <p>Thank you for your attention to this update.</p>
+                        
+                        <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;'>
+                        <p style='color: #6c757d; font-size: 12px;'>
+                            This is an automated message from HRDC Management System.<br>
+                            Your Registration Status: <strong>Confirmed</strong>
+                        </p>
+                    </div>
+                </body>
+                </html>";
         }
     }
 }
