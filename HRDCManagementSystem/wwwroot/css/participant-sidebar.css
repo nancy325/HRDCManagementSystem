@@ -14,11 +14,11 @@
     --badge-default-bg: #e9ecef;
     --badge-default-color: #495057;
     --logo-size: 180px;
-    --logout-btn-bg: #fff;
-    --logout-btn-color: #dc3545;
-    --logout-btn-border: #f5c2c7;
-    --logout-btn-hover-bg: #dc3545;
-    --logout-btn-hover-color: #fff;
+    /* --logout-btn-bg: #fff; */
+    /* --logout-btn-color: #dc3545; */
+    /* --logout-btn-border: #f5c2c7; */
+    /* --logout-btn-hover-bg: #dc3545; */
+    /* --logout-btn-hover-color: #fff; */
 }
 
 body {
@@ -32,16 +32,13 @@ body {
 
 .participant-sidebar {
     background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--sidebar-border);
     width: 280px;
-    height: 100vh;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
     overflow-y: auto;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    height: 100%;
 }
 
 .sidebar-content {
@@ -192,36 +189,6 @@ body {
     color: #6c757d;
 }
 
-/* Logout Button - Improved Styling */
-.logout-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background-color: var(--logout-btn-bg);
-    border: 1px solid var(--logout-btn-border);
-    border-radius: 8px;
-    color: var(--logout-btn-color);
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 0.5rem;
-}
-
-    .logout-btn:hover {
-        background-color: var(--logout-btn-hover-bg);
-        color: var(--logout-btn-hover-color);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .logout-btn:active {
-        transform: translateY(0);
-    }
-
 /* Sidebar Toggle Button */
 .sidebar-toggle {
     position: fixed;
@@ -276,26 +243,21 @@ body {
 
 /* Responsive Design */
 @media (max-width: 992px) {
-    body {
-        flex-direction: column;
-    }
-
     .participant-sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
-
-    .sidebar-toggle {
-        display: block;
-    }
-
-    .participant-sidebar:not(.open) {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1000;
         transform: translateX(-100%);
     }
 
     .participant-sidebar.open {
         transform: translateX(0);
+    }
+
+    .sidebar-toggle {
+        display: block;
     }
 }
 
@@ -310,8 +272,8 @@ body {
         max-height: 60px;
     }
 
-    .logout-btn {
+    /* .logout-btn {
         padding: 0.6rem 0.8rem;
         font-size: 0.9rem;
-    }
+    } */
 }

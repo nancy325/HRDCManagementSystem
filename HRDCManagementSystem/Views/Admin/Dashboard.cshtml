@@ -7,123 +7,6 @@
 
 <link href="~/css/admindashboard.css" rel="stylesheet" />
 
-<style>
-    /* --- GENERAL PAGE --- */
-    body {
-        background: #f7f9fc;
-    }
-
-    .section-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 1rem;
-    }
-
-    .card {
-        border: none;
-        border-radius: 14px;
-        box-shadow: 0 5px 18px rgba(0,0,0,0.06);
-    }
-
-    /* --- HEADER TOOLS --- */
-    .header-tools {
-        background: #fff;
-        padding: 20px 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.07);
-    }
-
-    .btn-icon {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: #f8f9fa;
-        border: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: .2s;
-    }
-
-    .btn-icon:hover {
-        background: #eef1f4;
-    }
-
-    /* --- STAT CARDS --- */
-    .stat-card {
-        background: #fff;
-        border-radius: 18px;
-        padding: 25px 20px;
-        text-align: center;
-        box-shadow: 0 5px 18px rgba(0,0,0,0.07);
-        transition: .2s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-    }
-
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.95rem;
-        margin-bottom: 4px;
-    }
-
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
-
-    /* --- TRAINING CARDS --- */
-    .training-card {
-        background: #fff;
-        padding: 20px 22px;
-        border-radius: 16px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-        border-left: 4px solid #0d6efd;
-        transition: .2s;
-    }
-
-    .training-card:hover {
-        transform: translateX(4px);
-    }
-
-    .status-badge {
-        font-size: .8rem;
-        padding: 6px 12px;
-    }
-
-    .view-all {
-        text-decoration: none;
-        color: #0d6efd;
-        font-weight: 600;
-        margin-top: 8px;
-        display: inline-block;
-    }
-
-    /* --- APPROVAL CARD --- */
-    .approval-card {
-        background: #fff;
-        padding: 20px;
-        border-radius: 16px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-        border-left: 4px solid #10b981;
-        transition: .2s;
-    }
-
-    .approval-card:hover {
-        transform: translateX(4px);
-    }
-
-    .btn-action i {
-        margin-right: 6px;
-    }
-</style>
-
 <!-- Header Tools Section -->
 <div class="header-tools container mb-4">
     <div class="row align-items-center">
@@ -172,28 +55,132 @@
     <!-- Stats -->
     <div class="row g-4 mb-4">
         <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-label">Total Employees</div>
-                <div class="stat-value">@Model.TotalEmployees.ToString("N0")</div>
-            </div>
+            <a href="/Admin/Employees" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon employees">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="stat-trend @Model.EmployeeTrend.TrendDirection">
+                            @if (Model.EmployeeTrend.TrendDirection == "up")
+                            {
+                                <i class="bi bi-arrow-up"></i>
+                            }
+                            else if (Model.EmployeeTrend.TrendDirection == "down")
+                            {
+                                <i class="bi bi-arrow-down"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-dash"></i>
+                            }
+                            <span>@(Model.EmployeeTrend.PercentageChange >= 0 ? "+" : "")@Model.EmployeeTrend.PercentageChange.ToString("F1")%</span>
+                        </div>
+                    </div>
+                    <div class="stat-label">Total Employees</div>
+                    <div class="stat-value">@Model.TotalEmployees.ToString("N0")</div>
+                </div>
+            </a>
         </div>
 
         <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-label">Active Trainings</div>
-                <div class="stat-value">@Model.ActiveTrainings</div>
-            </div>
+            <a href="/Training/TrainingIndex" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon trainings">
+                            <i class="bi bi-book-fill"></i>
+                        </div>
+                        <div class="stat-trend @Model.TrainingTrend.TrendDirection">
+                            @if (Model.TrainingTrend.TrendDirection == "up")
+                            {
+                                <i class="bi bi-arrow-up"></i>
+                            }
+                            else if (Model.TrainingTrend.TrendDirection == "down")
+                            {
+                                <i class="bi bi-arrow-down"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-dash"></i>
+                            }
+                            <span>@(Model.TrainingTrend.PercentageChange >= 0 ? "+" : "")@Model.TrainingTrend.PercentageChange.ToString("F1")%</span>
+                        </div>
+                    </div>
+                    <div class="stat-label">Active Trainings</div>
+                    <div class="stat-value">@Model.ActiveTrainings</div>
+                </div>
+            </a>
         </div>
 
         <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-label">Certificates Issued</div>
-                <div class="stat-value">@Model.CertificatesIssued.ToString("N0")</div>
-            </div>
+            <a href="/Certificate/Index" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon certificates">
+                            <i class="bi bi-award-fill"></i>
+                        </div>
+                        <div class="stat-trend @Model.CertificateTrend.TrendDirection">
+                            @if (Model.CertificateTrend.TrendDirection == "up")
+                            {
+                                <i class="bi bi-arrow-up"></i>
+                            }
+                            else if (Model.CertificateTrend.TrendDirection == "down")
+                            {
+                                <i class="bi bi-arrow-down"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-dash"></i>
+                            }
+                            <span>@(Model.CertificateTrend.PercentageChange >= 0 ? "+" : "")@Model.CertificateTrend.PercentageChange.ToString("F1")%</span>
+                        </div>
+                    </div>
+                    <div class="stat-label">Certificates Issued</div>
+                    <div class="stat-value">@Model.CertificatesIssued.ToString("N0")</div>
+                </div>
+            </a>
         </div>
     </div>
 
     <div class="row g-4">
+
+        <!-- Pending Approvals - Moved to Top -->
+        @if (Model.PendingApprovals.Count > 0)
+        {
+            <div class="col-12">
+                <div class="approval-container has-pending">
+                    <div class="card">
+                        <div class="card-body pb-3">
+                            <h2 class="section-title">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> 
+                                Pending Approvals 
+                                <span class="badge bg-danger ms-2">@Model.PendingApprovals.Count</span>
+                            </h2>
+
+                            @foreach (var approval in Model.PendingApprovals.Take(3))
+                            {
+                                <div class="approval-card" data-registration-id="@approval.TrainingRegSysID">
+                                    <h5>@approval.EmployeeName</h5>
+                                    <p class="mb-2">@approval.TrainingTitle - @approval.Department</p>
+
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-action" data-action="approve"><i class="bi bi-check-circle"></i> Approve</button>
+                                        <button class="btn btn-danger btn-action" data-action="reject"><i class="bi bi-x-circle"></i> Reject</button>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.PendingApprovals.Count > 3)
+                            {
+                                <a href="@Url.Action("PendingApprovals", "Training")" class="view-all">
+                                    View All <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
         <!-- Recent Trainings -->
         <div class="col-lg-8">
@@ -312,39 +299,13 @@
             </div>
         </div>
 
-        <!-- Pending Approvals -->
+        <!-- Sidebar Section (Help Queries, etc.) -->
         <div class="col-lg-4">
-
-            <div class="card">
-                <div class="card-body pb-3">
-                    <h2 class="section-title">Pending Approvals (@Model.PendingApprovals.Count)</h2>
-
-                    @foreach (var approval in Model.PendingApprovals.Take(2))
-                    {
-                        <div class="approval-card" data-registration-id="@approval.TrainingRegSysID">
-                            <h5>@approval.EmployeeName</h5>
-                            <p class="mb-2">@approval.TrainingTitle - @approval.Department</p>
-
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-success btn-action" data-action="approve"><i class="bi bi-check-circle"></i> Approve</button>
-                                <button class="btn btn-danger btn-action" data-action="reject"><i class="bi bi-x-circle"></i> Reject</button>
-                            </div>
-                        </div>
-                    }
-
-                    @if (Model.PendingApprovals.Count > 2)
-                    {
-                        <a href="@Url.Action("PendingApprovals", "Training")" class="view-all">
-                            View All <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    }
-                </div>
-            </div>
 
             <!-- Help Queries -->
             @if (Model.NewHelpQueriesCount > 0)
             {
-                <div class="card mt-4">
+                <div class="card">
                     <div class="card-body">
                         <h2 class="section-title">
                             <i class="bi bi-question-circle me-2"></i> New Help Queries

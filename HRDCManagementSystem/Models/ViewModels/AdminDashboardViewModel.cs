@@ -8,6 +8,11 @@
         public int CertificatesIssued { get; set; }
         public double OverallCompletionRate { get; set; }
 
+        // Trend Data
+        public TrendData EmployeeTrend { get; set; } = new();
+        public TrendData TrainingTrend { get; set; } = new();
+        public TrendData CertificateTrend { get; set; } = new();
+
         // Recent Data
         public List<TrainingProgramViewModel> UpcomingTrainings { get; set; } = new();
         public List<TrainingProgramViewModel> OngoingTrainings { get; set; } = new();
@@ -63,5 +68,11 @@
         public bool? Confirmation { get; set; }
         public DateTime RegistrationDate { get; set; }
         public string TrainingStatus { get; set; } = string.Empty;
+    }
+
+    public class TrendData
+    {
+        public double PercentageChange { get; set; }
+        public string TrendDirection { get; set; } = "neutral"; // "up", "down", "neutral"
     }
 }

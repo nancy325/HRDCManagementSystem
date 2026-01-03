@@ -32,12 +32,16 @@ namespace HRDCManagementSystem.Controllers.Admin
             var currentUserId = _currentUserService.GetCurrentUserId() ?? 0;
             var userRole = "Admin";
 
+            var totalEmployees = await _context.Employees.CountAsync(e => e.RecStatus == "active");
+            var activeTrainings = await GetOngoingTrainingsCount();
+            var certificatesIssued = await _context.Certificates.CountAsync(c => c.RecStatus == "active");
+
             var dashboard = new AdminDashboardViewModel
             {
-                TotalEmployees = await _context.Employees.CountAsync(e => e.RecStatus == "active"),
+                TotalEmployees = totalEmployees,
                 // Ongoing trainings determined by date and time
-                ActiveTrainings = await GetOngoingTrainingsCount(),
-                CertificatesIssued = await _context.Certificates.CountAsync(c => c.RecStatus == "active"),
+                ActiveTrainings = activeTrainings,
+                CertificatesIssued = certificatesIssued,
                 OverallCompletionRate = await CalculateCompletionRate(),
                 UpcomingTrainings = await GetUpcomingTrainings(),
                 OngoingTrainings = await GetOngoingTrainings(),
@@ -47,7 +51,10 @@ namespace HRDCManagementSystem.Controllers.Admin
                 UpcomingTrainingCount = await _context.TrainingPrograms.CountAsync(tp => tp.StartDate > currentDate && tp.RecStatus == "active"),
                 TotalTrainingRegistrations = await _context.TrainingRegistrations.CountAsync(tr => tr.RecStatus == "active"),
                 NewHelpQueriesCount = await _context.HelpQueries.CountAsync(hq => hq.ViewedByAdmin == false && hq.RecStatus == "active"),
-                UnreadNotificationCount = await _notificationService.GetUnreadNotificationCountAsync(currentUserId, userRole)
+                UnreadNotificationCount = await _notificationService.GetUnreadNotificationCountAsync(currentUserId, userRole),
+                EmployeeTrend = await CalculateEmployeeTrend(totalEmployees),
+                TrainingTrend = await CalculateTrainingTrend(activeTrainings),
+                CertificateTrend = await CalculateCertificateTrend()
             };
 
             return View(dashboard);
@@ -511,6 +518,100 @@ namespace HRDCManagementSystem.Controllers.Admin
                 .Where(tr => tr.RecStatus == "active" &&
                            !_context.Feedbacks.Any(f => f.TrainingRegSysID == tr.TrainingRegSysID && f.RecStatus == "active"))
                 .CountAsync();
+        }
+
+        private async Task<TrendData> CalculateEmployeeTrend(int currentCount)
+        {
+            var oneMonthAgo = DateTime.Now.AddMonths(-1);
+            var previousCount = await _context.Employees
+                .CountAsync(e => e.RecStatus == "active" && 
+                            (e.CreateDateTime == null || e.CreateDateTime <= oneMonthAgo));
+
+            return CalculateTrendPercentage(currentCount, previousCount);
+        }
+
+        private async Task<TrendData> CalculateTrainingTrend(int currentCount)
+        {
+            var now = DateTime.Now;
+            var oneMonthAgo = now.AddMonths(-1);
+            var oneMonthAgoDate = DateOnly.FromDateTime(oneMonthAgo);
+            var oneMonthAgoTime = TimeOnly.FromDateTime(oneMonthAgo);
+
+            // Get all active trainings that existed one month ago
+            var trainings = await _context.TrainingPrograms
+                .Where(tp => tp.RecStatus == "active" &&
+                            (tp.CreateDateTime == null || tp.CreateDateTime <= oneMonthAgo))
+                .ToListAsync();
+
+            // Count how many were active (ongoing) one month ago
+            var previousCount = trainings.Count(tp =>
+                tp.StartDate <= oneMonthAgoDate &&
+                (tp.EndDate > oneMonthAgoDate || (tp.EndDate == oneMonthAgoDate && tp.toTime > oneMonthAgoTime)));
+
+            return CalculateTrendPercentage(currentCount, previousCount);
+        }
+
+        private async Task<TrendData> CalculateCertificateTrend()
+        {
+            var now = DateTime.Now;
+            var oneMonthAgo = now.AddMonths(-1);
+            var twoMonthsAgo = now.AddMonths(-2);
+
+            // Certificates created in the last month
+            var currentPeriodCount = await _context.Certificates
+                .CountAsync(c => c.RecStatus == "active" &&
+                            c.CreateDateTime != null &&
+                            c.CreateDateTime >= oneMonthAgo &&
+                            c.CreateDateTime < now);
+
+            // Certificates created in the month before that
+            var previousPeriodCount = await _context.Certificates
+                .CountAsync(c => c.RecStatus == "active" &&
+                            c.CreateDateTime != null &&
+                            c.CreateDateTime >= twoMonthsAgo &&
+                            c.CreateDateTime < oneMonthAgo);
+
+            return CalculateTrendPercentage(currentPeriodCount, previousPeriodCount);
+        }
+
+        private TrendData CalculateTrendPercentage(int current, int previous)
+        {
+            var trend = new TrendData();
+
+            if (previous == 0)
+            {
+                // If no previous data, show as new/up if current > 0
+                if (current > 0)
+                {
+                    trend.TrendDirection = "up";
+                    trend.PercentageChange = 100;
+                }
+                else
+                {
+                    trend.TrendDirection = "neutral";
+                    trend.PercentageChange = 0;
+                }
+            }
+            else
+            {
+                var change = current - previous;
+                trend.PercentageChange = Math.Round((double)change / previous * 100, 1);
+
+                if (trend.PercentageChange > 0)
+                {
+                    trend.TrendDirection = "up";
+                }
+                else if (trend.PercentageChange < 0)
+                {
+                    trend.TrendDirection = "down";
+                }
+                else
+                {
+                    trend.TrendDirection = "neutral";
+                }
+            }
+
+            return trend;
         }
 
         [HttpGet]

@@ -46,18 +46,26 @@
             <!-- Notification Bell (for all logged-in users) -->
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <div class="ms-auto me-3">
-                    @await Html.PartialAsync("_NotificationBell")
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="me-3">
+                        @await Html.PartialAsync("_NotificationBell")
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="mb-0">
+                        <button type="submit" class="btn btn-outline-light btn-sm d-flex align-items-center" style="gap:0.3rem;">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="d-none d-md-inline">Logout</span>
+                        </button>
+                    </form>
                 </div>
             }
         </div>
     </header>
 
     <!-- 🧱 Layout Wrapper -->
-    <div class="d-flex flex-grow-1">
+    <div class="layout-container d-flex flex-grow-1">
 
         <!-- 🧭 Sidebar -->
-        <nav id="sidebar" class="sidebar bg-white border-end shadow-sm">
+        <nav id="sidebar" class="sidebar">
             @if (User.IsInRole("Admin"))
             {
                 @await Html.PartialAsync("_SidebarAdmin")
@@ -76,8 +84,8 @@
         </nav>
 
         <!-- 📄 Main Content -->
-        <main class="main-content flex-grow-1 p-4">
-            <div class="content-wrapper bg-white rounded shadow-sm p-4 mb-4">
+        <main class="main-content">
+            <div class="content-wrapper">
                 @RenderBody()
             </div>
         </main>

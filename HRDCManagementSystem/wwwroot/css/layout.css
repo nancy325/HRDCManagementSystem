@@ -39,6 +39,15 @@ body {
 }
 
 /* =========================
+   Layout Container
+========================= */
+.layout-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* =========================
    Header
 ========================= */
 .main-header {
@@ -80,10 +89,12 @@ body {
    Sidebar
 ========================= */
 .sidebar {
-    width: 260px;
+    flex-shrink: 0;
     background: var(--surface);
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    transition: transform var(--transition);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
     .sidebar a {
@@ -114,14 +125,16 @@ body {
 
 @media(max-width:992px) {
     .sidebar {
-        position: fixed;
-        top: 70px;
-        left: -260px;
-        height: calc(100vh - 70px);
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%);
     }
 
         .sidebar.show {
-            left: 0;
+            transform: translateX(0);
             box-shadow: 4px 0 10px rgba(0,0,0,0.1);
         }
 }
@@ -130,8 +143,11 @@ body {
    Content
 ========================= */
 .main-content {
-    flex: 1;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
     background: #f8fafc;
+    overflow-y: auto;
     padding: 2rem;
 }
 

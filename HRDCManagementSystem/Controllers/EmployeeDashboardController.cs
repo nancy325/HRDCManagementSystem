@@ -210,7 +210,7 @@ namespace HRDCManagementSystem.Controllers
                             tr.RecStatus == "active" &&
                             tr.TrainingSys.RecStatus == "active" &&
                             (tr.TrainingSys.TestAvailableFrom == null || tr.TrainingSys.TestAvailableFrom <= currentDate) &&
-                            (tr.TrainingSys.TestAvailableUntil == null || tr.TrainingSys.TestAvailableUntil >= currentDate))
+                            (tr.TrainingSys.TestAvailableUntil == null || tr.TrainingSys.TestAvailableUntil == currentDate))
                 .OrderBy(tr => tr.TrainingSys.TestAvailableFrom)
                 .Take(5)
                 .ToListAsync();

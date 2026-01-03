@@ -1,5 +1,5 @@
 ﻿@functions {
-    string IsActive(string controller, string? action = "")
+    string IsActive(string controller, string? action = null)
     {
         var routeData = ViewContext.RouteData;
         var currentController = routeData.Values["controller"]?.ToString();
@@ -9,6 +9,19 @@
         bool actionMatches = string.IsNullOrEmpty(action) || string.Equals(action, currentAction, StringComparison.OrdinalIgnoreCase);
 
         return controllerMatches && actionMatches ? "active" : "";
+    }
+
+    string IsActiveByPath(string path)
+    {
+        var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
+        var targetPath = path.ToLower();
+        
+        // Exact match or starts with (for nested routes)
+        if (currentPath == targetPath || currentPath.StartsWith(targetPath + "/"))
+        {
+            return "active";
+        }
+        return "";
     }
 
     string GetCleanUserName()
@@ -32,11 +45,11 @@
     /* SIDEBAR CONTAINER */
     .admin-sidebar {
         width: 250px;
-        height: 100vh;
+        flex-shrink: 0;
         background: #ffffff;
-        border-right: 1px solid #e5e7eb;
         display: flex;
         flex-direction: column;
+        height: 100%;
     }
 
     /* LOGO SECTION */
@@ -160,13 +173,13 @@
         </li>
 
         <li class="nav-item">
-            <a href="/AdminReport/Reports" class="nav-link @IsActive("Admin", "Reports")">
+            <a href="/AdminReport/Reports" class="nav-link @IsActive("AdminReport", "Reports")">
                 <i class="nav-icon bi bi-graph-up"></i> Training Reports
             </a>
         </li>
 
         <li class="nav-item">
-            <a href="/Admin/Employees" class="nav-link @IsActive("Admin", "Employees")">
+            <a href="/Admin/Employees" class="nav-link @IsActive("Employee", "Employees")">
                 <i class="nav-icon bi bi-people"></i> Employees
             </a>
         </li>
@@ -184,7 +197,7 @@
         </li>
 
         <li class="nav-item">
-            <a href="/Admin/Attendance" class="nav-link @IsActive("Admin", "Attendance")">
+            <a href="/Admin/Attendance" class="nav-link @IsActive("Attendance", "Index")">
                 <i class="nav-icon bi bi-calendar-check"></i> Attendance
             </a>
         </li>
@@ -210,7 +223,7 @@
         </li>
 
         <li class="nav-item">
-            <a href="/Feedback/TrainingFeedbacks" class="nav-link @IsActive("Feedback")">
+            <a href="/Feedback/TrainingFeedbacks" class="nav-link @IsActive("Feedback", "TrainingFeedbacks")">
                 <i class="nav-icon bi bi-chat-left-text"></i> Feedback
             </a>
         </li>
@@ -236,12 +249,6 @@
                 <small class="text-muted">System Administrator</small>
             </div>
         </div>
-
-        <form asp-controller="Account" asp-action="Logout" method="post">
-            <button type="submit" class="btn btn-outline-danger btn-logout">
-                <i class="bi bi-box-arrow-right me-1"></i> Logout
-            </button>
-        </form>
 
     </div>
 </div>
